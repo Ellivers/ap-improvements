@@ -1370,6 +1370,7 @@ const _css = `
               data: response
             });
 
+            if (initialStorage.debug?.seekThumbnails) console.log('thumb:',timeSlot,response);
             elem.find('img').css('display', 'none');
             elem.find('img').attr('src', response);
           });
@@ -9500,6 +9501,12 @@ function addGeneralButtons() {
             Message between iframe debugging
           </label>
         </div>
+        <div class="form-check">
+          <input class="form-check-input" type="checkbox" value="" id="anitracker-debug-seek-thumbnails" ${options.seekThumbnails ? "checked" : ""}>
+          <label class="form-check-label" for="anitracker-debug-seek-thumbnails">
+            Seek thumbnails debugging
+          </label>
+        </div>
         <input id="anitracker-decode-watched-input" placeholder="Decode watched format"><button class="btn btn-secondary anitracker-decode-watched-button">Decode</button>
         <div class="btn-group" style="display:block;">
           <button class="btn btn-primary anitracker-save-button">Save</button>
@@ -9515,6 +9522,7 @@ function addGeneralButtons() {
           storage.debug.sync = $('#anitracker-debug-sync-input').prop('checked');
           storage.debug.msg = $('#anitracker-debug-msg').prop('checked');
           storage.debug.notifs = $('#anitracker-debug-notifs').prop('checked');
+          storage.debug.seekThumbnails = $('#anitracker-debug-seek-thumbnails').prop('checked');
           saveData(storage);
 
           openShowDataModal();
