@@ -1395,6 +1395,21 @@ const _css = `
       });
     };
 
+    if (initialStorage.debug?.seekThumbnails) {
+      $(`<button class="anitracker-debug-canvas-button" style="position:absolute;top:0;left:0;z-index:1;">Test canvas</button>`).appendTo($(player).parents().eq(1));
+      $('.anitracker-debug-canvas-button').on('click', async () => {
+        console.log('started');
+        const canvas = document.createElement('canvas');
+        canvas.height = 1080;
+        canvas.width = 1920;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(bgVid, 0, 0, canvas.width, canvas.height);
+        const src = await canvas.toDataURL('image/png');
+        console.log('showing image!', src);
+        $(`<div style="background:red;padding:10px;margin:10px;position:absolute;width:100%;height:100%;"><img src=${src}></div>`).appendTo($(player).parents().eq(1));
+      });
+    }
+
     const hls2 = new Hls({
       maxBufferLength: 0.1,
       backBufferLength: 0,
