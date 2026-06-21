@@ -3,14 +3,14 @@ Improvements and additions for AnimePahe.
 
 The "dev" branch is for the in-development version of the script.
 
-If you find a bug or have a suggestion, [open an issue](https://github.com/Ellivers/ap-improvements/issues/new/choose).
+If you find a bug or have a suggestion, feel free to [open an issue](https://github.com/Ellivers/ap-improvements/issues/new/choose)!
 
 ## Installation
  1. Get the Violentmonkey browser extension (Tampermonkey is mostly untested, but seems to work as well).
  2. [Click here](https://raw.githubusercontent.com/Ellivers/ap-improvements/refs/heads/master/ap-improvements.user.js) or go to the file `ap-improvements.user.js` and click the "Raw" button.
  * I highly suggest using an ad blocker (uBlock Origin is recommended).
  
-## Feature list:
+## Feature list
  * Automatically redirects to the correct session when a tab with an old session is loaded.
  * Saves your watch progress of each video, so you can resume right where you left off.
  * Bookmark anime and view it in a bookmark menu.
