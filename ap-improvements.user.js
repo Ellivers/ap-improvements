@@ -4675,14 +4675,14 @@ function openNotificationsModal() {
           </div>
           <i class="fa ${ep.watched ? 'fa-eye-slash' : 'fa-eye'} anitracker-watched-toggle" tabindex="0" aria-hidden="true" title="Mark this episode as ${ep.watched ? 'unwatched' : 'watched'}"></i>
           <div class="anitracker-main-text">${data.title}</div>
-          <div class="anitracker-subtext"><strong class="anitracker-episode-text">Episode ${ep.episode}</strong></div>
+          <div class="anitracker-subtext">Episode <span class="anitracker-episode-text">${ep.episode}</span></div>
           <div class="anitracker-subtext">${timeSince(releaseTime)} ago (${releaseTime.toLocaleDateString()})</div>
         </a>
       </div>`).appendTo('#anitracker-modal-body .anitracker-modal-list');
 
       if (storage.settings.relativeEpNums) {
         getFirstEpisode(data.session).then(firstEp => {
-          elem.find('.anitracker-episode-text').text(`Episode ${getRelativeEpisodeNum(ep.episode, firstEp)}`);
+          elem.find('.anitracker-episode-text').text(getRelativeEpisodeNum(ep.episode, firstEp));
         });
       }
       if (i >= index+num) break;
