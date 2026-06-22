@@ -2745,6 +2745,12 @@ header.main-header nav .nav-search .search-results-wrap a {
     width: fit-content;
     margin: auto;
   }
+  .anitracker-bookmark-list-entry .anitracker-remove-bookmark-button>span {
+    display: none;
+  }
+  .anitracker-bookmark-list-entry > div {
+    gap: 12px;
+  }
   #anitracker {
     justify-content: center !important;
   }
@@ -4822,7 +4828,7 @@ function openBookmarksModal() {
             <button class="anitracker-bookmark-list-status anitracker-change-status-button" style="color:${statusAttrs[2]};" title="Change bookmark watching status">${statusAttrs[0]}</button>
             <button class="btn btn-dark anitracker-flat-button anitracker-remove-bookmark-button" title="Remove this bookmark" style="vertical-align: center;">
               <i class="fa fa-trash" aria-hidden="true"></i>
-              Remove
+              <span>Remove</span>
             </button>
           </div>
         </div>`).appendTo('#anitracker-modal-body .anitracker-modal-list');
