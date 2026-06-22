@@ -2258,11 +2258,15 @@ a.youtube-preview::before {
 .anitracker-notification-item .anitracker-main-text {
   color: rgb(153, 153, 153);
 }
+.anitracker-notification-item .anitracker-image-wrapper {
+  display: inline-flex !important;
+}
 .anitracker-notification-item-unwatched {
-  background-color: rgb(119, 62, 70);
+  background-color: rgb(82, 45, 50);
+  outline: rgb(119, 62, 70) solid 2px;
 }
 .anitracker-notification-item-unwatched:hover {
-  background-color: rgb(80, 49, 66);
+  background-color: rgb(63, 37, 52);
 }
 .anitracker-notification-item-unwatched .anitracker-main-text {
   color: white!important;
@@ -2276,7 +2280,6 @@ a.youtube-preview::before {
   margin-right: 5px;
   margin-top: 5px;
   cursor: pointer;
-  background-color: rgb(64, 64, 72);
   padding: 5px;
   border-radius: 5px;
 }
