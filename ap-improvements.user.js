@@ -2284,7 +2284,7 @@ a.youtube-preview::before {
   border-radius: 5px;
 }
 .anitracker-watched-toggle:hover,.anitracker-watched-toggle:focus {
-  outline: 2px solid #fff;
+  outline: 1px solid #fff;
 }
 #anitracker-replace-cover {
   z-index: 99;
@@ -2711,6 +2711,15 @@ header.main-header nav .main-nav li.nav-item > a:focus {
   margin-right: auto;
   overflow: auto clip;
 }
+.anitracker-index-lower>div {
+  float: right;
+  margin-right: 6px;
+  margin-bottom: 2rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  align-items: center;
+}
 .index .col-12:nth-child(4n-3), .index .col-12:nth-child(4n-2) {
   background-color: rgb(20, 19, 25);
 }
@@ -2753,6 +2762,9 @@ header.main-header nav .nav-search .search-results-wrap a {
   }
   .anitracker-bookmark-list-entry > div {
     gap: 12px;
+  }
+  .anitracker-index, .anitracker-index-lower {
+    margin-left: 10px;
   }
   #anitracker {
     justify-content: center !important;
@@ -5545,9 +5557,9 @@ function loadIndexPage() {
 
   <div id="anitracker-filter-dropdown-container"></div>
   </div>
-  <div>
+  <div class="anitracker-index-lower">
     <span style="font-size: 1.2em;color:#ddd;" id="anitracker-filter-result-count">Filter results: <span>${animeList.length}</span></span>
-    <div style="float: right; margin-right: 6px; margin-bottom: 2rem;">
+    <div>
       <div class="btn-group">
         <span id="anitracker-reset-filters" title="Reset filters" class="anitracker-text-button" style="margin-right: 10px;" tabindex="0"><i aria-hidden="true" class="fa fa-rotate-right"></i>&nbsp;Reset</span>
       </div>
