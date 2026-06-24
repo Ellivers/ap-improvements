@@ -4799,7 +4799,7 @@ function openBookmarksModal() {
     </div>
     ${storage.bookmarks.length ?`
     <div style="flex-grow: 1;">
-      <button class="btn btn-secondary anitracker-share-bookmarks-button" style="float: right;margin-right: 5px;" title="Share the bookmark list"><i aria-hidden="true" class="fa fa-share"></i></button>
+      <button class="btn btn-secondary anitracker-share-bookmarks-button" style="height: 40px;float: right;margin-right: 5px;" title="Share the bookmark list"><i aria-hidden="true" class="fa fa-share"></i></button>
     </div>
     <div class="dropdown-menu anitracker-dropdown-content anitracker-share-bookmarks-dropdown" style="display:hidden;">
       <span>Share through</span>
@@ -5014,6 +5014,7 @@ function openBookmarksModal() {
       if ($('#anitracker-share-bookmarks-spinner').length) return;
 
       const btn = $('.anitracker-share-bookmarks-button');
+      btn.off();
       btn.css('padding', '.2em');
       btn.html(`
       <div id="anitracker-share-bookmarks-spinner" class="anitracker-text-spinner anitracker-spinner">
@@ -5037,7 +5038,7 @@ function openBookmarksModal() {
       }
 
       $.anitrackerCachedScript('https://html2canvas.hertzen.com/dist/html2canvas.min.js', function() {
-        if (!$('.anitracker-share-bookmarks-button').length) return; // If no longer in the right menu
+        if (!modalIsOpen() || !$('.anitracker-share-bookmarks-button').length) return; // If no longer in the right menu
 
         $('.anitracker-remove-bookmark-button').remove();
         const prevWidth = $('.anitracker-modal-list-container').width();
