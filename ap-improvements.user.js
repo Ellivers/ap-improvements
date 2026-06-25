@@ -12,7 +12,7 @@
 // @grant       GM_setValue
 // @grant       GM_xmlhttpRequest
 // @grant       GM_info
-// @version     4.9.1
+// @version     4.9.2
 // @author      Ellivers
 // @license     MIT
 // @description Improvements and additions for the AnimePahe site
@@ -393,7 +393,8 @@ function removeWatched(animeId, episode, storage = getStorage()) {
 function removeWatchedAnime(animeId, storage = getStorage()) {
   const decoded = decodeWatched(storage.watched);
   if (isSyncEnabled(storage)) {
-    storage.sync.temp.removedData.push(decoded.filter(a => a.animeId === animeId).map(a => {return {type: 'watched', animeId: animeId, episodes: a.episodes}})[0]);
+    const found = decoded.filter(a => a.animeId === animeId);
+    if (found.length) storage.sync.temp.removedData.push(found.map(a => {return {type: 'watched', animeId: animeId, episodes: a.episodes}})[0]);
   }
 
   storage.watched = encodeWatched(decoded.filter(a => a.animeId !== animeId));
@@ -3118,6 +3119,7 @@ function closeModal() {
   siteVars.modalEvents.forEach(g => {
     g.elem.off(g.events, null, g.handler);
   });
+  siteVars.modalEvents = [];
 
   const storage = getStorage();
   if (storage.settings.reduceMotion === true || !$('#anitracker-modal').css('animation').startsWith('none')) {
@@ -11014,7 +11016,8 @@ async function syncData() {
   function fixDataDiff(storage) {
     const removedDataCopy = JSON.parse(JSON.stringify(storage.sync.temp.removedData));
     for (const entry of removedDataCopy) {
-      if (entry.type === 'watched') {
+      if (!entry) storage.sync.temp.removedData = storage.sync.temp.removedData.filter(a => a);
+      else if (entry.type === 'watched') {
         const epsToRemove = [];
         const addedIndicesToRemove = [];
         for (const found of storage.sync.temp.addedData) {
