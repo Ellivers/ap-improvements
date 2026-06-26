@@ -3352,7 +3352,8 @@ async function getDataFromAnimeId(id) {
       }
       resolve({
         session: responseLocation.pathname.split('/')[2],
-        title: $($(req.response).find('.title-wrapper h1 span')[0]).text()
+        title: $($(req.response).find('.title-wrapper h1 span')[0]).text(),
+        poster: $($(req.response).find('.anime-poster img')[0]).data('src').replace('.md','')
       });
     };
     req.send();
@@ -5366,8 +5367,9 @@ async function updateNotifications(animeName, storage = getStorage()) {
     toggleNotifications(animeName);
     return;
   }
-  const data = await asyncGetAnimeData(animeName, nobj.id);
-  if (data === undefined) return -1;
+  let data = await asyncGetAnimeData(animeName, nobj.id);
+  if (!data) data = await getDataFromAnimeId(nobj.id);
+  if (!data) return -1;
   const episodes = await getAllEpisodes(data.session, 'desc');
   if (episodes === undefined) return 0;
 
@@ -5432,6 +5434,7 @@ async function updateNotifications(animeName, storage = getStorage()) {
 
     saveData(storage);
 
+    if (!data.id) data.id = nobj.id;
     resolve(data);
   });
 }
