@@ -21,7 +21,7 @@ If you find a bug or have a suggestion, feel free to [open an issue](https://git
  * Jump directly to the next anime's first episode from the previous anime's last episode, and the other way around.
  * Keeps track of episodes that have been watched.
  * Adds a section on the main page where you can view episodes that you have started watching.
- * Adds a menu on to episodes in the Latest Releases feed and on anime pages where you can copy a link to them, mark/unmark them as watched, or download them.
+ * Adds a menu to episodes in the Latest Releases feed and on anime pages where you can copy a link to them, mark/unmark them as watched, or download them.
  * Adds an option to hide all episode thumbnails on the site.
  * Adds an option to have the header always stay at the top of the screen.
  * Reworked anime index page. You can now:
