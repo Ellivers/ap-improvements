@@ -3352,7 +3352,7 @@ async function getDataFromAnimeId(id) {
       }
       resolve({
         session: responseLocation.pathname.split('/')[2],
-        name: $($(req.response).find('.title-wrapper h1 span')[0]).text()
+        title: $($(req.response).find('.title-wrapper h1 span')[0]).text()
       });
     };
     req.send();
@@ -9956,7 +9956,7 @@ function addGeneralButtons() {
               alert("[AnimePahe Improvements]\n\nCouldn't get anime name");
             }
             else {
-              $(this).parent().find('.anitracker-watched-anime-id').text(data.name).attr('title', data.name);
+              $(this).parent().find('.anitracker-watched-anime-id').text(data.title).attr('title', data.title);
               const storage = getStorage();
               if (isSyncEnabled(storage)) {
                 storage.sync.temp.addedData.push({type: 'linkList', animeSession: data.session});
@@ -9964,7 +9964,7 @@ function addGeneralButtons() {
               storage.linkList.push({
                 type: 'anime',
                 animeSession: data.session,
-                animeName: data.name,
+                animeName: data.title,
                 animeId: id
               });
               if (storage.linkList.length > getStorageLimits().linkList) {
