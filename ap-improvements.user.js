@@ -1,6 +1,7 @@
 // ==UserScript==
 // @name        AnimePahe Improvements
 // @namespace   https://gist.github.com/Ellivers/f7716b6b6895802058c367963f3a2c51
+// @homepageURL https://github.com/Ellivers/ap-improvements
 // @downloadURL https://raw.githubusercontent.com/Ellivers/ap-improvements/refs/heads/master/ap-improvements.user.js
 // @updateURL   https://raw.githubusercontent.com/Ellivers/ap-improvements/refs/heads/master/ap-improvements.user.js
 // @match       https://animepahe.pw/*
@@ -12,7 +13,7 @@
 // @grant       GM_setValue
 // @grant       GM_xmlhttpRequest
 // @grant       GM_info
-// @version     4.9.2
+// @version     4.9.3
 // @author      Ellivers
 // @license     MIT
 // @description Improvements and additions for the AnimePahe site
@@ -2987,7 +2988,7 @@ async function getFirstEpisode(session) {
     }
 
     asyncGetResponseData(`/api?m=release&sort=episode_asc&id=${session}`).then(response => {
-      const ep = response[0].episode;
+      const ep = response[0]?.episode;
       siteVars.cached.firstEpisode[session] = ep;
       resolve(ep);
       return;
@@ -4544,7 +4545,8 @@ function openNotificationsModal() {
         </div>
       </div>`).appendTo('#anitracker-modal-body .anitracker-modal-list');
 
-      schedule.find(a => a.num === latestEp.getDay()).list.push({
+      const scheduleEntry = schedule.find(a => a.num === latestEp.getDay());
+      if (scheduleEntry) scheduleEntry.list.push({
         time: latestEp,
         name: g.name,
         id: g.id,
