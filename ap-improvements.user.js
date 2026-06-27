@@ -89,7 +89,7 @@ const initialStorage = getStorage();
 
 function getDefaultData() {
   return {
-    version: 3,
+    version: 4,
     linkList:[],
     videoTimes:[],
     bookmarks:[],
@@ -169,6 +169,8 @@ function upgradeData(data, fromver) {
      * autoPlayVideo -> settings.autoPlayVideo
    * V3:
      * linkList[].subInfo {name,quality,other} -> [name,quality,other]
+   * V4:
+     * Fix incorrect anime ID formats caused by 4.9.0
    */
   const upgradeFunctions = [
     () => { // upgrading from V0
@@ -198,6 +200,23 @@ function upgradeData(data, fromver) {
       data.linkList.forEach(g => {
         if (!g.subInfo || Array.isArray(g.subInfo)) return;
         g.subInfo = [g.subInfo.name, g.subInfo.quality, g.subInfo.other];
+      });
+    },
+    () => { // upgrading from V3
+      if (data.linkList?.length) data.linkList.forEach(g => {
+        if (g.animeId) g.animeId = +g.animeId;
+      });
+      if (data.videoTimes?.length) data.videoTimes.forEach(g => {
+        if (g.animeId) g.animeId = +g.animeId;
+      });
+      if (data.bookmarks?.length) data.bookmarks.forEach(g => {
+        if (g.id) g.id = +g.id;
+      });
+      if (data.notifications?.anime?.length) data.notifications.anime.forEach(g => {
+        if (g.id) g.id = +g.id;
+      });
+      if (data.notifications?.episodes?.length) data.notifications.episodes.forEach(g => {
+        if (g.animeId) g.animeId = +g.animeId;
       });
     },
   ];
@@ -6809,7 +6828,7 @@ async function asyncGetAnimeData(name = getAnimeName(), id = undefined, guess = 
       return;
     }
 
-    console.error(`Anime "${name}" not found`);
+    console.error(`[AnimePahe Improvements] Anime "${name}" not found`);
     resolve(undefined);
   });
 }
@@ -8843,7 +8862,7 @@ async function getAnimeCoverUrl() {
           results = JSON.parse(request.response).items;
         }
         catch (e) {
-          console.error(`JSON parse error when trying to find new anime cover: ${e}`);
+          console.error(`[AnimePahe Improvements] JSON parse error when trying to find new anime cover: ${e}`);
           resolve(undefined);
           return;
         }
@@ -8908,7 +8927,7 @@ async function getAnimeCoverUrl() {
       };
 
       request.onerror = (e) => {
-        console.error(`Network error when trying to find new anime cover: ${e}`);
+        console.error(`[AnimePahe Improvements] Network error when trying to find new anime cover: ${e}`);
         resolve(undefined);
         return;
       };
