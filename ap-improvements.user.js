@@ -13,7 +13,7 @@
 // @grant       GM_setValue
 // @grant       GM_xmlhttpRequest
 // @grant       GM_info
-// @version     4.9.3
+// @version     4.10.0
 // @author      Ellivers
 // @license     MIT
 // @description Improvements and additions for the AnimePahe site
@@ -800,7 +800,7 @@ const _css = `
         time: Math.floor(currentTime),
         animeName: vidInfo.animeName,
         episodeNum: vidInfo.episodeNum,
-        duration: player.duration
+        duration: Math.floor(player.duration)
       });
       if (storage.videoTimes.length > getStorageLimits().videoTimes) {
         storage.videoTimes.splice(0,1);
@@ -869,7 +869,7 @@ const _css = `
           animeName: vidInfo.animeName,
           episodeNum: vidInfo.episodeNum,
           animeId: data.id,
-          duration: player.duration
+          duration: Math.floor(player.duration)
         });
         if (storage.videoTimes.length > getStorageLimits().videoTimes) {
           storage.videoTimes.splice(0,1);
@@ -1226,7 +1226,7 @@ const _css = `
       }
       if (storedVideoTime.duration === undefined) {
         bumpSyncDiff(storage, 'videoTimeEntryUpdate');
-        storedVideoTime.duration = player.duration;
+        storedVideoTime.duration = Math.floor(player.duration);
         saveData(storage);
       }
       if (!storedVideoTime.animeId) sendIdRequest();
