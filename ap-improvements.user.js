@@ -10997,6 +10997,10 @@ async function syncData() {
         try {
           $.anitrackerCachedScript('https://cdn.jsdelivr.net/npm/js-base64@3.7.8/base64.min.js', function() {
             req.send(Base64.encode(JSON.stringify(toPut)));
+          }).fail((jqXHR, textStatus) => {
+            console.error(`[AnimePahe Improvements] Error when putting sync data: ${textStatus} ${jqXHR.status}`);
+            resolve(4);
+            return;
           });
         }
         catch (err) {
