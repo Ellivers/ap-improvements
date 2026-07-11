@@ -120,6 +120,7 @@ function getDefaultData() {
       keybindBookmarks: "b",
       keybindNotifications: "n",
       keybindSearch: "s",
+      keybindResetPlayer: "",
       dlPreferRes: 1080,
       dlPreferLang: '',
       showContinueWatching: true,
@@ -1402,7 +1403,8 @@ const _css = `
         currentTime = time;
       }).observe(seekElem[0], { attributes: true });
 
-      seekElem.on('mouseleave blur', () => {
+      seekElem.on('mouseleave blur', (e) => {
+        if (e.type === 'mouseleave') seekElem.blur();
         toggleVisibility(false);
       });
 
@@ -4421,6 +4423,7 @@ $(document).on('keydown', (e, other = undefined) => {
   }
 
   if (!isEpisode()) return;
+  if (e.key === storage.settings.keybindResetPlayer) resetPlayer();
   if (e.key === 't') {
     toggleTheatreMode();
   }
@@ -9164,6 +9167,7 @@ function addGeneralButtons() {
         {title:'Bookmarks',id:'keybindBookmarks'},
         {title:'Episode Feed',id:'keybindNotifications'},
         {title:'Open Search',id:'keybindSearch'},
+        {title:'Reset Player',id:'keybindResetPlayer'},
       ];
 
       function getKeybindString(keybind) {
