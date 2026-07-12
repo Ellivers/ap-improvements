@@ -117,17 +117,22 @@ function getDefaultData() {
       bookmarkLayout: "grid",
       bookmarkSort: "recent",
       notifScheduleStart: 0,
+      numpadSeeking: true,
+      dlPreferRes: 1080,
+      dlPreferLang: '',
+      showContinueWatching: true,
+
       keybindBookmarks: "b",
       keybindNotifications: "n",
       keybindSearch: "s",
       keybindTheatreMode: "t",
       keybindNextEpisode: "Shift+N",
       keybindPrevEpisode: "Shift+P",
+      keybind10sBackward: "j",
+      keybind10sForward: "l",
+      keybind1fBackward: ",",
+      keybind1fForward: ".",
       keybindResetPlayer: "",
-      numpadSeeking: true,
-      dlPreferRes: 1080,
-      dlPreferLang: '',
-      showContinueWatching: true,
     },
     videoSpeed: [],
     watched: "",
@@ -947,26 +952,31 @@ const _css = `
       if (player.paused && data.time !== undefined && data.time > player.currentTime) player.currentTime = data.time;
     }
     else if (action === 'key') {
-      if ([' ','k'].includes(data.key)) {
-        if (player.paused) player.play();
-        else player.pause();
+      if (!data.event.shiftKey && !data.event.ctrlKey) {
+        if ([' ','k'].includes(data.key)) {
+          if (player.paused) player.play();
+          else player.pause();
+          return;
+        }
+        else if (data.key === 'ArrowLeft') {
+          player.currentTime = Math.max(0, player.currentTime - 5);
+          return;
+        }
+        else if (data.key === 'ArrowRight') {
+          player.currentTime = Math.min(player.duration, player.currentTime + 5);
+          return;
+        }
+        else if (/^\d$/.test(data.key) && data.event.code.startsWith('Digit')) {
+          player.currentTime = (player.duration/10)*(+data.key);
+          return;
+        }
+        else if (data.key === 'm') {
+          player.muted = !player.muted;
+          return;
+        }
       }
-      else if (data.key === 'ArrowLeft') {
-        player.currentTime = Math.max(0, player.currentTime - 5);
-        return;
-      }
-      else if (data.key === 'ArrowRight') {
-        player.currentTime = Math.min(player.duration, player.currentTime + 5);
-        return;
-      }
-      else if (/^\d$/.test(data.key) && data.event.code.startsWith('Digit')) {
-        player.currentTime = (player.duration/10)*(+data.key);
-        return;
-      }
-      else if (data.key === 'm') player.muted = !player.muted;
-      else $(player).trigger('keydown', {
-        event: data.event
-      });
+
+      $(player).trigger('keydown', {event: data.event});
     }
     else if (action === 'setting_changed') {
       if (data.type === 'generic') {
@@ -1512,6 +1522,7 @@ const _css = `
   $(document).on('keydown', function(e, other = undefined) {
     if (!e.key) e = other.event;
     const key = e.key;
+    if (!e.shiftKey && ['l','L'].includes(e.key)) setTimeout(() => {player.loop = false}, 5);
     if (key === 'ArrowUp') {
       changeSpeed(e, -1); // The changeSpeed function only works if ctrl is being held
       return;
@@ -1525,32 +1536,29 @@ const _css = `
       player.loop = !player.loop;
       return;
     }
+    if (pressedKeybind(e, anitrackerSettings.keybind10sBackward)) {
+      player.currentTime = Math.max(0, player.currentTime - 10);
+      return;
+    }
+    else if (pressedKeybind(e, anitrackerSettings.keybind10sForward)) {
+      player.currentTime = Math.min(player.duration, player.currentTime + 10);
+      return;
+    }
+    if (!(player.currentTime > 0 && !player.paused && !player.ended && player.readyState > 2)) {
+      if (pressedKeybind(e, anitrackerSettings.keybind1fBackward)) {
+        player.currentTime = Math.max(0, player.currentTime - frametime);
+        return;
+      }
+      else if (pressedKeybind(e, anitrackerSettings.keybind1fForward)) {
+        player.currentTime = Math.min(player.duration, player.currentTime + frametime);
+        return;
+      }
+    }
 
     if (!e.ctrlKey && !e.altKey && !e.shiftKey && !e.metaKey) {
-      if (key === 'j') {
-        player.currentTime = Math.max(0, player.currentTime - 10);
-        return;
-      }
-      else if (key === 'l') {
-        player.currentTime = Math.min(player.duration, player.currentTime + 10);
-        setTimeout(() => {
-          player.loop = false;
-        }, 5);
-        return;
-      }
-      else if (/^Numpad\d$/.test(e.code) && anitrackerSettings.numpadSeeking) {
+      if (/^Numpad\d$/.test(e.code) && anitrackerSettings.numpadSeeking) {
         player.currentTime = (player.duration/10)*(+e.code.replace('Numpad', ''));
         return;
-      }
-      if (!(player.currentTime > 0 && !player.paused && !player.ended && player.readyState > 2)) {
-        if (key === ',') {
-          player.currentTime = Math.max(0, player.currentTime - frametime);
-          return;
-        }
-        else if (key === '.') {
-          player.currentTime = Math.min(player.duration, player.currentTime + frametime);
-          return;
-        }
       }
 
       funPitch += key;
@@ -2679,7 +2687,6 @@ header.main-header nav .main-nav li.nav-item > a:focus {
   grid-template-columns: 45% auto 42px;
   gap: 5px;
   min-width: 24rem;
-  margin-bottom: 12px;
 }
 .anitracker-keybinds-section label {
   margin: 0;
@@ -9160,13 +9167,17 @@ function addGeneralButtons() {
       $('#anitracker-modal-body').empty();
 
       const keybindEntries = [
-        {title:'Bookmarks',id:'keybindBookmarks'},
-        {title:'Episode Feed',id:'keybindNotifications'},
-        {title:'Open Search',id:'keybindSearch'},
-        {title:'Toggle Theatre Mode',id:'keybindTheatreMode'},
-        {title:'Next Episode',id:'keybindNextEpisode'},
-        {title:'Previous Episode',id:'keybindPrevEpisode'},
-        {title:'Reset Player',id:'keybindResetPlayer'},
+        {title:'Bookmarks',id:'keybindBookmarks',parent:'#anitracker-site-keybinds'},
+        {title:'Episode Feed',id:'keybindNotifications',parent:'#anitracker-site-keybinds'},
+        {title:'Open Search',id:'keybindSearch',parent:'#anitracker-site-keybinds'},
+        {title:'Toggle Theatre Mode',id:'keybindTheatreMode',parent:'#anitracker-site-keybinds'},
+        {title:'Next Episode',id:'keybindNextEpisode',parent:'#anitracker-site-keybinds'},
+        {title:'Previous Episode',id:'keybindPrevEpisode',parent:'#anitracker-site-keybinds'},
+        {title:'Backward 10 Seconds',id:'keybind10sBackward',parent:'#anitracker-player-keybinds'},
+        {title:'Forward 10 Seconds',id:'keybind10sForward',parent:'#anitracker-player-keybinds'},
+        {title:'Backward 1 Frame',id:'keybind1fBackward',parent:'#anitracker-player-keybinds'},
+        {title:'Forward 1 Frame',id:'keybind1fForward',parent:'#anitracker-player-keybinds'},
+        {title:'Reset Player',id:'keybindResetPlayer',parent:'#anitracker-player-keybinds'},
       ];
 
       function getKeybindString(keybind) {
@@ -9200,7 +9211,16 @@ function addGeneralButtons() {
       const storage = getStorage();
       const defaultData = getDefaultData();
 
-      $(`<h4>Edit Keybinds</h4><div class="anitracker-keybinds-section"></div>`).appendTo('#anitracker-modal-body');
+      $(`<h4>Edit Keybinds</h4>
+      <div class="anitracker-dark-area">
+        <strong>Site:</strong>
+        <div class="anitracker-keybinds-section" id="anitracker-site-keybinds"></div>
+      </div>
+      <div class="anitracker-dark-area" style="margin-top:10px;">
+        <strong>Player:</strong>
+        <div class="anitracker-keybinds-section" id="anitracker-player-keybinds" style="margin-bottom:10px;"></div>
+      </div>
+      `).appendTo('#anitracker-modal-body');
 
       keybindEntries.forEach(g => {
         g.value = storage.settings[g.id];
@@ -9213,9 +9233,9 @@ function addGeneralButtons() {
         </button>
         <button class="btn btn-secondary anitracker-flat-button anitracker-reset-keybind-button" title="${defValue ? 'Reset to ' + defValue : 'Reset keybind'}">
           <i class="fa fa-undo" aria-hidden="true"></i>
-        </button>`).appendTo('.anitracker-keybinds-section').data('id', g.id);
+        </button>`).appendTo(g.parent).data('id', g.id);
       });
-      addOptionSwitch('numpadSeeking', 'Numpad Seeking', 'Allow seeking through videos with numpad keys', '#anitracker-modal-body');
+      addOptionSwitch('numpadSeeking', 'Numpad Seeking', 'Allow seeking through videos with numpad keys', '#anitracker-modal-body>.anitracker-dark-area:nth-child(3)');
 
       $('.anitracker-keybind-button').on('keydown', (e) => {
         const inputKey = e.key === 'Escape' ? '' : e.key;
