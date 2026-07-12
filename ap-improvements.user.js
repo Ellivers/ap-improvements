@@ -2898,21 +2898,15 @@ const optionSwitches = [
     optionId: 'theatreMode',
     switchId: 'theatre-mode',
     value: initialStorage.settings.theatreMode,
-    onEvent: () => {
-      theatreMode(true);
-    },
-    offEvent: () => {
-      theatreMode(false);
-    }
+    onEvent: () => {theatreMode(true)},
+    offEvent: () => {theatreMode(false)}
   },
   {
     optionId: 'hideThumbnails',
     switchId: 'hide-thumbnails',
     value: initialStorage.settings.hideThumbnails,
     onEvent: hideThumbnails,
-    offEvent: () => {
-      $('.main').removeClass('anitracker-hide-thumbnails');
-    }
+    offEvent: () => {$('.main').removeClass('anitracker-hide-thumbnails')}
   },
   {
     optionId: 'bestQuality',
@@ -2939,34 +2933,22 @@ const optionSwitches = [
     optionId: 'seekThumbnails',
     switchId: 'seek-thumbnails',
     value: initialStorage.settings.seekThumbnails,
-    onEvent: () => {
-      sendMessage({action:'setting_changed',type:'seek_thumbnails',value:true});
-    },
-    offEvent: () => {
-      sendMessage({action:'setting_changed',type:'seek_thumbnails',value:false});
-    }
+    onEvent: () => {sendMessage({action:'setting_changed',type:'seek_thumbnails',value:true})},
+    offEvent: () => {sendMessage({action:'setting_changed',type:'seek_thumbnails',value:false})}
   },
   {
     optionId: 'seekPoints',
     switchId: 'seek-points',
     value: initialStorage.settings.seekPoints,
-    onEvent: () => {
-      sendMessage({action:'setting_changed',type:'seek_points',value:true});
-    },
-    offEvent: () => {
-      sendMessage({action:'setting_changed',type:'seek_points',value:false});
-    }
+    onEvent: () => {sendMessage({action:'setting_changed',type:'seek_points',value:true})},
+    offEvent: () => {sendMessage({action:'setting_changed',type:'seek_points',value:false})}
   },
   {
     optionId: 'skipButton',
     switchId: 'skip-button',
     value: initialStorage.settings.skipButton,
-    onEvent: () => {
-      sendMessage({action:'setting_changed',type:'skip_button',value:true});
-    },
-    offEvent: () => {
-      sendMessage({action:'setting_changed',type:'skip_button',value:false});
-    }
+    onEvent: () => {sendMessage({action:'setting_changed',type:'skip_button',value:true})},
+    offEvent: () => {sendMessage({action:'setting_changed',type:'skip_button',value:false})}
   },
   {
     optionId: 'copyScreenshots',
