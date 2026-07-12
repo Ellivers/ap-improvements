@@ -120,6 +120,9 @@ function getDefaultData() {
       keybindBookmarks: "b",
       keybindNotifications: "n",
       keybindSearch: "s",
+      keybindTheatreMode: "t",
+      keybindNextEpisode: "Shift+N",
+      keybindPrevEpisode: "Shift+P",
       keybindResetPlayer: "",
       numpadSeeking: true,
       dlPreferRes: 1080,
@@ -444,7 +447,7 @@ function pressedKeybind(event, keybind) {
   const shift = parts.find(g => g === 'Shift');
   const ctrl = parts.find(g => g === 'Control');
   const key = parts.filter(g => !['Shift','Control'].includes(g))[0] || '+';
-  return (key === event.key && event.shiftKey === Boolean(shift) && event.ctrlKey === Boolean(ctrl));
+  return (key.toLowerCase() === event.key.toLowerCase() && event.shiftKey === Boolean(shift) && event.ctrlKey === Boolean(ctrl));
 }
 
 function isSyncEnabled(storage) {
@@ -670,6 +673,7 @@ const _css = `
   }
 
   var timestamps = [];
+  const anitrackerSettings = initialStorage.settings;
 
   async function getAnidbIdFromTitle(title) {
     return new Promise((resolve) => {
@@ -965,6 +969,10 @@ const _css = `
       });
     }
     else if (action === 'setting_changed') {
+      if (data.type === 'generic') {
+        anitrackerSettings[data.id] = data.value;
+        return;
+      }
       if (player.readyState <= 2) return;
       const storedVideoTime = getStoredTime(vidInfo.animeName, vidInfo.episodeNum, storage);
       if (data.type === 'seek_points' && storedVideoTime.hasTimestamps === true) {
@@ -988,7 +996,6 @@ const _css = `
           timestamps = [];
         }
       }
-      else if (data.type === 'screenshot_mode') $('button[data-plyr="capture"]').data('mode', data.value);
     }
     else if (action === 'timestamp_edit_mode') {
       timestampEditMode();
@@ -1268,7 +1275,6 @@ const _css = `
     // Screenshot changes
     $('button[data-plyr="capture"]').replaceWith($('button[data-plyr="capture"]').clone()); // Just to remove existing event listeners
     $('button[data-plyr="capture"]')
-    .data('mode', ['download', 'copy'][+initialStorage.settings.copyScreenshots])
     .on('click', (e) => {
       const canvas = document.createElement('canvas');
       canvas.height = player.videoHeight;
@@ -1276,7 +1282,7 @@ const _css = `
       const ctx = canvas.getContext('2d');
       ctx.drawImage(player, 0, 0, canvas.width, canvas.height);
       const mode = $(e.currentTarget).data('mode');
-      if (mode === 'copy') {
+      if (anitrackerSettings.copyScreenshots) {
         canvas.toBlob((blob) => {
           try {
             navigator.clipboard.write([
@@ -1289,11 +1295,10 @@ const _css = `
             alert("[AnimePahe Improvements]\n\nCouldn't copy screenshot. Try disabling the Copy Screenshots option.");
             return;
           }
-
           showMessage('Copied image');
         });
       }
-      else if (mode === 'download') {
+      else { // Otherwise, download
         const element = document.createElement('a');
         element.setAttribute('href', canvas.toDataURL('image/png'));
         element.setAttribute('download', $('.ss-label').text());
@@ -1520,11 +1525,11 @@ const _css = `
       player.loop = !player.loop;
       return;
     }
-    if (e.shiftKey && ['n','N'].includes(key)) {
+    if (pressedKeybind(e, anitrackerSettings.keybindNextEpisode)) {
       sendMessage({action: "next"});
       return;
     }
-    if (e.shiftKey && ['p','P'].includes(key)) {
+    if (pressedKeybind(e, anitrackerSettings.keybindPrevEpisode)) {
       sendMessage({action: "previous"});
       return;
     }
@@ -1540,8 +1545,7 @@ const _css = `
       }, 5);
       return;
     }
-    else if (/^Numpad\d$/.test(e.code)) {
-      if (!getStorage().settings.numpadSeeking) return;
+    else if (/^Numpad\d$/.test(e.code) && anitrackerSettings.numpadSeeking) {
       player.currentTime = (player.duration/10)*(+e.code.replace('Numpad', ''));
       return;
     }
@@ -2678,7 +2682,7 @@ header.main-header nav .main-nav li.nav-item > a:focus {
 }
 .anitracker-keybinds-section {
   display: grid;
-  grid-template-columns: 40% auto 42px;
+  grid-template-columns: 45% auto 42px;
   gap: 5px;
   min-width: 24rem;
   margin-bottom: 12px;
@@ -2967,12 +2971,8 @@ const optionSwitches = [
     optionId: 'copyScreenshots',
     switchId: 'copy-screenshots',
     value: initialStorage.settings.copyScreenshots,
-    onEvent: () => {
-      sendMessage({action:'setting_changed',type:'screenshot_mode',value:'copy'});
-    },
-    offEvent: () => {
-      sendMessage({action:'setting_changed',type:'screenshot_mode',value:'download'});
-    }
+    onEvent: () => {sendMessage({action:'setting_changed',type:'generic',id:'copyScreenshots',value:true})},
+    offEvent: () => {sendMessage({action:'setting_changed',type:'generic',id:'copyScreenshots',value:false})}
   },
   {
     optionId: 'reduceMotion',
@@ -3005,7 +3005,9 @@ const optionSwitches = [
   {
     optionId: 'numpadSeeking',
     switchId: 'numpad-seeking',
-    value: initialStorage.settings.numpadSeeking
+    value: initialStorage.settings.numpadSeeking,
+    onEvent: () => {sendMessage({action:'setting_changed',type:'generic',id:'numpadSeeking',value:true})},
+    offEvent: () => {sendMessage({action:'setting_changed',type:'generic',id:'numpadSeeking',value:false})}
   }];
 
 const originalEpisodeValue = (() => {
@@ -4426,24 +4428,14 @@ $(document).on('keydown', (e, other = undefined) => {
   if (isTextInput) return;
 
   const storage = getStorage();
-  if (pressedKeybind(e, storage.settings.keybindBookmarks)) {
-    openBookmarksModal();
-    return;
-  }
-  if (pressedKeybind(e, storage.settings.keybindNotifications)) {
-    openNotificationsModal();
-    return;
-  }
-  if (pressedKeybind(e, storage.settings.keybindSearch)) {
-    setTimeout(() => {$('.input-search').focus()}, 1);
-    return;
-  }
+  if (pressedKeybind(e, storage.settings.keybindBookmarks)) return openBookmarksModal();
+  if (pressedKeybind(e, storage.settings.keybindNotifications)) return openNotificationsModal();
+  if (pressedKeybind(e, storage.settings.keybindSearch)) return setTimeout(() => {$('.input-search').focus()}, 1);
 
   if (!isEpisode()) return;
-  if (pressedKeybind(e, storage.settings.keybindResetPlayer)) resetPlayer();
-  if (e.key === 't') {
-    toggleTheatreMode();
-  }
+  if (pressedKeybind(e, storage.settings.keybindResetPlayer)) return resetPlayer();
+  if (pressedKeybind(e, storage.settings.keybindTheatreMode)) return toggleTheatreMode();
+
   else if (!['Control','Shift','Alt'].includes(e.key) && !e.msg /*If this was a message from iframe, don't do recursive stuff*/) {
     sendMessage({action:"key",key:e.key,event:{key:e.key, code:e.originalEvent.code, ctrlKey:e.ctrlKey, shiftKey:e.shiftKey, altKey:e.altKey, metaKey:e.metaKey, msg:true}});
     $('.embed-responsive-item')[0].contentWindow.focus();
@@ -9120,7 +9112,6 @@ function addGeneralButtons() {
         $('.anitracker-mark-watched-spinner').css('display','inline');
         getAllEpisodes(animeSession).then((episodes) => {
           $(e.currentTarget).prop('disabled', false);
-
           if (!episodes.length) {
             $('.anitracker-mark-watched-spinner').css('display','none');
             return;
@@ -9142,7 +9133,6 @@ function addGeneralButtons() {
               episodes: converted
             });
           }
-
           if (isSyncEnabled(storage)) {
             storage.sync.temp.addedData.push({type: 'watched', animeId: animeId, episodes: converted});
           }
@@ -9184,6 +9174,9 @@ function addGeneralButtons() {
         {title:'Bookmarks',id:'keybindBookmarks'},
         {title:'Episode Feed',id:'keybindNotifications'},
         {title:'Open Search',id:'keybindSearch'},
+        {title:'Toggle Theatre Mode',id:'keybindTheatreMode'},
+        {title:'Next Episode',id:'keybindNextEpisode'},
+        {title:'Previous Episode',id:'keybindPrevEpisode'},
         {title:'Reset Player',id:'keybindResetPlayer'},
       ];
 
@@ -9200,6 +9193,19 @@ function addGeneralButtons() {
           return '<i class="fa fa-times-circle" aria-hidden="true"></i>';
         }
         return getKeybindString(keybind);
+      }
+      function setKeybind(id, value) {
+        const storage = getStorage();
+        if (storage.settings[id] === value) return false;
+
+        const elem = $(`#anitracker-${id}-button`);
+        elem.html(getKeybindHtml(value));
+        elem.attr('title', getKeybindString(value));
+        sendMessage({action:"setting_changed",type:"generic",id:id,value:value}); // Assumes that keybind IDs share space with generic setting IDs
+
+        storage.settings[id] = value;
+        saveData(storage);
+        return true;
       }
 
       const storage = getStorage();
@@ -9229,15 +9235,7 @@ function addGeneralButtons() {
         const id = elem.data('id');
 
         const fullKeybind = `${(e.ctrlKey && inputKey !== 'Control') ? 'Control+' : ''}${e.shiftKey ? 'Shift+' : ''}${inputKey}`;
-        const storage = getStorage();
-        if (storage.settings[id] !== fullKeybind) {
-          elem.html(getKeybindHtml(fullKeybind));
-          elem.attr('title', getKeybindString(fullKeybind));
-          showMessage(inputKey ? `Keybind set to ${getKeybindString(fullKeybind)}` : 'Keybind unset');
-
-          storage.settings[id] = fullKeybind;
-          saveData(storage);
-        }
+        if (setKeybind(id, fullKeybind)) showMessage(inputKey ? `Keybind set to ${getKeybindString(fullKeybind)}` : 'Keybind unset');
 
         e.preventDefault();
         e.stopPropagation();
@@ -9248,12 +9246,7 @@ function addGeneralButtons() {
         const defValue = getDefaultData().settings[id];
         if (defValue === undefined) return;
 
-        const storage = getStorage();
-        storage.settings[id] = defValue;
-        saveData(storage);
-
-        $(`#anitracker-${id}-button`).html(getKeybindHtml(defValue));
-        $(`#anitracker-${id}-button`).attr('title', getKeybindString(defValue));
+        setKeybind(id, defValue);
         showMessage(`Keybind reset${defValue ? ' to ' + getKeybindString(defValue) : ''}`);
         $(this).blur();
       });
@@ -9262,6 +9255,7 @@ function addGeneralButtons() {
         keybindEntries.forEach(g => {
           const elem = $(`#anitracker-${g.id}-button`);
           elem.html(getKeybindHtml(storage.settings[g.id]));
+          elem.attr('title', getKeybindString(storage.settings[g.id]));
         });
       });
 
@@ -10339,7 +10333,6 @@ function addGeneralButtons() {
               openSyncDataModal();
               return;
             }
-
             if (result === 1) showError("Couldn't connect. Check your internet connection.");
             else if (result === 2) showError("Code is invalid.");
             else if (result === 3) showError("Please update AnimePahe Improvements.");
