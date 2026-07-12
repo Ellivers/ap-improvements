@@ -2891,94 +2891,79 @@ const continueWatchingStatus = {
 const optionSwitches = [
   {
     optionId: 'autoDelete',
-    switchId: 'auto-delete',
     value: initialStorage.settings.autoDelete
   },
   {
     optionId: 'theatreMode',
-    switchId: 'theatre-mode',
     value: initialStorage.settings.theatreMode,
     onEvent: () => {theatreMode(true)},
     offEvent: () => {theatreMode(false)}
   },
   {
     optionId: 'hideThumbnails',
-    switchId: 'hide-thumbnails',
     value: initialStorage.settings.hideThumbnails,
     onEvent: hideThumbnails,
     offEvent: () => {$('.main').removeClass('anitracker-hide-thumbnails')}
   },
   {
     optionId: 'bestQuality',
-    switchId: 'best-quality',
     value: initialStorage.settings.bestQuality,
     onEvent: bestVideoQuality
   },
   {
     optionId: 'autoDownload',
-    switchId: 'auto-download',
     value: initialStorage.settings.autoDownload
   },
   {
     optionId: 'autoPlayNext',
-    switchId: 'autoplay-next',
     value: initialStorage.settings.autoPlayNext
   },
   {
     optionId: 'autoPlayVideo',
-    switchId: 'autoplay-video',
     value: initialStorage.settings.autoPlayVideo
   },
   {
     optionId: 'seekThumbnails',
-    switchId: 'seek-thumbnails',
     value: initialStorage.settings.seekThumbnails,
     onEvent: () => {sendMessage({action:'setting_changed',type:'seek_thumbnails',value:true})},
     offEvent: () => {sendMessage({action:'setting_changed',type:'seek_thumbnails',value:false})}
   },
   {
     optionId: 'seekPoints',
-    switchId: 'seek-points',
     value: initialStorage.settings.seekPoints,
     onEvent: () => {sendMessage({action:'setting_changed',type:'seek_points',value:true})},
     offEvent: () => {sendMessage({action:'setting_changed',type:'seek_points',value:false})}
   },
   {
     optionId: 'skipButton',
-    switchId: 'skip-button',
     value: initialStorage.settings.skipButton,
     onEvent: () => {sendMessage({action:'setting_changed',type:'skip_button',value:true})},
     offEvent: () => {sendMessage({action:'setting_changed',type:'skip_button',value:false})}
   },
   {
     optionId: 'copyScreenshots',
-    switchId: 'copy-screenshots',
     value: initialStorage.settings.copyScreenshots,
     onEvent: () => {sendMessage({action:'setting_changed',type:'generic',id:'copyScreenshots',value:true})},
     offEvent: () => {sendMessage({action:'setting_changed',type:'generic',id:'copyScreenshots',value:false})}
   },
   {
     optionId: 'reduceMotion',
-    switchId: 'reduced-motion',
     value: initialStorage.settings.reduceMotion
   },
   {
     optionId: 'stickyHeader',
-    switchId: 'sticky-header',
     value: initialStorage.settings.stickyHeader,
     onEvent: () => {stickyHeader(true)},
     offEvent: () => {stickyHeader(false)}
   },
   {
     optionId: 'relativeEpNums',
-    switchId: 'relative-episode-nums',
     value: initialStorage.settings.relativeEpNums,
     onEvent: () => {setRelativeEpNums(true)},
     offEvent: () => {setRelativeEpNums(false)}
   },
   {
     optionId: 'showContinueWatching',
-    switchId: 'show-continue-watching',
     value: initialStorage.settings.showContinueWatching,
     onEvent: setupContinueWatchingSection,
     offEvent: () => {
@@ -2987,7 +2972,6 @@ const optionSwitches = [
   },
   {
     optionId: 'numpadSeeking',
-    switchId: 'numpad-seeking',
     value: initialStorage.settings.numpadSeeking,
     onEvent: () => {sendMessage({action:'setting_changed',type:'generic',id:'numpadSeeking',value:true})},
     offEvent: () => {sendMessage({action:'setting_changed',type:'generic',id:'numpadSeeking',value:false})}
@@ -9199,7 +9183,7 @@ function addGeneralButtons() {
         <div class="anitracker-keybinds-section" id="anitracker-site-keybinds"></div>
       </div>
       <div class="anitracker-dark-area" style="margin-top:10px;">
-        <strong>Player:</strong>
+        <strong>Video Player:</strong>
         <div class="anitracker-keybinds-section" id="anitracker-player-keybinds" style="margin-bottom:10px;"></div>
       </div>
       `).appendTo('#anitracker-modal-body');
@@ -11244,7 +11228,7 @@ function updateSwitches() {
     if (!different) continue;
 
     s.value = storage.settings[s.optionId];
-    $(`#anitracker-${s.switchId}-switch`).prop('checked', s.value === true);
+    $(`#anitracker-${s.optionId}-switch`).prop('checked', s.value === true);
 
     if (s.value === true) {
       if (s.onEvent !== undefined) s.onEvent();
@@ -11261,11 +11245,11 @@ function addOptionSwitch(optionId, name, desc = '', parent = '#anitracker-modal-
   const option = optionSwitches.find(s => s.optionId === optionId);
 
   $(`
-  <div class="custom-control custom-switch anitracker-switch" id="anitracker-${option.switchId}" title="${toHtmlCodes(desc)}">
-    <input type="checkbox" class="custom-control-input" id="anitracker-${option.switchId}-switch">
-    <label class="custom-control-label" for="anitracker-${option.switchId}-switch">${name}</label>
+  <div class="custom-control custom-switch anitracker-switch" id="anitracker-${optionId}" title="${toHtmlCodes(desc)}">
+    <input type="checkbox" class="custom-control-input" id="anitracker-${optionId}-switch">
+    <label class="custom-control-label" for="anitracker-${optionId}-switch">${name}</label>
   </div>`).appendTo(parent);
-  const switc = $(`#anitracker-${option.switchId}-switch`);
+  const switc = $(`#anitracker-${optionId}-switch`);
   switc.prop('checked', option.value);
 
   const events = [option.onEvent, option.offEvent];
