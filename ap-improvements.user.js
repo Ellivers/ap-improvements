@@ -1525,50 +1525,44 @@ const _css = `
       player.loop = !player.loop;
       return;
     }
-    if (pressedKeybind(e, anitrackerSettings.keybindNextEpisode)) {
-      sendMessage({action: "next"});
-      return;
-    }
-    if (pressedKeybind(e, anitrackerSettings.keybindPrevEpisode)) {
-      sendMessage({action: "previous"});
-      return;
-    }
-    if (e.ctrlKey || e.altKey || e.shiftKey || e.metaKey) return; // Prevents special keys for the rest of the keybinds
-    if (key === 'j') {
-      player.currentTime = Math.max(0, player.currentTime - 10);
-      return;
-    }
-    else if (key === 'l') {
-      player.currentTime = Math.min(player.duration, player.currentTime + 10);
-      setTimeout(() => {
-        player.loop = false;
-      }, 5);
-      return;
-    }
-    else if (/^Numpad\d$/.test(e.code) && anitrackerSettings.numpadSeeking) {
-      player.currentTime = (player.duration/10)*(+e.code.replace('Numpad', ''));
-      return;
-    }
-    if (!(player.currentTime > 0 && !player.paused && !player.ended && player.readyState > 2)) {
-      if (key === ',') {
-        player.currentTime = Math.max(0, player.currentTime - frametime);
-        return;
-      }
-      else if (key === '.') {
-        player.currentTime = Math.min(player.duration, player.currentTime + frametime);
-        return;
-      }
-    }
 
-    funPitch += key;
-    if (funPitch === 'crazy') {
-      player.preservesPitch = !player.preservesPitch;
-      showMessage(player.preservesPitch ? 'Off' : 'Change speed ;D');
-      funPitch = "";
-      return;
-    }
-    if (!"crazy".startsWith(funPitch)) {
-      funPitch = "";
+    if (!e.ctrlKey && !e.altKey && !e.shiftKey && !e.metaKey) {
+      if (key === 'j') {
+        player.currentTime = Math.max(0, player.currentTime - 10);
+        return;
+      }
+      else if (key === 'l') {
+        player.currentTime = Math.min(player.duration, player.currentTime + 10);
+        setTimeout(() => {
+          player.loop = false;
+        }, 5);
+        return;
+      }
+      else if (/^Numpad\d$/.test(e.code) && anitrackerSettings.numpadSeeking) {
+        player.currentTime = (player.duration/10)*(+e.code.replace('Numpad', ''));
+        return;
+      }
+      if (!(player.currentTime > 0 && !player.paused && !player.ended && player.readyState > 2)) {
+        if (key === ',') {
+          player.currentTime = Math.max(0, player.currentTime - frametime);
+          return;
+        }
+        else if (key === '.') {
+          player.currentTime = Math.min(player.duration, player.currentTime + frametime);
+          return;
+        }
+      }
+
+      funPitch += key;
+      if (funPitch === 'crazy') {
+        player.preservesPitch = !player.preservesPitch;
+        showMessage(player.preservesPitch ? 'Off' : 'Change speed ;D');
+        funPitch = "";
+        return;
+      }
+      if (!"crazy".startsWith(funPitch)) {
+        funPitch = "";
+      }
     }
 
     if (e.msg) return; // If this was a message from main page, don't do recursive stuff
@@ -3341,14 +3335,6 @@ if (isEpisode()) {
       const elem = $('.sequel a');
       if (elem.length) elem[0].click();
     }
-    else if (action === 'next') {
-      const elem = $('.sequel a');
-      if (elem.length) elem[0].click();
-    }
-    else if (action === 'previous') {
-      const elem = $('.prequel a');
-      if (elem.length) elem[0].click();
-    }
   };
 }
 
@@ -4432,9 +4418,12 @@ $(document).on('keydown', (e, other = undefined) => {
   if (pressedKeybind(e, storage.settings.keybindNotifications)) return openNotificationsModal();
   if (pressedKeybind(e, storage.settings.keybindSearch)) return setTimeout(() => {$('.input-search').focus()}, 1);
 
-  if (!isEpisode()) return;
+  if (!isEpisode()) return; // Everything below is for episode pages
+
   if (pressedKeybind(e, storage.settings.keybindResetPlayer)) return resetPlayer();
   if (pressedKeybind(e, storage.settings.keybindTheatreMode)) return toggleTheatreMode();
+  if (pressedKeybind(e, storage.settings.keybindNextEpisode)) return $('.sequel a')[0]?.click();
+  if (pressedKeybind(e, storage.settings.keybindPrevEpisode)) return $('.prequel a')[0]?.click();
 
   else if (!['Control','Shift','Alt'].includes(e.key) && !e.msg /*If this was a message from iframe, don't do recursive stuff*/) {
     sendMessage({action:"key",key:e.key,event:{key:e.key, code:e.originalEvent.code, ctrlKey:e.ctrlKey, shiftKey:e.shiftKey, altKey:e.altKey, metaKey:e.metaKey, msg:true}});
