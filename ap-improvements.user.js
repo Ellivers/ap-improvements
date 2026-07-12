@@ -437,6 +437,15 @@ function getStoredTime(name, ep, storage, id = undefined) {
   else return storage.videoTimes.find(a => a.animeName === name && a.episodeNum === ep);
 }
 
+function pressedKeybind(event, keybind) {
+  if (!keybind) return false;
+  const parts = keybind.split('+');
+  const shift = parts.find(g => g === 'Shift');
+  const ctrl = parts.find(g => g === 'Control');
+  const key = parts.filter(g => !['Shift','Control'].includes(g))[0] || '+';
+  return (key === event.key && event.shiftKey === Boolean(shift) && event.ctrlKey === Boolean(ctrl));
+}
+
 function isSyncEnabled(storage) {
   return storage.sync.syncCode !== '';
 }
@@ -1531,6 +1540,7 @@ const _css = `
       return;
     }
     else if (/^Numpad\d$/.test(e.code)) {
+      if (!getStorage().settings.numpadSeeking) return;
       player.currentTime = (player.duration/10)*(+e.code.replace('Numpad', ''));
       return;
     }
@@ -2667,9 +2677,9 @@ header.main-header nav .main-nav li.nav-item > a:focus {
 }
 .anitracker-keybinds-section {
   display: grid;
-  grid-template-columns: 50% auto 42px;
+  grid-template-columns: 40% auto 42px;
   gap: 5px;
-  min-width: 16rem;
+  min-width: 24rem;
 }
 .anitracker-keybinds-section label {
   margin: 0;
@@ -4409,21 +4419,21 @@ $(document).on('keydown', (e, other = undefined) => {
   if (isTextInput) return;
 
   const storage = getStorage();
-  if (e.key === storage.settings.keybindBookmarks) {
+  if (pressedKeybind(e, storage.settings.keybindBookmarks)) {
     openBookmarksModal();
     return;
   }
-  if (e.key === storage.settings.keybindNotifications) {
+  if (pressedKeybind(e, storage.settings.keybindNotifications)) {
     openNotificationsModal();
     return;
   }
-  if (e.key === storage.settings.keybindSearch) {
+  if (pressedKeybind(e, storage.settings.keybindSearch)) {
     setTimeout(() => {$('.input-search').focus()}, 1);
     return;
   }
 
   if (!isEpisode()) return;
-  if (e.key === storage.settings.keybindResetPlayer) resetPlayer();
+  if (pressedKeybind(e, storage.settings.keybindResetPlayer)) resetPlayer();
   if (e.key === 't') {
     toggleTheatreMode();
   }
@@ -9171,9 +9181,11 @@ function addGeneralButtons() {
       ];
 
       function getKeybindString(keybind) {
-        if (keybind === ' ') return 'Space';
-        if (keybind.length === 1) return keybind.toUpperCase();
-        else return keybind;
+        const parts = keybind.split('+');
+        const key = parts[parts.length-1];
+        if (key.length === 1) parts.splice(-1,1,key.toUpperCase());
+        if (key === ' ') parts.splice(-1,1,'Space');
+        return parts.join('+');
       }
 
       function getKeybindHtml(keybind) {
@@ -9194,29 +9206,34 @@ function addGeneralButtons() {
         const defValue = getKeybindString(defaultData.settings[g.id]);
         $(`
         <label for="anitracker-${g.id}-button">${g.title}</label>
-        <button class="btn btn-secondary anitracker-flat-button anitracker-keybind-button" id="anitracker-${g.id}-button" title="Change this keybind">
+        <button class="btn btn-secondary anitracker-flat-button anitracker-keybind-button" id="anitracker-${g.id}-button" title="${getKeybindString(g.value) || 'Unbound'}">
           ${keyHtml}
         </button>
-        <button class="btn btn-secondary anitracker-flat-button anitracker-reset-keybind-button" title="Reset to ${defValue}">
+        <button class="btn btn-secondary anitracker-flat-button anitracker-reset-keybind-button" title="${defValue ? 'Reset to ' + defValue : 'Reset keybind'}">
           <i class="fa fa-undo" aria-hidden="true"></i>
         </button>`).appendTo('.anitracker-keybinds-section').data('id', g.id);
       });
 
       $('.anitracker-keybind-button').on('keydown', (e) => {
-        const key = e.key === 'Escape' ? '' : e.key;
-        if (['Tab','Shift'].includes(key)) return;
+        const inputKey = e.key === 'Escape' ? '' : e.key;
+        if (['Tab','Shift'].includes(inputKey)) return;
         const elem = $(e.currentTarget);
         const id = elem.data('id');
-        elem.html(getKeybindHtml(key));
 
+        const fullKeybind = `${(e.ctrlKey && inputKey !== 'Control') ? 'Control+' : ''}${e.shiftKey ? 'Shift+' : ''}${inputKey}`;
         const storage = getStorage();
-        storage.settings[id] = key;
-        saveData(storage);
+        if (storage.settings[id] !== fullKeybind) {
+          elem.html(getKeybindHtml(fullKeybind));
+          elem.attr('title', getKeybindString(fullKeybind));
+          showMessage(inputKey ? `Keybind set to ${getKeybindString(fullKeybind)}` : 'Keybind unset');
 
-        showMessage(key ? `Keybind set to ${getKeybindString(key)}` : 'Keybind unset');
+          storage.settings[id] = fullKeybind;
+          saveData(storage);
+        }
+
         e.preventDefault();
         e.stopPropagation();
-        elem.blur();
+        if (inputKey !== 'Control') elem.blur();
       });
       $('.anitracker-reset-keybind-button').on('click', function() {
         const id = $(this).data('id');
@@ -9228,7 +9245,8 @@ function addGeneralButtons() {
         saveData(storage);
 
         $(`#anitracker-${id}-button`).html(getKeybindHtml(defValue));
-        showMessage(`Keybind reset to ${getKeybindString(defValue)}`);
+        $(`#anitracker-${id}-button`).attr('title', getKeybindString(defValue));
+        showMessage(`Keybind reset${defValue ? ' to ' + getKeybindString(defValue) : ''}`);
         $(this).blur();
       });
       $('.anitracker-keybinds-section').on('anitracker:update', () => {
