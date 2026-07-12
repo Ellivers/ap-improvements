@@ -121,6 +121,7 @@ function getDefaultData() {
       keybindNotifications: "n",
       keybindSearch: "s",
       keybindResetPlayer: "",
+      numpadSeeking: true,
       dlPreferRes: 1080,
       dlPreferLang: '',
       showContinueWatching: true,
@@ -954,7 +955,7 @@ const _css = `
         player.currentTime = Math.min(player.duration, player.currentTime + 5);
         return;
       }
-      else if (/^\d$/.test(data.key)) {
+      else if (/^\d$/.test(data.key) && data.event.code.startsWith('Digit')) {
         player.currentTime = (player.duration/10)*(+data.key);
         return;
       }
@@ -2680,6 +2681,7 @@ header.main-header nav .main-nav li.nav-item > a:focus {
   grid-template-columns: 40% auto 42px;
   gap: 5px;
   min-width: 24rem;
+  margin-bottom: 12px;
 }
 .anitracker-keybinds-section label {
   margin: 0;
@@ -2999,6 +3001,11 @@ const optionSwitches = [
     offEvent: () => {
       if (isHome()) window.location.replace(window.location);
     }
+  },
+  {
+    optionId: 'numpadSeeking',
+    switchId: 'numpad-seeking',
+    value: initialStorage.settings.numpadSeeking
   }];
 
 const originalEpisodeValue = (() => {
@@ -4438,7 +4445,7 @@ $(document).on('keydown', (e, other = undefined) => {
     toggleTheatreMode();
   }
   else if (!['Control','Shift','Alt'].includes(e.key) && !e.msg /*If this was a message from iframe, don't do recursive stuff*/) {
-    sendMessage({action:"key",key:e.key,event:{key:e.key, ctrlKey:e.ctrlKey, shiftKey:e.shiftKey, altKey:e.altKey, metaKey:e.metaKey, msg:true}});
+    sendMessage({action:"key",key:e.key,event:{key:e.key, code:e.originalEvent.code, ctrlKey:e.ctrlKey, shiftKey:e.shiftKey, altKey:e.altKey, metaKey:e.metaKey, msg:true}});
     $('.embed-responsive-item')[0].contentWindow.focus();
     if ([" "].includes(e.key) || (["ArrowUp", "ArrowDown"].includes(e.key) && e.ctrlKey)) e.preventDefault();
   }
@@ -9213,6 +9220,7 @@ function addGeneralButtons() {
           <i class="fa fa-undo" aria-hidden="true"></i>
         </button>`).appendTo('.anitracker-keybinds-section').data('id', g.id);
       });
+      addOptionSwitch('numpadSeeking', 'Numpad Seeking', 'Allow seeking through videos with numpad keys', '#anitracker-modal-body');
 
       $('.anitracker-keybind-button').on('keydown', (e) => {
         const inputKey = e.key === 'Escape' ? '' : e.key;
