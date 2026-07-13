@@ -132,6 +132,7 @@ function getDefaultData() {
       keybind10sForward: "l",
       keybind1fBackward: ",",
       keybind1fForward: ".",
+      keybindToggleLoop: "Shift+L",
       keybindResetPlayer: "",
     },
     videoSpeed: [],
@@ -1259,9 +1260,7 @@ const _css = `
       }
       if (!storedVideoTime.animeId) sendIdRequest();
       const storedPlaybackSpeed = storage.videoSpeed.find(a => a.animeId === storedVideoTime.animeId);
-      if (storedPlaybackSpeed) {
-        setSpeed(storedPlaybackSpeed.speed);
-      }
+      if (storedPlaybackSpeed) setSpeed(storedPlaybackSpeed.speed);
       else player.playbackRate = 1;
     }
     else {
@@ -1284,8 +1283,7 @@ const _css = `
 
     // Screenshot changes
     $('button[data-plyr="capture"]').replaceWith($('button[data-plyr="capture"]').clone()); // Just to remove existing event listeners
-    $('button[data-plyr="capture"]')
-    .on('click', (e) => {
+    $('button[data-plyr="capture"]').on('click', (e) => {
       const canvas = document.createElement('canvas');
       canvas.height = player.videoHeight;
       canvas.width = player.videoWidth;
@@ -1517,23 +1515,26 @@ const _css = `
 
   const frametime = 1 / 24;
   let funPitch = "";
+  let loop = player.loop;
 
   // MARKER:VIDEO KEYBOARD SHORTCUTS
   $(document).on('keydown', function(e, other = undefined) {
     if (!e.key) e = other.event;
     const key = e.key;
-    if (!e.shiftKey && ['l','L'].includes(e.key)) setTimeout(() => {player.loop = false}, 5);
+
+    if (pressedKeybind(e, anitrackerSettings.keybindToggleLoop)) {
+      showMessage('Loop: ' + (loop ? 'Off' : 'On'));
+      loop = !loop;
+      player.loop = loop;
+      return;
+    }
+    if (['l','L'].includes(e.key)) setTimeout(() => {player.loop = loop}, 5);
     if (key === 'ArrowUp') {
       changeSpeed(e, -1); // The changeSpeed function only works if ctrl is being held
       return;
     }
     if (key === 'ArrowDown') {
       changeSpeed(e, 1);
-      return;
-    }
-    if (e.shiftKey && ['l','L'].includes(key)) {
-      showMessage('Loop: ' + (player.loop ? 'Off' : 'On'));
-      player.loop = !player.loop;
       return;
     }
     if (pressedKeybind(e, anitrackerSettings.keybind10sBackward)) {
@@ -9143,6 +9144,7 @@ function addGeneralButtons() {
         {title:'Forward 10 Seconds',id:'keybind10sForward',parent:'#anitracker-player-keybinds'},
         {title:'Backward 1 Frame',id:'keybind1fBackward',parent:'#anitracker-player-keybinds'},
         {title:'Forward 1 Frame',id:'keybind1fForward',parent:'#anitracker-player-keybinds'},
+        {title:'Toggle Looping',id:'keybindToggleLoop',parent:'#anitracker-player-keybinds'},
         {title:'Reset Player',id:'keybindResetPlayer',parent:'#anitracker-player-keybinds'},
       ];
 
