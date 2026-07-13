@@ -1225,10 +1225,6 @@ const _css = `
     });
     // Events end
 
-    setTimeout(() => {
-      $('.plyr__time').click(); // Toggle to show time elapsed instead of time remaining
-    }, 0);
-
     const storage = getStorage();
     const vidInfo = getVideoInfo();
     const storedVideoTime = getStoredTime(vidInfo.animeName, vidInfo.episodeNum, storage);
@@ -2803,6 +2799,9 @@ header.main-header nav .nav-search .search-results-wrap a {
   }
   .anitracker-bookmark-list-entry > div {
     gap: 12px;
+  }
+  .anitracker-keybinds-section {
+    min-width: 0;
   }
   .anitracker-index, .anitracker-index-lower {
     margin-left: 10px;
@@ -9132,7 +9131,6 @@ function addGeneralButtons() {
 
     $('#anitracker-edit-keybinds').on('click', () => {
       $('#anitracker-modal-body').empty();
-
       const keybindEntries = [
         {title:'Bookmarks',id:'keybindBookmarks',parent:'#anitracker-site-keybinds'},
         {title:'Episode Feed',id:'keybindNotifications',parent:'#anitracker-site-keybinds'},
@@ -9155,7 +9153,6 @@ function addGeneralButtons() {
         if (key === ' ') parts.splice(-1,1,'Space');
         return parts.join('+');
       }
-
       function getKeybindHtml(keybind) {
         if (!keybind || keybind === 'Escape') {
           return '<i class="fa fa-times-circle" aria-hidden="true"></i>';
@@ -9171,9 +9168,18 @@ function addGeneralButtons() {
         elem.attr('title', getKeybindString(value));
         sendMessage({action:"setting_changed",type:"generic",id:id,value:value}); // Assumes that keybind IDs share space with generic setting IDs
 
+        const found = keybindEntries.find(g => g.id === id);
+        if (found) found.value = value;
         storage.settings[id] = value;
         saveData(storage);
+        updateConflicts();
         return true;
+      }
+      function updateConflicts() {
+        keybindEntries.forEach((g) => {
+          if (!keybindEntries.find(f => f.id !== g.id && f.value === g.value)) return $(`#anitracker-${g.id}-button`).replaceClass('btn-warning','btn-secondary');
+          $(`#anitracker-${g.id}-button`).replaceClass('btn-secondary','btn-warning');
+        });
       }
 
       const storage = getStorage();
@@ -9204,6 +9210,7 @@ function addGeneralButtons() {
         </button>`).appendTo(g.parent).data('id', g.id);
       });
       addOptionSwitch('numpadSeeking', 'Numpad Seeking', 'Allow seeking through videos with numpad keys', '#anitracker-modal-body>.anitracker-dark-area:nth-child(3)');
+      updateConflicts();
 
       $('.anitracker-keybind-button').on('keydown', (e) => {
         const inputKey = e.key === 'Escape' ? '' : e.key;
@@ -9229,11 +9236,17 @@ function addGeneralButtons() {
       });
       $('.anitracker-keybinds-section').on('anitracker:update', () => {
         const storage = getStorage();
+        let changed;
         keybindEntries.forEach(g => {
+          const newValue = storage.settings[g.id];
+          if (g.value === newValue) return;
+          changed = true;
+          g.value = newValue;
           const elem = $(`#anitracker-${g.id}-button`);
-          elem.html(getKeybindHtml(storage.settings[g.id]));
-          elem.attr('title', getKeybindString(storage.settings[g.id]));
+          elem.html(getKeybindHtml(newValue));
+          elem.attr('title', getKeybindString(newValue));
         });
+        if (changed) updateConflicts();
       });
 
       openModal(openOptionsModal);
