@@ -250,7 +250,6 @@ function getStorage() {
     if (res[key] !== undefined) continue;
     res[key] = defa[key];
   }
-
   for (const key of Object.keys(defa.settings)) {
     if (res.settings[key] !== undefined) continue;
     res.settings[key] = defa.settings[key];
@@ -6489,7 +6488,6 @@ function getAnimeList(page = $(document)) {
       html: $(anime).html()
     });
   }
-
   return animeList;
 }
 
@@ -7497,18 +7495,10 @@ else if (obj && is404) {
   document.title = "Refreshing session... :: animepahe";
   $('.text-center h1').text('Refreshing session, please wait...');
   refreshSession(true).then(code => {
-    if (code === 1) {
-      $('.text-center h1').text('Couldn\'t refresh session: Link not found in tracker');
-    }
-    else if (code === 2) {
-      $('.text-center h1').text('Couldn\'t refresh session: Couldn\'t get anime data');
-    }
-    else if (code === 3) {
-      $('.text-center h1').text('Couldn\'t refresh session: Couldn\'t get episode data');
-    }
-    else if (code !== 0) {
-      $('.text-center h1').text('Couldn\'t refresh session: An unknown error occurred');
-    }
+    if (code === 1) $('.text-center h1').text('Couldn\'t refresh session: Link not found in tracker');
+    else if (code === 2) $('.text-center h1').text('Couldn\'t refresh session: Couldn\'t get anime data');
+    else if (code === 3) $('.text-center h1').text('Couldn\'t refresh session: Couldn\'t get episode data');
+    else if (code !== 0) $('.text-center h1').text('Couldn\'t refresh session: An unknown error occurred');
 
     if ([2,3].includes(code)) {
       if (obj.episodeNum !== undefined) {
@@ -7983,7 +7973,6 @@ async function getDownloadPage(redirectUrl) {
     if (reqResult.readyState !== 4 || reqResult.status !== 200) {
       return 1;
     }
-
     const htmlText = reqResult.response;
     const link = /https:\/\/kwik.\w+\/f\/[^"]+/.exec(htmlText);
     if (link) {
@@ -8006,8 +7995,6 @@ async function getDownloadPage(redirectUrl) {
   }
 
   return new Promise((resolve) => {
-    //request.open('GET', `https://opsalar.000webhostapp.com/animepahe.php?url=${redirectUrl}`, true);
-
     const request = new XMLHttpRequest();
     request.open('GET', redirectUrl, true);
     request.onload = () => {
@@ -8016,7 +8003,6 @@ async function getDownloadPage(redirectUrl) {
         resolve(response);
         return;
       }
-
       with_GM().then((a) => {resolve(a)});
     }
 
@@ -8028,28 +8014,27 @@ async function getDownloadPage(redirectUrl) {
 
 function replaceDownloadButtons() {
   for (const aTag of $('#pickDownload a')) {
-      $(aTag).changeElementType('span');
-    }
+    $(aTag).changeElementType('span');
+  }
+  $('#pickDownload>span').on('click', function() {
+    $(this).parents(':eq(1)').find('.anitracker-player-dropup-spinner').show();
 
-    $('#pickDownload>span').on('click', function() {
-      $(this).parents(':eq(1)').find('.anitracker-player-dropup-spinner').show();
+    const dlBtn = $(this);
+    const redirectUrl = dlBtn.attr('href');
 
-      const dlBtn = $(this);
-      const redirectUrl = dlBtn.attr('href');
+    getDownloadPage(redirectUrl).then(result => {
+      hideSpinner(dlBtn);
+      if (result === 1) {
+        windowOpen(redirectUrl); // When failed, open the link normally
+        return;
+      }
 
-      getDownloadPage(redirectUrl).then(result => {
-        hideSpinner(dlBtn);
-        if (result === 1) {
-          windowOpen(redirectUrl); // When failed, open the link normally
-          return;
-        }
-
-        dlBtn.attr('href', result);
-        dlBtn.off();
-        dlBtn.changeElementType('a');
-        windowOpen(result);
-      });
+      dlBtn.attr('href', result);
+      dlBtn.off();
+      dlBtn.changeElementType('a');
+      windowOpen(result);
     });
+  });
 }
 
 function stripUrl(url) {
@@ -8172,7 +8157,6 @@ function applyEpisodeOptionsEvents(elems) {
         windowOpen(redirectUrl);
         return;
       }
-
       dropdownElem.attr('href', result).data('resPref', resPref).data('langPref', langPref);
       windowOpen(result);
     });
@@ -9120,12 +9104,8 @@ function addGeneralButtons() {
 
       refreshSession().then(result => {
         if (result === 0) return;
-        else if ([2,3].includes(result)) {
-          temporaryHtmlChange(elem, 2200, 'Failed: Couldn\'t find session', timeout);
-        }
-        else {
-          temporaryHtmlChange(elem, 2200, 'Failed.', timeout);
-        }
+        else if ([2,3].includes(result)) temporaryHtmlChange(elem, 2200, 'Failed: Couldn\'t find session', timeout);
+        else temporaryHtmlChange(elem, 2200, 'Failed.', timeout);
       });
     });
 
@@ -9749,7 +9729,6 @@ function addGeneralButtons() {
     function getCleanType(type) {
       if (type === 'linkList') return "Clean up older duplicate entries";
       else if (type === 'videoTimes') return "Remove entries with no progress (0s)";
-      else return "[Message not found]";
     }
 
     function expandData(elem) {
@@ -10249,7 +10228,6 @@ function addGeneralButtons() {
         $('#anitracker-modal-body').empty();
 
         const storage = getStorage();
-
         $(`
         <p class="anitracker-secondary-info anitracker-thin-text">Copy the following code and send it to the devices you want to sync with.</p>
         <div class="anitracker-sync-code-display">
@@ -10269,7 +10247,6 @@ function addGeneralButtons() {
 
         $('.anitracker-sync-code-display>i').on('click keydown', (e) => {
           if (e.type === 'keydown' && e.key !== "Enter") return;
-
           const elem = $(e.currentTarget);
           navigator.clipboard.writeText(storage.sync.syncCode);
 
@@ -10282,7 +10259,6 @@ function addGeneralButtons() {
         });
 
         $('.anitracker-done-button').on('click', openSyncDataModal);
-
         openModal(openSyncDataModal);
       }
 
@@ -11248,9 +11224,7 @@ function updateSwitches() {
     if (s.value === true) {
       if (s.onEvent !== undefined) s.onEvent();
     }
-    else if (s.offEvent !== undefined) {
-      s.offEvent();
-    }
+    else if (s.offEvent !== undefined) s.offEvent();
   }
 }
 
