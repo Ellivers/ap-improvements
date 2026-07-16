@@ -9130,13 +9130,17 @@ function addGeneralButtons() {
         const parts = keybind.split('+');
         const key = parts[parts.length-1];
         if (key.length === 1) parts.splice(-1,1,key.toUpperCase());
+        if (!key) parts.splice(-1,1,'Unbound');
         if (key === ' ') parts.splice(-1,1,'Space');
+        if (key === ',') parts.splice(-1,1,'Comma');
+        if (key === '.') parts.splice(-1,1,'Period');
+        if (key === '-') parts.splice(-1,1,'Minus');
+        if (key === '=') parts.splice(-1,1,'Equal');
+        if (keybind.endsWith('+')) parts.splice(-2,2,'Plus'); // Needs to be here in combination with "Unbound"
         return parts.join('+');
       }
       function getKeybindHtml(keybind) {
-        if (!keybind || keybind === 'Escape') {
-          return '<i class="fa fa-times-circle" aria-hidden="true"></i>';
-        }
+        if (!keybind || keybind === 'Escape') return '<i class="fa fa-times-circle" aria-hidden="true"></i>';
         return getKeybindString(keybind);
       }
       function setKeybind(id, value) {
@@ -9182,7 +9186,7 @@ function addGeneralButtons() {
         const defValue = getKeybindString(defaultData.settings[g.id]);
         $(`
         <label for="anitracker-${g.id}-button">${g.title}</label>
-        <button class="btn btn-secondary anitracker-flat-button anitracker-keybind-button" id="anitracker-${g.id}-button" title="${getKeybindString(g.value) || 'Unbound'}">
+        <button class="btn btn-secondary anitracker-flat-button anitracker-keybind-button" id="anitracker-${g.id}-button" title="${getKeybindString(g.value)}">
           ${keyHtml}
         </button>
         <button class="btn btn-secondary anitracker-flat-button anitracker-reset-keybind-button" title="${defValue ? 'Reset to ' + defValue : 'Reset keybind'}">
