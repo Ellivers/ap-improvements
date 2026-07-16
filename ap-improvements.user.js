@@ -8854,7 +8854,6 @@ async function getAnimeCoverUrl() {
           resolve(undefined);
           return;
         }
-
         candidates.sort((a, b) => {return a.aspectRatio < b.aspectRatio ? 1 : -1});
         let topCandidate;
 
@@ -8876,11 +8875,9 @@ async function getAnimeCoverUrl() {
           }
           else resolve(undefined);
         };
-
         image.addEventListener('error', function() {
           resolve(undefined);
         });
-
         image.src = topCandidate;
       };
 
@@ -8890,7 +8887,6 @@ async function getAnimeCoverUrl() {
         return;
       };
       request.ontimeout = request.onerror;
-
       request.send();
     });
   }
@@ -9574,6 +9570,8 @@ function addGeneralButtons() {
           </label>
         </div>
         <input id="anitracker-decode-watched-input" placeholder="Decode watched format"><button class="btn btn-secondary anitracker-decode-watched-button">Decode</button>
+        <div>Override function response: <input placeholder="Function" id="anitracker-funcresover-fn" style="width:50px;">
+        <input placeholder="Value" id="anitracker-funcresover-val" style="width:50px;"><button class="btn btn-secondary anitracker-functionresover-button">Confirm</button></div>
         <div class="btn-group" style="display:block;">
           <button class="btn btn-primary anitracker-save-button">Save</button>
         </div>`).appendTo('#anitracker-modal-body');
@@ -9594,13 +9592,18 @@ function addGeneralButtons() {
           openShowDataModal();
           showMessage('Saved');
         });
-
         $('.anitracker-decode-watched-button').on('click', () => {
           const decoded = decodeWatched($('#anitracker-decode-watched-input').val());
           console.log(decoded);
           alert(JSON.stringify(decoded));
         });
-
+        $('.anitracker-functionresover-button').on('click', () => {
+          eval(`${$('#anitracker-funcresover-fn').val()} = () => {
+            return new Promise(resolve => {
+              setTimeout(() => {resolve(${$('#anitracker-funcresover-val').val()})}, 1500);
+            });
+          }`);
+        });
         openModal(openEditDataModal);
       }
     }
@@ -10037,9 +10040,6 @@ function addGeneralButtons() {
       const storage = getStorage();
       const syncEnabled = isSyncEnabled(storage);
 
-      const syncMessage = storage.sync.currentMessage ?
-            `<span class="anitracker-sync-message anitracker-dark-area anitracker-thin-text ${storage.sync.currentMessage.type}">${storage.sync.currentMessage.text}</span>` : '<span class="anitracker-sync-message anitracker-dark-area anitracker-thin-text" style="display:none;"></span>';
-
       function addSpinner(elem, className) {
         return $(`
         <div class="anitracker-spinner anitracker-${className}-spinner" style="display: inline-block;vertical-align: middle; margin-left: 5px;">
@@ -10047,6 +10047,10 @@ function addGeneralButtons() {
               <span class="sr-only">Loading...</span>
             </div>
         </div>`).insertAfter(elem);
+      }
+      function getSyncMessageElem(storage) {
+        return storage.sync.currentMessage ?
+            `<span class="anitracker-sync-message anitracker-dark-area anitracker-thin-text ${storage.sync.currentMessage.type}">${storage.sync.currentMessage.text}</span>` : '<span class="anitracker-sync-message anitracker-dark-area anitracker-thin-text" style="display:none;"></span>';
       }
 
       let disconnectFailed = false;
@@ -10071,7 +10075,7 @@ function addGeneralButtons() {
             <i class="fa fa-copy" aria-hidden="true"></i>
             &nbsp;Copy Code
           </button>
-          ${syncMessage}
+          ${getSyncMessageElem(storage)}
           <div style="height:10px;"></div>
           <div>
             <button class="btn btn-danger anitracker-flat-button anitracker-disconnect-sync-button" title="Disconnect from sync">
@@ -10101,51 +10105,74 @@ function addGeneralButtons() {
         });
 
         $('.anitracker-disconnect-sync-button').on('click', (e) => {
-          if ($('.anitracker-disconnect-sync-spinner').length) return;
-
-          const spinner = addSpinner(e.currentTarget, 'disconnect-sync');
-
+          $('#anitracker-modal-body').empty();
+          let loading = false;
           const storage = getStorage();
-          syncDisconnectUser(storage.sync.syncCode).then(result => {
-            spinner.remove();
+
+          $(`
+          <p class="anitracker-thin-text">Disconnect from sync?</p>
+          <div class="anitracker-center-content">
+            <div style="display:flex;gap:16px;" id="anitracker-disconnect-prompt">
+              <div><button class="btn btn-primary anitracker-disconnect-sync-confirm-button" title="Confirm disconnect">Yes</button></div>
+              <button class="btn btn-secondary anitracker-disconnect-sync-cancel-button" title="Cancel">No</button>
+            </div>
+          </div>
+          ${getSyncMessageElem(storage)}`).appendTo('#anitracker-modal-body');
+
+          $('.anitracker-disconnect-sync-confirm-button').on('click', () => {
+            if (loading) return;
+            loading = true;
+
+            const spinner = addSpinner($('#anitracker-disconnect-prompt'), 'disconnect-sync');
+            $('#anitracker-disconnect-prompt').hide();
 
             const storage = getStorage();
-            if (result === 0) storage.sync.currentMessage = null;
-            else if (result === 1 && !disconnectFailed) {
-              storage.sync.currentMessage = {
-                type: "error",
-                text: "Couldn't disconnect. Please check you internet connection.<br>To disconnect anyway, press the Disconnect button again."
-              };
-              saveData(storage);
-              updateSyncMessageElem(storage);
-              disconnectFailed = true;
-              return;
-            }
-            else if (result === 2 && !disconnectFailed) {
-              storage.sync.currentMessage = {
-                type: "error",
-                text: "Couldn't disconnect due to unknown error.<br>To disconnect anyway, press the Disconnect button again."
-              };
-              saveData(storage);
-              updateSyncMessageElem(storage);
-              disconnectFailed = true;
-              return;
-            }
-            else if (result === 3 && !disconnectFailed) {
-              storage.sync.currentMessage.text += "<br>To disconnect anyway, press the Disconnect button again.";
-              saveData(storage);
-              updateSyncMessageElem(storage);
-              disconnectFailed = true;
-              return;
-            }
+            syncDisconnectUser(storage.sync.syncCode).then(result => {
+              spinner.remove();
+              $('#anitracker-disconnect-prompt').show();
+              loading = false;
 
-            saveData(storage);
-            if (storage.debug?.dontLeave === true) return;
-            removeSync();
+              const storage = getStorage();
+              if (result === 0) storage.sync.currentMessage = null;
+              else if (result === 1 && !disconnectFailed) {
+                storage.sync.currentMessage = {
+                  type: "error",
+                  text: "Couldn't disconnect. Please check you internet connection.<br>To disconnect anyway, press the Disconnect button again."
+                };
+                saveData(storage);
+                updateSyncMessageElem(storage);
+                disconnectFailed = true;
+                return;
+              }
+              else if (result === 2 && !disconnectFailed) {
+                storage.sync.currentMessage = {
+                  type: "error",
+                  text: "Couldn't disconnect due to unknown error.<br>To disconnect anyway, press the Disconnect button again."
+                };
+                saveData(storage);
+                updateSyncMessageElem(storage);
+                disconnectFailed = true;
+                return;
+              }
+              else if (result === 3 && !disconnectFailed) {
+                storage.sync.currentMessage.text += "<br>To disconnect anyway, press the Disconnect button again.";
+                saveData(storage);
+                updateSyncMessageElem(storage);
+                disconnectFailed = true;
+                return;
+              }
 
-            showMessage('Sync disconnected');
-            openSyncDataModal();
+              saveData(storage);
+              if (storage.debug?.dontLeave === true) return;
+              removeSync();
+
+              showMessage('Sync disconnected');
+              openSyncDataModal();
+            });
           });
+
+          $('.anitracker-disconnect-sync-cancel-button').on('click', openSyncDataModal);
+          openModal(openSyncDataModal);
         });
       }
       else {
