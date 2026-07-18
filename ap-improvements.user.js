@@ -9157,7 +9157,7 @@ function addGeneralButtons() {
       }
       function updateConflicts() {
         keybindEntries.forEach((g) => {
-          if (!keybindEntries.find(f => f.id !== g.id && f.value === g.value)) return $(`#anitracker-${g.id}-button`).replaceClass('btn-warning','btn-secondary');
+          if (!g.value || !keybindEntries.find(f => f.id !== g.id && f.value === g.value)) return $(`#anitracker-${g.id}-button`).replaceClass('btn-warning','btn-secondary');
           $(`#anitracker-${g.id}-button`).replaceClass('btn-secondary','btn-warning');
         });
       }
