@@ -1033,7 +1033,7 @@ const _css = `
       <div style="font-size: 0.6em;line-height:1.1em;">
         <div style="width:100%;"><span id="anitracker-timestamp-edit-current"></span></div>
         <span>W - Set start&nbsp;&nbsp;E - Set end</span><br>
-        <span>R - Remove all&nbsp;&nbsp;D - Done&nbsp;&nbsp;Q - Cancel</span>
+        <span>R - Remove all&nbsp;&nbsp;D - Done&nbsp;<button id="anitracker-timestamp-edit-cancel" style="z-index: 1;position: relative;">Q - Cancel</button></span>
       </div>`, 0, true);
       setType(currentType);
     }).trigger('anitracker:message_close');
@@ -1053,52 +1053,50 @@ const _css = `
         e.stopPropagation();
       }
       const key = e.key.toLowerCase();
-      if (['d','q'].includes(key)) {
-        $(document).off('keydown', keydownFn);
-        $('.anitracker-message').off('anitracker:message_close').hide();
-        $('.anitracker-seek-points>i').remove();
-        timestampEditModeEnabled = false;
-        if (key === 'd') {
-          newTimestamps = newTimestamps.filter(a => a.start !== undefined || a.end !== undefined);
-          sendMessage({action:'timestamp_edit_mode_done', timestamps:newTimestamps});
-
-          const storage = getStorage();
-
-          if (storage.settings.skipButton) timestamps = newTimestamps;
-          if (storage.settings.seekPoints) setSeekPoints(newTimestamps);
-
-          const storedVideoTime = getStoredTime(vidInfo.animeName, vidInfo.episodeNum, storage);
-          if (!storedVideoTime) return;
-
-          const hasTimestamps = Boolean(newTimestamps.find(a => a.start >= 0));
-          storedVideoTime.hasTimestamps = hasTimestamps;
-          if (!hasTimestamps) {
-            saveData(storage);
-            return;
-          }
-          storedVideoTime.timestampData = newTimestamps;
-          saveData(storage);
-        }
-        else {
-          if (storage.settings.seekPoints) setSeekPoints(storedVideoTime.timestampData || []);
-        }
-      }
+      if (['d','q'].includes(key)) exit(key === 'd');
       else if (key === 'r') {
         $('.anitracker-seek-points>i').remove();
         newTimestamps = newTimestamps.filter(a => a.type !== currentType);
       }
-      else if (key === 'w') {
-        setTimestamp(Math.floor(player.currentTime), 'start');
-      }
+      else if (key === 'w') setTimestamp(Math.floor(player.currentTime), 'start');
       else if (key === 'e') {
-        if (currentType === 'preview') {
-          showMessage("Preview only has a start");
-          return;
-        }
+        if (currentType === 'preview') return showMessage("Preview only has a start");
         setTimestamp(Math.floor(player.currentTime), 'end');
       }
     };
+    function exit(save) {
+      $(document).off('keydown', keydownFn);
+      $('#anitracker-timestamp-edit-cancel').off('click', exit);
+      $('.anitracker-message').off('anitracker:message_close').hide();
+      $('.anitracker-seek-points>i').remove();
+      timestampEditModeEnabled = false;
+      if (save === true) {
+        newTimestamps = newTimestamps.filter(a => a.start !== undefined || a.end !== undefined);
+        sendMessage({action:'timestamp_edit_mode_done', timestamps:newTimestamps});
+
+        const storage = getStorage();
+
+        if (storage.settings.skipButton) timestamps = newTimestamps;
+        if (storage.settings.seekPoints) setSeekPoints(newTimestamps);
+
+        const storedVideoTime = getStoredTime(vidInfo.animeName, vidInfo.episodeNum, storage);
+        if (!storedVideoTime) return;
+
+        const hasTimestamps = Boolean(newTimestamps.find(a => a.start >= 0));
+        storedVideoTime.hasTimestamps = hasTimestamps;
+        if (!hasTimestamps) {
+          saveData(storage);
+          return;
+        }
+        storedVideoTime.timestampData = newTimestamps;
+        saveData(storage);
+      }
+      else {
+        if (storage.settings.seekPoints) setSeekPoints(storedVideoTime.timestampData || []);
+      }
+    }
     $(document).on('keydown', keydownFn);
+    $('#anitracker-timestamp-edit-cancel').on('click', exit);
 
     function setType(type) {
       currentType = type;
