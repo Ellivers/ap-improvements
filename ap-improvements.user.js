@@ -2090,13 +2090,23 @@ const _css = `
   background-color: rgb(6, 130, 54);
 }
 .anitracker-filter-dropdown>button.included:focus {
-  border: 2px dashed rgb(141, 234, 141);
+  outline: 2px dashed rgb(141, 234, 141);
+}
+.anitracker-filter-dropdown>button.included::before {
+  content: "\\f067";
+  font: normal normal normal 14px/1 ForkAwesome;
+  margin-right: 3px;
 }
 .anitracker-filter-dropdown>button.excluded {
   background-color: rgb(117, 17, 17);
 }
 .anitracker-filter-dropdown>button.excluded:focus {
-  border: 2px dashed rgb(215, 90, 90);
+  outline: 2px dashed rgb(215, 90, 90);
+}
+.anitracker-filter-dropdown>button.excluded::before {
+  content: "\\f068";
+  font: normal normal normal 14px/1 ForkAwesome;
+  margin-right: 3px;
 }
 .anitracker-filter-dropdown>button.anitracker-active:focus {
   border: 2px dashed #ffd7eb;
