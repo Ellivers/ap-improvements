@@ -6912,7 +6912,8 @@ function setupContinueWatchingSection() {
     const storage = getStorage();
 
     $(`
-    <h4>Video Progress</h4>
+    <h4 style="margin-bottom:0;">Video Progress</h4>
+    <p class="anitracker-secondary-info">Bookmarked entries have icons</p>
     <div class="btn-group" style="margin-left: 5px;">
       <input autocomplete="off" class="form-control anitracker-text-input-bar anitracker-modal-search" placeholder="Search">
       <button dir="down" class="btn btn-secondary dropdown-toggle anitracker-reverse-order-button anitracker-list-btn" title="Sort direction (down is default, and means newest first)"></button>
@@ -9193,7 +9194,7 @@ function addGeneralButtons() {
         <button class="btn btn-secondary anitracker-flat-button anitracker-keybind-button" id="anitracker-${g.id}-button" title="${getKeybindString(g.value)}">
           ${keyHtml}
         </button>
-        <button class="btn btn-secondary anitracker-flat-button anitracker-reset-keybind-button" title="${defValue ? 'Reset to ' + defValue : 'Reset keybind'}">
+        <button class="btn btn-secondary anitracker-flat-button anitracker-reset-keybind-button" title="Reset to ${defValue}">
           <i class="fa fa-undo" aria-hidden="true"></i>
         </button>`).appendTo(g.parent).data('id', g.id);
       });
