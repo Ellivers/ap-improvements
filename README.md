@@ -39,7 +39,7 @@ If you find a bug or have a suggestion, feel free to [open an issue](https://git
  * Allows you to copy screenshots to the clipboard instead of downloading them.
  * Frame-by-frame controls on videos, using ',' and '.'
  * Skip 10 seconds on videos at a time, using 'J' and 'L'
- * Changes the video 'loop' keybind to Shift + L
+ * Changes the video 'loop' keybind to Shift + L (by default)
  * Allows you to press Shift + N to go to the next episode, or Shift + P to go to the previous one.
  * Speed up or slow down a video by holding Ctrl and:
     * Scrolling up/down
@@ -54,7 +54,7 @@ If you find a bug or have a suggestion, feel free to [open an issue](https://git
     * B (default) to open the bookmark menu
     * N (default) to open the episode feed
     * S (default) to open the main search bar, as an alternative to F2
-    * These keyboard shortcuts can be rebound or disabled.
+ * All added keyboard shortcuts can be rebound or disabled.
  * Adds a more noticeable spinning loading indicator on videos.
  * Adds an "Auto-Play Video" option to automatically play the video (on some browsers, you may need to allow auto-playing for this to work).
  * Adds an "Auto-Play Next" option to automatically go to the next episode when the current one is finished.
