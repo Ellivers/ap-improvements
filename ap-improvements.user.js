@@ -1774,6 +1774,12 @@ const _css = `
   display: flex;
   align-items: center;
 }
+.anitracker-collection-image-wrapper:nth-child(1) {
+  translate: 0px -5px;
+}
+.anitracker-collection-image-wrapper:nth-child(2) {
+  translate: 0px 5px;
+}
 .anitracker-big-list-item {
   list-style: none;
   border-radius: 10px;
