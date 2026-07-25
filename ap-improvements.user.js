@@ -9771,7 +9771,7 @@ function addGeneralButtons() {
         ${cleanButton}
       </div>
       `).appendTo(dataEntries);
-      elem.parent().find('.anitracker-modal-search').focus();
+      if (!isMobileOrTablet()) elem.parent().find('.anitracker-modal-search').focus();
 
       elem.parent().find('.anitracker-modal-search').on('input', (e) => {
         setTimeout(() => {
