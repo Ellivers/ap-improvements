@@ -1729,6 +1729,7 @@ const _css = `
 }
 #anitracker-modal-content {
   max-height: 90%;
+  max-width: 100%;
   background-color: var(--dark);
   margin: auto auto auto auto;
   border-radius: 20px;
