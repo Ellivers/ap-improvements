@@ -2762,6 +2762,13 @@ header.main-header nav .main-nav li.nav-item > a:focus {
 .anitracker-random-result-buttons {
   margin-left: 240px;
 }
+.anitracker-full-poster-link {
+  display: block;
+  background: rgba(0,0,0,0.4);
+  width: fit-content;
+  margin: auto;
+  padding: 0 10px 0 10px;
+}
 #anitracker-bookmark-share-result {
   height: 100%;
   margin-left: auto;
@@ -8133,7 +8140,7 @@ function improvePoster() {
   }
   $('.anime-poster .youtube-preview').removeAttr('href');
   $(`
-  <a style="display:block;" target="_blank" href="${$('.anime-poster .youtube-preview img').attr('src').replace('.md','')}">
+  <a class="anitracker-full-poster-link" target="_blank" href="${$('.anime-poster .youtube-preview img').attr('src').replace('.md','')}">
     View full poster
   </a>`).appendTo('.anime-poster');
 }
