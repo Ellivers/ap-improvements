@@ -8197,9 +8197,9 @@ function applyEpisodeOptionsEvents(elems) {
   })
   .off('blur').on('blur', (e) => {
     const dropdown = $(e.currentTarget).parent().find('.anitracker-episode-menu-dropdown');
-    const dropdownBtns = dropdown.find('button');
     setTimeout(() => {
-      if (dropdownBtns.is(':focus')) return;
+      console.log(dropdown.find('button:focus'))
+      if (dropdown.find('button:focus').length) return;
       dropdown.hide();
     }, 100);
   });
