@@ -1197,8 +1197,19 @@ const _css = `
     }, 2000);
   }
 
+  function seeked() {
+    updateStoredTime();
+    checkActiveTimestamps();
+    finishedLoading();
+  }
+
+  function initialSeek(time) {
+    player.currentTime = time;
+    if (time === 0) seeked();
+  }
+
   // MARKER:VIDEO LOADED EVENT
-  player.addEventListener('loadeddata', function loadVideoData() {
+  player.addEventListener('progress', function loadVideoData() {
     // Events
     let lastTimeUpdate = 0;
     player.addEventListener('timeupdate', function() {
@@ -1212,11 +1223,7 @@ const _css = `
     player.addEventListener('pause', () => {
       updateStoredTime();
     });
-    player.addEventListener('seeked', () => {
-      updateStoredTime();
-      checkActiveTimestamps();
-      finishedLoading();
-    });
+    player.addEventListener('seeked', seeked);
     player.addEventListener('ratechange', () => {
       if (player.readyState > 2) updateStoredPlaybackSpeed(player.playbackRate);
     });
@@ -1227,7 +1234,7 @@ const _css = `
     const storedVideoTime = getStoredTime(vidInfo.animeName, vidInfo.episodeNum, storage);
 
     if (storedVideoTime) {
-      player.currentTime = Math.max(0, Math.min(storedVideoTime.time, player.duration));
+      initialSeek(Math.max(0, Math.min(storedVideoTime.time, player.duration)));
       if (storedVideoTime.hasTimestamps) {
         if (storedVideoTime.timestampData.timestamps) {
           // Handle previous format
@@ -1267,12 +1274,12 @@ const _css = `
       const newTime = +timeArg[1];
       if (!storedVideoTime || (storedVideoTime && Math.floor(storedVideoTime.time) === Math.floor(newTime)) || (storedVideoTime &&
                                             confirm(`[AnimePahe Improvements]\n\nYou already have saved progress on this video (${secondsToHMS(storedVideoTime.time)}). Do you want to overwrite it and go to ${secondsToHMS(newTime)}?`))) {
-        player.currentTime = Math.max(0, Math.min(newTime, player.duration));
+        initialSeek(Math.max(0, Math.min(newTime, player.duration)));
       }
       window.history.replaceState({}, document.title, url);
     }
 
-    player.removeEventListener('loadeddata', loadVideoData);
+    player.removeEventListener('progress', loadVideoData);
 
     // Screenshot changes
     $('button[data-plyr="capture"]').replaceWith($('button[data-plyr="capture"]').clone()); // Just to remove existing event listeners
