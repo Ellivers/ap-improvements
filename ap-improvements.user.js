@@ -5099,13 +5099,14 @@ function openBookmarksModal() {
         if (!modalIsOpen() || !$('.anitracker-share-bookmarks-button').length) return; // If no longer in the right menu
 
         $('.anitracker-remove-bookmark-button').remove();
+        $('.anitracker-bookmark-new').remove();
         const prevWidth = $('.anitracker-modal-list-container').width();
+        let newWidth = layout === 'grid' ? 0 : prevWidth;
         if (layout === 'grid') {
-          let width = 0;
           for (const elem of $('.anitracker-bookmark-grid-entry')) {
-            width += $(elem).width();
+            newWidth += $(elem).width();
           }
-          $('.anitracker-modal-list-container').css('width', Math.min(width, 2400) + 'px');
+          $('.anitracker-modal-list-container').css('width', Math.min(newWidth, 2400) + 'px');
         }
         else if (layout === 'list') {
           $('.anitracker-bookmark-list-entry').css('border', '2px solid var(--secondary)').css('border-radius','5px').css('padding', '5px').css('margin', '2px');
@@ -5113,7 +5114,7 @@ function openBookmarksModal() {
         $('.anitracker-modal-list-container').css('border-radius', '24px');
         $('.anitracker-modal-list a').css('color', '#fff').css('text-decoration', 'none');
 
-        html2canvas($('.anitracker-modal-list-container')[0], { allowTaint:true, scale:0.8, backgroundColor:null }).then(function(canvas) {
+        html2canvas($('.anitracker-modal-list-container')[0], { allowTaint:true, scale: (newWidth > 1024 ? 0.8 : 1), backgroundColor:null }).then(function(canvas) {
           $('.anitracker-spinner').remove();
           $(`
           <h4>Share Result</h4>
