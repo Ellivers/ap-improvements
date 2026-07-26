@@ -531,18 +531,21 @@ const _css = `
   height: 80px;
 }
 .anitracker-message {
-  width:50%;
-  height:10%;
+  width:50rem;
+  max-width: 100%;
+  height:6rem;
   position:absolute;
   background-color:rgba(0,0,0,0.5);
   justify-content:center;
   align-items:center;
   margin-top:1.5%;
   border-radius:20px;
+  padding: 16px;
 }
 .anitracker-message>span {
   color: white;
   font-size: 2.5em;
+  line-height: 1em;
 }
 .anitracker-progress-tooltip {
   width: 219px;
@@ -622,6 +625,11 @@ const _css = `
 }
 .plyr.plyr--hide-controls {
   cursor: none;
+}
+@media screen and (max-width: 700px) {
+  .anitracker-message>span {
+    font-size: 1.5em;
+  }
 }
 @keyframes spin {
   0% { transform: rotate(0deg); }
