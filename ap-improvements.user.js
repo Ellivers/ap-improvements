@@ -10241,7 +10241,7 @@ function addGeneralButtons() {
             <i class="fa fa-search" aria-hidden="true"></i>
             &nbsp;Enter Sync Code...
           </button>
-          ${syncMessage}
+          ${getSyncMessageElem(storage)}
         </div>`).appendTo('#anitracker-modal-body');
 
         $('.anitracker-create-sync-code-button').on('click', () => {
