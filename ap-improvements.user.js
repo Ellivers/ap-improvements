@@ -6565,10 +6565,9 @@ function isMobileOrTablet() {
   return check;
 }
 
-
-function download(filename, text) {
+function download(filename, text, dataType = 'text/plain') {
   const element = document.createElement('a');
-  element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(text));
+  element.setAttribute('href', `data:${dataType};charset=utf-8,${encodeURIComponent(text)}`);
   element.setAttribute('download', filename);
 
   element.click();
@@ -9664,7 +9663,7 @@ function addGeneralButtons() {
         delete storage.temp;
         saveData(storage);
       }
-      download('animepahe-tracked-data-' + Date.now() + '.json', JSON.stringify(getStorage(), null, 2));
+      download('animepahe-tracked-data-' + Date.now() + '.json', JSON.stringify(getStorage(), null, 2), 'application/json');
     });
 
     $('#anitracker-import-data-label').on('keydown', (e) => {
