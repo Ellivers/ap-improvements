@@ -3330,6 +3330,11 @@ function sendMessage(message) {
   iframe[0].contentWindow.postMessage(message,'*');
 }
 
+function toUTCDate(timeString) {
+  const parts = timeString.split(' ');
+  return new Date([parts[0],'T',parts[1],'Z'].join(''));
+}
+
 function toggleTheatreMode() {
   const storage = getStorage();
   theatreMode(!storage.settings.theatreMode);
@@ -3515,7 +3520,7 @@ function importData(data, importedData, save = true, ignored = {settings:{}}, fr
         const existingEpisodes = data.notifications.episodes.filter(a => (a.animeName === g.name || a.animeId === g.id));
         const addedEpisodes = value.episodes.filter(a => (a.animeName === g.name || a.animeId === g.id));
         if (existingEpisodes.length > 0 && addedEpisodes.length > 0 && (existingEpisodes[existingEpisodes.length-1].episode - addedEpisodes[0].episode > 1.5)) {
-          g.updateFrom = new Date(addedEpisodes[0].time + " UTC").getTime();
+          g.updateFrom = toUTCDate(addedEpisodes[0].time).getTime();
         }
       });
 
@@ -3545,7 +3550,7 @@ function importData(data, importedData, save = true, ignored = {settings:{}}, fr
       if (save && value.episodes) {
         data.notifications.episodes.sort((a,b) => a.time < b.time ? 1 : -1);
         if (value.episodes.length > 0) {
-          data.notifications.lastUpdated = new Date(value.episodes[0].time + " UTC").getTime();
+          data.notifications.lastUpdated = toUTCDate(value.episodes[0].time).getTime();
         }
         const limit = getStorageLimits().notifications.episodes;
         if (data.notifications.episodes.length > limit) {
@@ -4528,7 +4533,7 @@ function openNotificationsModal() {
     }
 
     [...storage.notifications.anime].sort((a,b) => a.latest_episode > b.latest_episode ? 1 : -1).forEach(g => {
-      const latestEp = new Date(g.latest_episode + " UTC");
+      const latestEp = toUTCDate(g.latest_episode);
       const latestEpString = g.latest_episode !== undefined ? `${getDayName(latestEp.getDay())} ${latestEp.toLocaleTimeString([], {timeStyle:'short'})} (${timeSince(latestEp.getTime())} ago)` : "None found";
       $(`
       <div class="anitracker-modal-list-entry" animeid="${g.id}" animename="${toHtmlCodes(g.name)}">
@@ -4657,7 +4662,7 @@ function openNotificationsModal() {
     let removedAnime = 0;
     for (const anime of storage.notifications.anime) {
       if (anime.latest_episode === undefined || anime.dont_ask === true) continue;
-      const time = Date.now() - new Date(anime.latest_episode + " UTC").getTime();
+      const time = Date.now() - toUTCDate(anime.latest_episode).getTime();
       if ((time / 1000 / 60 / 60 / 24 / 7) > 2) {
         const remove = confirm(`[AnimePahe Improvements]\n\nThe latest episode for ${anime.name} was more than 2 weeks ago. Remove it from the feed?\n\nThis prompt will not be shown again.`);
         if (remove === true) {
@@ -4698,7 +4703,7 @@ function openNotificationsModal() {
         continue;
       }
 
-      const releaseTime = new Date(ep.time + " UTC");
+      const releaseTime = toUTCDate(ep.time);
       const elem = $(`
       <div class="anitracker-big-list-item anitracker-notification-item${ep.watched ? "" : " anitracker-notification-item-unwatched"} anitracker-temp" anime-data="${data.id}" episode-data="${ep.episode}">
         <a href="/play/${data.session}/${ep.session}" target="_blank" title="${toHtmlCodes(data.title)}">
@@ -5417,7 +5422,7 @@ async function updateNotifications(animeName, storage = getStorage()) {
         continue;
       }
 
-      if (new Date(ep.created_at + " UTC").getTime() < compareUpdateTime) {
+      if (toUTCDate(ep.created_at).getTime() < compareUpdateTime) {
         continue;
       }
 
@@ -8373,7 +8378,7 @@ function updateEpisodePage(entry, allowCache = true) {
   for (let i = 0; i < episodeElements.length; i++) {
     const elem = $(episodeElements[i]);
 
-    const date = new Date(episodes[i].created_at + " UTC");
+    const date = toUTCDate(episodes[i].created_at);
     const episode = episodes[i].episode;
     if (entry.mode === 'multi') {
       animeId = episodes[i].anime_id;
