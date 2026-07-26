@@ -5425,7 +5425,7 @@ async function updateNotifications(animeName, storage = getStorage()) {
     let hasFirstEpisode = false;
 
     for (const ep of episodes) {
-      const epWatched = isWatched(nobj.id, ep.episode, watched);
+      const epWatched = isWatched(nobj.id, ep.episode, watched) || getStoredTime(nobj.name, ep.episode, storage, nobj.id);
 
       const found = storage.notifications.episodes.find(a => a.episode === ep.episode && (a.animeId === nobj.id || a.animeName === data.title));
       if (found) {
@@ -6932,7 +6932,14 @@ function setupContinueWatchingSection() {
   </div>`).prependTo('.latest-release');
   $('#anitracker').css('justify-content', 'end');
 
-  addContinueWatchingEpisodes(storage2, Math.min(6, storage2.videoTimes.length), true);
+  addContinueWatchingEpisodes(storage2, Math.min(6, storage2.videoTimes.length), true).then(() => {
+    if (!$('.anitracker-episode-list-wrapper .episode').length) {
+      $(`
+      <div class="anitracker-center-content" style="align-self:center;width:100%;position:absolute;">
+        <span>Nothing to continue watching!</span>
+      </div>`).appendTo('.anitracker-episode-list-wrapper .episode-list.row');
+    }
+  });
 
   $('#anitracker-continue-watching-show-more-button').on('click', () => {
     $('#anitracker-modal-body').empty();
@@ -7020,7 +7027,6 @@ function setupContinueWatchingSection() {
         addWatched(+id, episode);
         showMessage('Marked as watched');
       });
-
       $('.anitracker-video-progress-item .anitracker-delete-button').on('click', function() {
         const elem = $(this).parents(':eq(1)');
 
@@ -7033,7 +7039,6 @@ function setupContinueWatchingSection() {
         removeVideoProgressElem(elem);
         showMessage('Removed');
       });
-
       scrollModalToTop();
     }
     layoutEntries();
