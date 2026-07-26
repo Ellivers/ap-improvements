@@ -2764,7 +2764,7 @@ header.main-header nav .main-nav li.nav-item > a:focus {
   margin-left: 240px;
 }
 .anitracker-full-poster-link {
-  display: block;
+  display: block !important;
   background: rgba(0,0,0,0.4);
   width: fit-content;
   margin: auto;
