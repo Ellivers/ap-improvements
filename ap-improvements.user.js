@@ -8198,7 +8198,8 @@ function applyEpisodeOptionsEvents(elems) {
   .off('blur').on('blur', (e) => {
     const dropdown = $(e.currentTarget).parent().find('.anitracker-episode-menu-dropdown');
     setTimeout(() => {
-      console.log(dropdown.find('button:focus'))
+      if (initialStorage.debug?.epDropdown) alert(dropdown.find('button:focus').length)
+      if (initialStorage.debug?.epDropdown) dropdown.find('button:focus').css('background','red')
       if (dropdown.find('button:focus').length) return;
       dropdown.hide();
     }, 100);
@@ -9596,6 +9597,12 @@ function addGeneralButtons() {
             Seek thumbnails debugging
           </label>
         </div>
+        <div class="form-check">
+          <input class="form-check-input" type="checkbox" value="" id="anitracker-debug-ep-dropdown" ${options.epDropdown ? "checked" : ""}>
+          <label class="form-check-label" for="anitracker-debug-ep-dropdown">
+            Episode dropdown debugging
+          </label>
+        </div>
         <input id="anitracker-decode-watched-input" placeholder="Decode watched format"><button class="btn btn-secondary anitracker-decode-watched-button">Decode</button>
         <div>Override function response: <input placeholder="Function" id="anitracker-funcresover-fn" style="width:50px;">
         <input placeholder="Value" id="anitracker-funcresover-val" style="width:50px;"><button class="btn btn-secondary anitracker-functionresover-button">Confirm</button></div>
@@ -9614,6 +9621,7 @@ function addGeneralButtons() {
           storage.debug.msg = $('#anitracker-debug-msg').prop('checked');
           storage.debug.notifs = $('#anitracker-debug-notifs').prop('checked');
           storage.debug.seekThumbnails = $('#anitracker-debug-seek-thumbnails').prop('checked');
+          storage.debug.epDropdown = $('#anitracker-debug-ep-dropdown').prop('checked');
           saveData(storage);
 
           openShowDataModal();
