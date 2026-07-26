@@ -1502,7 +1502,7 @@ const _css = `
 
     const storage = getStorage();
     if (storage.settings.autoPlayVideo === true) player.play().catch(() => {
-      showMessage('<span style="font-size: 1.75rem;">Auto-play failed! Try enabling autoplay/sound for this site.</span>', 3000, true);
+      showMessage('<span style="font-size: 1.75rem;">Auto-play failed! Try enabling autoplay/sound for this site.</span>', 6000, true);
     });
   }
 
