@@ -9423,7 +9423,7 @@ function addGeneralButtons() {
     });
 
     $('#anitracker-raw-data').on('click', function() {
-      const blob = new Blob([JSON.stringify(getStorage())], {type : 'application/json'});
+      const blob = new Blob([JSON.stringify(getStorage(), null, 2)], {type : 'application/json'});
       windowOpen(URL.createObjectURL(blob));
     });
 
