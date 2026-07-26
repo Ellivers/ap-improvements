@@ -6866,11 +6866,11 @@ if (isHome()) {
   Array.from(style.cssRules).forEach(rule => {
     if (rule.type !== 1) return;
     if (!rule.selectorText.includes('episode-list-wrapper')) return;
-    let cssText = rule.cssText.replace(/.episode-list-wrapper/, '.anitracker-episode-list-wrapper');
     if (rule.selectorText.endsWith('.episode')) {
-      cssText = cssText.replace(/z\-index:\s?\d+;/,'').replace(/overflow:\s?hidden;/,'');
+      rule.style.setProperty('z-index', 'unset');
+      rule.style.setProperty('overflow', 'visible');
     }
-    $("#anitracker-style")[0].sheet.insertRule(`${cssText}`);
+    $("#anitracker-style")[0].sheet.insertRule(rule.cssText.replace(/.episode-list-wrapper/, '.anitracker-episode-list-wrapper'));
   });
 
   if (initialStorage.settings.showContinueWatching) setupContinueWatchingSection();
