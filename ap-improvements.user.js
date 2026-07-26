@@ -4920,7 +4920,33 @@ function openBookmarksModal() {
 
     // Apply button events
     $('.anitracker-modal-list-entry .anitracker-change-status-button').on('click', (e) => {
-      openDropdown($(e.currentTarget));
+      $('.anitracker-change-status-button').off('blur').removeClass('active');
+      const elem = $(e.currentTarget);
+      const id = elem.parents().eq(1).attr('animeid');
+
+      const dropdown = $('.anitracker-status-dropdown');
+      if (dropdown.is(':visible') && dropdown.data('id') === id) {
+        dropdown.hide();
+        return;
+      }
+      elem.addClass('active');
+      elem.focus();
+
+      dropdown.insertAfter(elem);
+      const top = Math.min(window.innerHeight - dropdown.outerHeight(true), elem.position().top + elem.outerHeight(true));
+      const left = elem.position().left;
+
+      dropdown.css('top',top).css('left',left);
+      dropdown.show();
+      dropdown.scrollTop(0);
+      dropdown.data('id', id);
+
+      elem.on('blur', () => {
+        elem.removeClass('active');
+        setTimeout(() => {
+          if (!$('.anitracker-change-status-button, .anitracker-status-dropdown button').is(':focus')) dropdown.hide();
+        }, 0);
+      });
     });
 
     $('.anitracker-modal-list-entry .anitracker-remove-bookmark-button').on('click', function() {
@@ -5010,6 +5036,7 @@ function openBookmarksModal() {
 
   $('.anitracker-share-bookmarks-button').on('click', function() {
     const elem = $(this);
+    elem.focus();
     const dropdown = $('.anitracker-share-bookmarks-dropdown');
     const top = elem.position().top + elem.outerHeight(true);
     const left = elem.position().left - (dropdown.width() - elem.outerWidth(true));
@@ -5025,7 +5052,7 @@ function openBookmarksModal() {
     elem.on('blur', () => {
       setTimeout(() => {
         if (!$('.anitracker-share-bookmarks-button, .anitracker-share-bookmarks-dropdown button').is(':focus')) dropdown.hide();
-      }, 100);
+      }, 0);
     });
   });
 
@@ -5117,33 +5144,6 @@ function openBookmarksModal() {
     $('#anitracker-modal-body .anitracker-dropdown-content').hide();
   });
 
-  function openDropdown(elem, currentStatus) {
-    $('.anitracker-change-status-button').off('blur').removeClass('active');
-    const id = elem.parents().eq(1).attr('animeid');
-
-    const dropdown = $('.anitracker-status-dropdown');
-    if (dropdown.is(':visible') && dropdown.data('id') === id) {
-      dropdown.hide();
-      return;
-    }
-    elem.addClass('active');
-
-    dropdown.insertAfter(elem);
-    const top = Math.min(window.innerHeight - dropdown.outerHeight(true), elem.position().top + elem.outerHeight(true));
-    const left = elem.position().left;
-
-    dropdown.css('top',top).css('left',left);
-    dropdown.show();
-    dropdown.scrollTop(0);
-    dropdown.data('id', id);
-
-    elem.on('blur', () => {
-      elem.removeClass('active');
-      setTimeout(() => {
-        if (!$('.anitracker-change-status-button, .anitracker-status-dropdown button').is(':focus')) dropdown.hide();
-      }, 100);
-    });
-  }
   if (!storage.bookmarks.length) {
     $(`<span style="display: block;">No bookmarks yet!</span>`).appendTo('#anitracker-modal-body .anitracker-modal-list');
   }
@@ -8191,6 +8191,7 @@ function applyEpisodeOptionsEvents(elems) {
 
   elems.find('.anitracker-episode-menu-button').off('click').on('click', (e) => {
     const elem = $(e.currentTarget);
+    elem.focus();
     const dropdown = elem.parent().find('.anitracker-episode-menu-dropdown');
     dropdown.toggle();
     if (!dropdown.is(':visible')) elem.blur();
@@ -8198,11 +8199,9 @@ function applyEpisodeOptionsEvents(elems) {
   .off('blur').on('blur', (e) => {
     const dropdown = $(e.currentTarget).parent().find('.anitracker-episode-menu-dropdown');
     setTimeout(() => {
-      if (initialStorage.debug?.epDropdown) alert(dropdown.find('button:focus').length)
-      if (initialStorage.debug?.epDropdown) dropdown.find('button:focus').css('background','red')
       if (dropdown.find('button:focus').length) return;
       dropdown.hide();
-    }, 100);
+    }, 0);
   });
 
   elems.find('.anitracker-episode-menu-dropdown>button').off('click').on('click', (e) => {
@@ -8344,7 +8343,7 @@ function applyEpisodeOptionsEvents(elems) {
     setTimeout(() => {
       if (btn.is(':focus') || dropdownBtns.is(':focus')) return;
       $(e.currentTarget).parent().hide();
-    }, 100);
+    }, 0);
   });
 }
 
@@ -9597,12 +9596,6 @@ function addGeneralButtons() {
             Seek thumbnails debugging
           </label>
         </div>
-        <div class="form-check">
-          <input class="form-check-input" type="checkbox" value="" id="anitracker-debug-ep-dropdown" ${options.epDropdown ? "checked" : ""}>
-          <label class="form-check-label" for="anitracker-debug-ep-dropdown">
-            Episode dropdown debugging
-          </label>
-        </div>
         <input id="anitracker-decode-watched-input" placeholder="Decode watched format"><button class="btn btn-secondary anitracker-decode-watched-button">Decode</button>
         <div>Override function response: <input placeholder="Function" id="anitracker-funcresover-fn" style="width:50px;">
         <input placeholder="Value" id="anitracker-funcresover-val" style="width:50px;"><button class="btn btn-secondary anitracker-functionresover-button">Confirm</button></div>
@@ -9621,7 +9614,6 @@ function addGeneralButtons() {
           storage.debug.msg = $('#anitracker-debug-msg').prop('checked');
           storage.debug.notifs = $('#anitracker-debug-notifs').prop('checked');
           storage.debug.seekThumbnails = $('#anitracker-debug-seek-thumbnails').prop('checked');
-          storage.debug.epDropdown = $('#anitracker-debug-ep-dropdown').prop('checked');
           saveData(storage);
 
           openShowDataModal();
