@@ -2793,6 +2793,11 @@ header.main-header nav .main-nav li.nav-item > a:focus {
   gap: 5px;
   align-items: center;
 }
+.anitracker-share-bookmarks-button {
+  height: 40px;
+  float: right;
+  margin-right: 5px;
+}
 .index .col-12:nth-child(4n-3), .index .col-12:nth-child(4n-2) {
   background-color: rgb(20, 19, 25);
 }
@@ -2836,6 +2841,12 @@ header.main-header nav .nav-search .search-results-wrap a {
   .anitracker-bookmark-list-entry > div {
     gap: 12px;
   }
+  .anitracker-bookmark-grid-entry {
+    width: 8rem;
+  }
+  .anitracker-share-bookmarks-button {
+    margin-right: 0;
+  }
   .anitracker-keybinds-section {
     min-width: 0;
   }
@@ -2847,6 +2858,12 @@ header.main-header nav .nav-search .search-results-wrap a {
   }
   #anitracker {
     justify-content: center !important;
+  }
+  #anitracker-modal-close {
+    margin-right: 0;
+  }
+  #anitracker-modal-content {
+    padding: 10px;
   }
 }
 @keyframes anitracker-modalOpen {
@@ -4841,7 +4858,7 @@ function openBookmarksModal() {
     </div>
     ${storage.bookmarks.length ?`
     <div style="flex-grow: 1;">
-      <button class="btn btn-secondary anitracker-share-bookmarks-button" style="height: 40px;float: right;margin-right: 5px;" title="Share the bookmark list"><i aria-hidden="true" class="fa fa-share"></i></button>
+      <button class="btn btn-secondary anitracker-share-bookmarks-button" title="Share the bookmark list"><i aria-hidden="true" class="fa fa-share"></i></button>
     </div>
     <div class="dropdown-menu anitracker-dropdown-content anitracker-share-bookmarks-dropdown" style="display:hidden;">
       <span>Share through</span>
