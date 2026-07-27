@@ -5129,7 +5129,7 @@ function openBookmarksModal() {
           $('.anitracker-spinner').remove();
           $(`
           <h4>Share Result</h4>
-          <p class="anitracker-secondary-info">Right-click or hold tap to save</p>
+          <p class="anitracker-secondary-info">Right-click to save</p>
           ${layout === 'list' ? '<p class="anitracker-secondary-info"><i>Grid view is recommended over list view</i></p>' : ''}
           <div id="anitracker-bookmark-share-result"></div>`).appendTo('#anitracker-modal-body');
           $(canvas).css('height', '100%').css('width', '').appendTo('#anitracker-bookmark-share-result');
