@@ -2131,7 +2131,7 @@ const _css = `
   margin-right: 3px;
 }
 .anitracker-filter-dropdown>button.anitracker-active:focus {
-  border: 2px dashed #ffd7eb;
+  outline: 2px dashed #ffd7eb;
 }
 #anitracker-season-copy-to-lower {
   color:white;
