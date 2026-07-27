@@ -2842,6 +2842,9 @@ header.main-header nav .nav-search .search-results-wrap a {
   .anitracker-index, .anitracker-index-lower {
     margin-left: 10px;
   }
+  .anitracker-episode-list-wrapper {
+    padding: 0px 15px;
+  }
   #anitracker {
     justify-content: center !important;
   }
