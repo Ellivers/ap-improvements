@@ -2604,13 +2604,17 @@ header.main-header nav .main-nav li.nav-item > a:focus {
 .anitracker-bookmark-list-status:active {
   background-color: var(--anitracker-dark);
 }
-.anitracker-status-button {
-  border: 3px solid rgb(23, 23, 23)!important;
+.anitracker-status-dropdown {
+  padding: 0;
+}
+.anitracker-status-dropdown button.anitracker-status-button {
+  border: 3px solid rgb(23, 23, 23);
   border-radius: 5px;
   transition: none;
+  padding: 10px 16px;
 }
-.anitracker-status-button:hover, .anitracker-status-button:focus-visible {
-  border: 3px solid white!important;
+.anitracker-status-dropdown button.anitracker-status-button:hover, .anitracker-status-dropdown button.anitracker-status-button:focus-visible {
+  border-color: white;
 }
 .anitracker-video-progress-item {
   display:grid;
@@ -5265,11 +5269,13 @@ function openBookmarkStatusEditModal(id, adding=false) {
   $('.anitracker-status-dropdown button').on('click', (e) => {
     const pressed = $(e.target);
     const btn = pressed.parents().eq(1).find('.anitracker-status-dropdown-button');
-    btn.data('value', pressed.data('value'));
-    btn.text(pressed.text());
-    btn.css('background-color', pressed.css('background-color'));
+    const value = pressed.data('value');
+    const found = Object.entries(statuses).find(e => e[0] === value)[1];
+    btn.data('value', value);
+    btn.text(found[0]);
+    btn.css('background-color', found[1]);
 
-    entry.status = pressed.data('value');
+    entry.status = value;
     if (adding) return;
 
     setBookmarkStatus(id, entry.status);
