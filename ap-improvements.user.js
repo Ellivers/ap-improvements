@@ -4964,8 +4964,8 @@ function openBookmarksModal() {
 
     // Apply button events
     $('.anitracker-modal-list-entry .anitracker-change-status-button').on('click', (e) => {
-      $('.anitracker-change-status-button').off('blur').removeClass('active');
       const elem = $(e.currentTarget);
+      elem.removeClass('active');
       const id = elem.parents().eq(1).attr('animeid');
 
       const dropdown = $('.anitracker-status-dropdown');
@@ -4984,13 +4984,17 @@ function openBookmarksModal() {
       dropdown.show();
       dropdown.scrollTop(0);
       dropdown.data('id', id);
-
-      elem.on('blur', () => {
-        elem.removeClass('active');
-        setTimeout(() => {
-          if (!$('.anitracker-change-status-button, .anitracker-status-dropdown button').is(':focus')) dropdown.hide();
-        }, 0);
-      });
+    })
+    .on('blur', function() {
+      $(this).removeClass('active');
+      setTimeout(() => {
+        if (!$('.anitracker-status-dropdown button').is(':focus')) $('.anitracker-status-dropdown').hide();
+      }, 0);
+    })
+    .on('keydown', (e) => {
+      if (e.key !== 'Escape') return;
+      $(e.currentTarget).trigger('blur');
+      e.stopPropagation();
     });
 
     $('.anitracker-modal-list-entry .anitracker-remove-bookmark-button').on('click', function() {
@@ -5009,8 +5013,13 @@ function openBookmarksModal() {
       layoutEntries(getStorage(), sort === 'status');
     }).on('blur', function() {
       setTimeout(() => {
-        if (!$('.anitracker-status-dropdown button').is(':focus')) $(this).parent().hide();
+        if (!$('.anitracker-change-status-button, .anitracker-status-dropdown button').is(':focus')) $(this).parent().hide();
       }, 0);
+    })
+    .on('keydown', (e) => {
+      if (e.key !== 'Escape') return;
+      $(e.currentTarget).trigger('blur');
+      e.stopPropagation();
     });
 
     $('.anitracker-modal-list-entry').on('mouseenter focus', function() {
@@ -5092,12 +5101,16 @@ function openBookmarksModal() {
     dropdown.css('top',top).css('left',left);
     dropdown.show();
     dropdown.scrollTop(0);
-
-    elem.on('blur', () => {
-      setTimeout(() => {
-        if (!$('.anitracker-share-bookmarks-button, .anitracker-share-bookmarks-dropdown button').is(':focus')) dropdown.hide();
-      }, 0);
-    });
+  })
+  .on('blur', () => {
+    setTimeout(() => {
+      if (!$('.anitracker-share-bookmarks-dropdown button').is(':focus')) $('.anitracker-share-bookmarks-dropdown').hide();
+    }, 0);
+  })
+  .on('keydown', (e) => {
+    if (e.key !== 'Escape') return;
+    $(e.currentTarget).trigger('blur');
+    e.stopPropagation();
   });
 
   $('.anitracker-share-bookmarks-dropdown button').on('click', async function() {
@@ -5183,6 +5196,16 @@ function openBookmarksModal() {
 
       download('bookmarks-list.txt', entries.map(a => `${a.name} - ${getStatusAttributes(a.status)[0]}\n`).join(''));
     }
+  })
+  .on('blur', () => {
+    setTimeout(() => {
+      if (!$('.anitracker-share-bookmarks-button, .anitracker-share-bookmarks-dropdown button').is(':focus')) $('.anitracker-share-bookmarks-dropdown').hide();
+    }, 0);
+  })
+  .on('keydown', (e) => {
+    if (e.key !== 'Escape') return;
+    $(e.currentTarget).trigger('blur');
+    e.stopPropagation();
   });
 
   addModalEvent($('#anitracker-modal-body'), 'scroll', () => {
@@ -8253,6 +8276,9 @@ function applyEpisodeOptionsEvents(elems) {
       if (dropdown.find('button:focus').length) return;
       dropdown.hide();
     }, 0);
+  })
+  .off('keydown').on('keydown', (e) => {
+    if (e.key === 'Escape') $(e.currentTarget).trigger('blur');
   });
 
   elems.find('.anitracker-episode-menu-dropdown>button').off('click').on('click', (e) => {
@@ -8395,6 +8421,9 @@ function applyEpisodeOptionsEvents(elems) {
       if (btn.is(':focus') || dropdownBtns.is(':focus')) return;
       $(e.currentTarget).parent().hide();
     }, 0);
+  })
+  .off('keydown').on('keydown', (e) => {
+    if (e.key === 'Escape') $(e.currentTarget).trigger('blur');
   });
 }
 
