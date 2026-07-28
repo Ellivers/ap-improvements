@@ -2458,6 +2458,7 @@ header.main-header nav .main-nav li.nav-item > a:focus {
 }
 .anitracker-bookmark-grid-entry a {
   text-align: center;
+  flex-grow: 1;
 }
 .anitracker-secondary-info {
   color: lightgray;
