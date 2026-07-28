@@ -8674,7 +8674,6 @@ if (isAnime()) {
   if (initialStorage.bookmarks.find(g => g.id === animeid)) {
     $('.anitracker-bookmark-toggle .anitracker-title-icon-check').show();
   }
-
   if (initialStorage.notifications.anime.find(g => g.id === animeid)) {
     $('.anitracker-notifications-toggle .anitracker-title-icon-check').show();
   }
@@ -8934,7 +8933,6 @@ async function getAnimeCoverUrl() {
           topCandidate = c.src;
           break;
         }
-
         if (!topCandidate) {
           resolve(undefined);
           return;
@@ -9067,7 +9065,6 @@ function addGeneralButtons() {
         closeModal();
         resetPlayer();
       });
-
       $('#anitracker-edit-timestamps').on('click', function() {
         sendMessage({action:'timestamp_edit_mode'});
         closeModal();
@@ -9490,11 +9487,9 @@ function addGeneralButtons() {
         btn.data('value', pressed.attr('ref'));
         btn.text(pressed.text());
       });
-
       $('.anitracker-edit-data-key,.anitracker-edit-data-value').on('keydown', e => {
         if (e.currentTarget === e.target && e.key === 'Enter') $('.anitracker-confirm-edit-button').trigger('click');
       });
-
       $('.anitracker-confirm-edit-button').on('click', () => {
         const storage = getStorage();
         const key = $('.anitracker-edit-data-key').val();
@@ -9689,11 +9684,9 @@ function addGeneralButtons() {
       }
       download('animepahe-tracked-data-' + Date.now() + '.json', JSON.stringify(getStorage(), null, 2), 'application/json');
     });
-
     $('#anitracker-import-data-label').on('keydown', (e) => {
       if (e.key === "Enter") $("#" + $(e.currentTarget).attr('for')).click();
     });
-
     $('#anitracker-import-data').on('change', function(event) {
       const file = this.files[0];
       const fileReader = new FileReader();
@@ -9714,14 +9707,12 @@ function addGeneralButtons() {
         for (const [key, value] of Object.entries(diffBefore)) {
           totalChanged += value;
         }
-
         if (totalChanged === 0) {
           alert('[AnimePahe Improvements]\n\nThis file contains no changes to import.');
           return;
         }
 
         $('#anitracker-modal-body').empty();
-
         $(`
         <h4>Choose what to import</h4>
         <br>
@@ -9934,7 +9925,6 @@ function addGeneralButtons() {
 
           $(this).parent().remove();
         });
-
         $('.anitracker-modal-list-entry .anitracker-delete-progress-button').on('click', function() {
           const lookForUrl = $(this).attr('lookForUrl');
 
@@ -9954,7 +9944,6 @@ function addGeneralButtons() {
 
           $(this).parent().remove();
         });
-
         $('.anitracker-modal-list-entry .anitracker-delete-watched-button').on('click', function() {
           const id = +$(this).parent().attr('animeid');
           removeWatchedAnime(id);
@@ -9962,7 +9951,6 @@ function addGeneralButtons() {
 
           $(this).parent().remove();
         });
-
         $('.anitracker-modal-list-entry .anitracker-delete-speed-entry-button').on('click', function() {
           const storage = getStorage();
           const idString = $(this).attr('animeid');
@@ -10090,7 +10078,6 @@ function addGeneralButtons() {
             </button>
           </div>`).appendTo(elem.parent().find('.anitracker-modal-list'));
         });
-
         applyDeleteEvents();
       }
 
@@ -10099,9 +10086,7 @@ function addGeneralButtons() {
 
     function contractData(elem) {
       elem.find('.anitracker-expand-data-icon').replaceWith(expandIcon);
-
       elem.parent().find('.anitracker-modal-list').remove();
-
       elem.removeClass('anitracker-expanded');
       elem.blur();
     }
@@ -10124,9 +10109,7 @@ function addGeneralButtons() {
         return storage.sync.currentMessage ?
             `<span class="anitracker-sync-message anitracker-dark-area anitracker-thin-text ${storage.sync.currentMessage.type}">${storage.sync.currentMessage.text}</span>` : '<span class="anitracker-sync-message anitracker-dark-area anitracker-thin-text" style="display:none;"></span>';
       }
-
       let disconnectFailed = false;
-
       const syncedTime = storage.sync.lastSynced ? new Date(storage.sync.lastSynced).toLocaleString() : 'Not synced yet';
 
       if (syncEnabled && !storage.debug?.noSyncSim) {
@@ -10285,7 +10268,6 @@ function addGeneralButtons() {
               openCodeCreationModal();
               return;
             }
-
             const elem = $(e.currentTarget);
             const spinner = addSpinner(elem, 'sync-code');
             syncGetCode().then(result => {
@@ -10293,7 +10275,6 @@ function addGeneralButtons() {
 
               if (/^[A-Z0-9]{10}$/.test(result)) {
                 setupSync(result);
-
                 showMessage('Sync connected!');
                 openCodeCreationModal();
                 return;
@@ -10320,7 +10301,6 @@ function addGeneralButtons() {
 
         $('.anitracker-enter-sync-code-button').on('click', openCodeEnterModal);
       }
-
       $('.anitracker-change-sync-settings-button').on('click', () => {
         openSyncSettingsModal(openSyncDataModal);
       });
@@ -10347,7 +10327,6 @@ function addGeneralButtons() {
         $('.anitracker-sync-code-display>span').on('click', (e) => {
           selectElementText(e.currentTarget);
         });
-
         $('.anitracker-sync-code-display>i').on('click keydown', (e) => {
           if (e.type === 'keydown' && e.key !== "Enter") return;
           const elem = $(e.currentTarget);
@@ -10360,7 +10339,6 @@ function addGeneralButtons() {
             elem.replaceClass('fa-check', 'fa-copy');
           }, 1000);
         });
-
         $('.anitracker-done-button').on('click', openSyncDataModal);
         openModal(openSyncDataModal);
       }
@@ -10389,7 +10367,6 @@ function addGeneralButtons() {
             showError('Please enter a code.');
             return;
           }
-
           const spinner = addSpinner(e.currentTarget, 'sync-code-enter');
 
           syncConnectUser(code).then(result => {
@@ -10397,7 +10374,6 @@ function addGeneralButtons() {
 
             if (result === 0) {
               setupSync(code);
-
               showMessage('Sync connected!');
               openSyncDataModal();
               return;
@@ -10424,7 +10400,6 @@ function addGeneralButtons() {
 
       const storage = getStorage();
       const settings = storage.sync.settings;
-
       $(`
       <h4 style="text-align:center;margin-bottom:16px;">Choose sync settings</h4>
       ${firstTime ? '<p class="anitracker-secondary-info anitracker-thin-text">Automatically sync data between multiple devices</p>' : ''}
@@ -10719,7 +10694,6 @@ async function syncConnectUser(code) {
         storage.sync.temp.requiredHash = etag;
         saveData(storage);
       }
-
       resolve(0);
     };
     req.onerror = (() => {
@@ -10957,7 +10931,6 @@ async function syncData() {
     5. PUT request with the current local data into the server
     6. done
     */
-
     return new Promise(resolve => {
       let storage = getStorage();
       const settings = storage.sync.settings;
@@ -11056,7 +11029,6 @@ async function syncData() {
         }
 
         syncDiffs.imported = importData(storage, dbData, true, {settings:true}, true); // Imports synced data and saves storage data
-
         storage = getStorage();
 
         const toPut = JSON.parse(JSON.stringify(storage));
@@ -11282,7 +11254,6 @@ async function syncData() {
   }
 }
 
-
 addGeneralButtons();
 if (isEpisode()) {
   $(`
@@ -11335,7 +11306,6 @@ updateSwitches();
 
 function addOptionSwitch(optionId, name, desc = '', parent = '#anitracker-modal-body') {
   const option = optionSwitches.find(s => s.optionId === optionId);
-
   $(`
   <div class="custom-control custom-switch anitracker-switch" id="anitracker-${optionId}" title="${toHtmlCodes(desc)}">
     <input type="checkbox" class="custom-control-input" id="anitracker-${optionId}-switch">
@@ -11349,7 +11319,6 @@ function addOptionSwitch(optionId, name, desc = '', parent = '#anitracker-modal-
   switc.on('change', (e) => {
     const checked = $(e.currentTarget).is(':checked');
     const storage = getStorage();
-
     if (checked !== storage.settings[optionId]) {
       storage.settings[optionId] = checked;
       option.value = checked;
