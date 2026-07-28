@@ -4884,8 +4884,8 @@ function openBookmarksModal() {
   }, 0);
 
   function sortEntries(entries) {
-    if (sort === 'alphabetical') entries.sort((a,b) => a.name < b.name ? 1 : -1);
-    else if (sort === 'status') entries.sort((a, b) => getStatusAttributes(a.status)[3] < getStatusAttributes(b.status)[3] ? 1 : -1)
+    if (['alphabetical','status'].includes(sort)) entries.sort((a,b) => a.name < b.name ? 1 : -1);
+    if (sort === 'status') entries.sort((a, b) => getStatusAttributes(a.status)[3] < getStatusAttributes(b.status)[3] ? 1 : -1)
     if (!isReversed()) entries.reverse();
   }
 
