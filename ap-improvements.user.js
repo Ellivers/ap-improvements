@@ -4974,7 +4974,7 @@ function openBookmarksModal() {
 
       dropdown.insertAfter(elem);
       const top = Math.min(window.innerHeight - dropdown.outerHeight(true), elem.position().top + elem.outerHeight(true));
-      const left = elem.position().left;
+      const left = Math.min(window.innerWidth - dropdown.outerWidth(true), elem.position().left);
 
       dropdown.css('top',top).css('left',left);
       dropdown.show();
