@@ -961,7 +961,8 @@ const _css = `
     }
     else if (action === 'key') {
       if (!data.event.shiftKey && !data.event.ctrlKey) {
-        if ([' ','k'].includes(data.key)) {
+        if (data.key === 'f') return showMessage('Press again for full screen');
+        else if ([' ','k'].includes(data.key)) {
           if (player.paused) player.play();
           else player.pause();
           return;
