@@ -2871,7 +2871,7 @@ header.main-header nav .nav-search .search-results-wrap a {
     padding: 10px;
   }
   .anitracker-modal-list {
-    padding: 8px 3px;
+    padding: 8px 6px;
   }
 }
 @keyframes anitracker-modalOpen {
