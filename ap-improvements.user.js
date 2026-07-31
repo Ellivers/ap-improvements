@@ -4554,7 +4554,7 @@ function openNotificationsModal() {
         <div class="spinner-border" role="status">
           <span class="sr-only">Loading...</span>
         </div>
-        <div class="anitracker-progress-bar" style="width:8rem;height:10px;margin-top:5px;"><div></div></div>
+        <span><span class="anitracker-loaded-amount">0</span><span>/${oldStorage.notifications.anime.length}</span></span>
       </div>
     </div>
   </div>`).appendTo('#anitracker-modal-body');
@@ -4699,7 +4699,7 @@ function openNotificationsModal() {
 
   async function next() {
     if (!modalIsOpen() || !$('#anitracker-notifications-list-spinner').length) return;
-    $('#anitracker-notifications-list-spinner .anitracker-progress-bar > div').css('width', ((oldStorage.notifications.anime.length - queue.length) / oldStorage.notifications.anime.length)*100 + '%');
+    $('.anitracker-loaded-amount').text(1 + +$('.anitracker-loaded-amount').text());
 
     if (!queue.length) done();
     const anime = queue.shift();
