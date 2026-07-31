@@ -2804,6 +2804,17 @@ header.main-header nav .main-nav li.nav-item > a:focus {
   float: right;
   margin-right: 5px;
 }
+.anitracker-progress-bar {
+  background-color: gray;
+  border-radius: 5px;
+  overflow: hidden;
+}
+.anitracker-progress-bar>div {
+  background-color: var(--pahe-pink);
+  transition: width .1s;
+  height: 100%;
+  width: 0;
+}
 .index .col-12:nth-child(4n-3), .index .col-12:nth-child(4n-2) {
   background-color: rgb(20, 19, 25);
 }
@@ -4543,7 +4554,7 @@ function openNotificationsModal() {
         <div class="spinner-border" role="status">
           <span class="sr-only">Loading...</span>
         </div>
-        <span><span class="anitracker-loaded-amount">0</span><span>/${oldStorage.notifications.anime.length}</span></span>
+        <div class="anitracker-progress-bar" style="width:8rem;height:10px;margin-top:5px;"><div></div></div>
       </div>
     </div>
   </div>`).appendTo('#anitracker-modal-body');
@@ -4688,7 +4699,7 @@ function openNotificationsModal() {
 
   async function next() {
     if (!modalIsOpen() || !$('#anitracker-notifications-list-spinner').length) return;
-    $('.anitracker-loaded-amount').text(1 + +$('.anitracker-loaded-amount').text());
+    $('#anitracker-notifications-list-spinner .anitracker-progress-bar > div').css('width', ((oldStorage.notifications.anime.length - queue.length) / oldStorage.notifications.anime.length)*100 + '%');
 
     if (!queue.length) done();
     const anime = queue.shift();
@@ -7197,10 +7208,12 @@ async function addContinueWatchingEpisodes(storage, episodeCount, clearAll = fal
   return new Promise(async (resolve) => {
     if (clearAll) {
       $(`
-      <div id="anitracker-continue-watching-spinner" class="anitracker-spinner anitracker-center-content" style="align-self:center;width:100%;position:absolute;z-index:2;">
-        <div class="spinner-border" role="status" style="width:3rem;height:3rem;">
-          <span class="sr-only">Loading...</span>
-        </div>
+      <div id="anitracker-continue-watching-progress" class="anitracker-center-content" style="align-self:center;width:100%;position:absolute;z-index:2;flex-direction:column;">
+        <div class="anitracker-spinner" style="margin: auto;">
+          <div class="spinner-border" role="status">
+            <span class="sr-only">Loading...</span>
+          </div>
+        </div><div class="anitracker-progress-bar" style="width:12rem;height:10px;margin: auto;"><div></div></div></div>
       </div>`).appendTo('.anitracker-episode-list-wrapper .episode-list.row');
     }
 
@@ -7284,6 +7297,8 @@ async function addContinueWatchingEpisodes(storage, episodeCount, clearAll = fal
       const episodeData = await getEpisodeData(animeSession, entry.episodeNum);
       const firstEpisode = siteVars.cached.firstEpisode[animeSession]; // If not cached, it will be undefined
       addEpisode(entry, episodeData, sessionEntry, data, {animeSession: animeSession, firstEpisode: firstEpisode});
+
+      if (clearAll) $('#anitracker-continue-watching-progress .anitracker-progress-bar > div').width((processedAnime.length / episodeCount)*100 + '%');
     }
 
     $('.anitracker-continue-watching-skeleton').remove();
@@ -7378,7 +7393,7 @@ async function addContinueWatchingEpisodes(storage, episodeCount, clearAll = fal
       continueWatchingStatus.displayedEps.push({animeName: videoTimeEntry.animeName, episodeNum: videoTimeEntry.episodeNum});
     }
 
-    $('#anitracker-continue-watching-spinner').remove();
+    $('#anitracker-continue-watching-progress').remove();
 
     continueWatchingStatus.inProgress = false;
     if (continueWatchingStatus.queue.length) addContinueWatchingEpisodes(getStorage(), continueWatchingStatus.queue.shift()); // Advance the queue
