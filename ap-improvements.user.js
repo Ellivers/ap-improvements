@@ -3168,7 +3168,7 @@ function addPermanentElements() {
 }
 addPermanentElements();
 
-function openModal(backFunction) {
+function openModal(backFunction, animation = true) {
   modalBackFunction = backFunction || closeModal;
   $('#anitracker-modal').trigger('anitracker:open');
 
@@ -3178,7 +3178,7 @@ function openModal(backFunction) {
   const storage = getStorage();
 
   return new Promise(resolve => {
-    if (storage.settings.reduceMotion !== true) {
+    if (animation && storage.settings.reduceMotion !== true) {
       if (!modalIsOpen()) {
         playAnimation($('#anitracker-modal-content'), 'modalOpen');
         playAnimation($('#anitracker-modal'), 'fadeIn').then(() => {
@@ -4559,7 +4559,7 @@ function openNotificationsModal() {
     </div>
   </div>`).appendTo('#anitracker-modal-body');
 
-  function openNotifAnimesModal() {
+  function openNotifAnimesModal(animation = true) {
     $('#anitracker-modal-body').empty();
     const storage = getStorage();
     $(`
@@ -4663,7 +4663,7 @@ function openNotificationsModal() {
       if (name2.length > 0 && name2 === name) $('.anitracker-notifications-toggle .anitracker-title-icon-check').hide();
 
       parent.remove();
-      openNotifAnimesModal();
+      openNotifAnimesModal(false);
     });
 
     function makeSchedule(startDay) {
@@ -4685,7 +4685,7 @@ function openNotificationsModal() {
       }
     }
 
-    openModal(openNotificationsModal);
+    openModal(openNotificationsModal, animation);
   }
   $('.anitracker-view-notif-animes').on('click', openNotifAnimesModal);
 
