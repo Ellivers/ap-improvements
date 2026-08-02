@@ -10243,7 +10243,7 @@ function addGeneralButtons() {
               else if (result === 1 && !disconnectFailed) {
                 storage.sync.currentMessage = {
                   type: "error",
-                  text: "Couldn't disconnect. Please check you internet connection.<br>To disconnect anyway, press the Disconnect button again."
+                  text: "Couldn't disconnect. Please check you internet connection.<br>To disconnect anyway, press the confirm button again."
                 };
                 saveData(storage);
                 updateSyncMessageElem(storage);
@@ -10253,7 +10253,7 @@ function addGeneralButtons() {
               else if (result === 2 && !disconnectFailed) {
                 storage.sync.currentMessage = {
                   type: "error",
-                  text: "Couldn't disconnect due to unknown error.<br>To disconnect anyway, press the Disconnect button again."
+                  text: "Couldn't disconnect due to unknown error.<br>To disconnect anyway, press the confirm button again."
                 };
                 saveData(storage);
                 updateSyncMessageElem(storage);
@@ -10261,7 +10261,7 @@ function addGeneralButtons() {
                 return;
               }
               else if (result === 3 && !disconnectFailed) {
-                storage.sync.currentMessage.text += "<br>To disconnect anyway, press the Disconnect button again.";
+                storage.sync.currentMessage.text += "<br>To disconnect anyway, press the confirm button again.";
                 saveData(storage);
                 updateSyncMessageElem(storage);
                 disconnectFailed = true;
