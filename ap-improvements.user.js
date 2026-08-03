@@ -13,7 +13,7 @@
 // @grant       GM_setValue
 // @grant       GM_xmlhttpRequest
 // @grant       GM_info
-// @version     4.10.0
+// @version     4.10.1
 // @author      Ellivers
 // @license     MIT
 // @description Improvements and additions for the AnimePahe site
@@ -39,12 +39,12 @@
  * Keeps track of episodes that have been watched.
  * Adds a section on the main page where you can view episodes that you have started watching.
  * Adds a menu to episodes in the Latest Releases feed and on anime pages where you can copy a link to them, mark/unmark them as watched, or download them.
- * Adds an option to hide all episode thumbnails on the site.
- * Adds an option to have the header always stay at the top of the screen.
  * Reworked anime index page. You can now:
     * Find anime with your desired genre, theme, type, demographic, status and season.
     * Search among these filter results.
     * Open a random anime within the specified filters.
+ * Adds an option to hide all episode thumbnails on the site.
+ * Adds an option to have the header always stay at the top of the screen.
  * Saved data can be viewed and deleted in the "Manage Data" menu.
  * You can enable data syncing to sync your data between multiple devices.
     * Choose what data to sync, per device.
@@ -4906,6 +4906,7 @@ function openBookmarksModal() {
 
     const entries = [...storage.bookmarks];
     sortEntries(entries);
+    const searchInput = $('.anitracker-modal-search').val().toLowerCase();
 
     if (layout === 'list') {
       $('.anitracker-modal-list').removeClass('flex');
@@ -4926,6 +4927,7 @@ function openBookmarksModal() {
             </button>
           </div>
         </div>`).appendTo('#anitracker-modal-body .anitracker-modal-list');
+        if (!g.name.toLowerCase().includes(searchInput)) elem.hide();
       });
     }
     else {
@@ -4950,6 +4952,7 @@ function openBookmarksModal() {
             </button>
           </div>
         </div>`).appendTo('#anitracker-modal-body .anitracker-modal-list');
+        if (!g.name.toLowerCase().includes(searchInput)) elem.hide();
 
         elem.find('img').on('load', function() {$(this).css('opacity', '1')});
         if (g.posterUrl === undefined) {
@@ -4960,7 +4963,6 @@ function openBookmarksModal() {
           getBookmarkImage(elem, g);
           $(this).off('error');
         });
-
       });
     }
 
