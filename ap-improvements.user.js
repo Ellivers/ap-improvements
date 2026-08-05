@@ -5347,7 +5347,6 @@ function openBookmarkStatusEditModal(id, adding=false) {
     $('#anitracker-modal-body .anitracker-delete-button').on('click', (e) => {
       removeBookmark(id);
       showMessage('Bookmark removed');
-
       closeModal();
     });
   }
@@ -6887,7 +6886,6 @@ async function asyncGetAnimeData(name = getAnimeName(), id = undefined, guess = 
 
       page++;
     }*/
-
     const response = await asyncGetResponseData(`/api?m=search&q=${makeSearchable(name)}`);
     if (!response) {
       resolve(response);
@@ -7082,6 +7080,7 @@ function setupContinueWatchingSection() {
             <button class="btn btn-dark anitracker-delete-button" title="Remove video progress"><i class="fa fa-trash" aria-hidden="true"></i>&nbsp;Remove</button>
           </div>
         </div>`).appendTo('#anitracker-modal-body .anitracker-modal-list').data('anime-id', animeId).data('title', entry.animeName).data('episode', entry.episodeNum);
+        if (!Array.from($(elem).find('a,span')).map(el => $(el).text()).join().toLowerCase().includes($('.anitracker-modal-search').val().toLowerCase())) elem.hide();
 
         if (entry.duration) elem.css('background-size', `${100 * (entry.time / entry.duration)}% ${elem.css('background-size').split(' ')[1]}`);
       }
@@ -9921,7 +9920,6 @@ function addGeneralButtons() {
         }
 
         showMessage(`Cleaned up ${removed.length} ${removed.length === 1 ? "entry" : "entries"}.`);
-
         saveData(updatedStorage);
         dataEntries.remove();
         expandData(elem);
