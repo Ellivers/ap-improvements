@@ -9275,6 +9275,7 @@ function addGeneralButtons() {
 
           closeModal();
           updateEpisodePages();
+          showMessage('Marked all episodes as watched');
         });
       });
 
@@ -9284,6 +9285,7 @@ function addGeneralButtons() {
           closeModal();
           removeWatchedAnime(id);
           updateEpisodePages();
+          showMessage('Unmarked all watched episodes');
         });
       });
     }
