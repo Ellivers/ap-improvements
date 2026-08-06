@@ -3253,7 +3253,9 @@ if (isEpisode()) {
 
     const action = data.action;
     if (action === 'id_request') {
-      sendMessage({action:"id_response",id:getAnimeId(getAnimeSessionFromUrl())});
+      asyncGetAnimeId(getAnimeSessionFromUrl()).then(id => {
+        sendMessage({action:"id_response",id:id});
+      });
     }
     else if (action === 'anidb_id_request') {
       getAnidbId(data.id).then(idResult => {
@@ -6932,6 +6934,30 @@ function getAnimeId(session, animeName = getAnimeName()) {
   })();
   if (id) siteVars.cached.animeId[session] = id;
   return id;
+}
+
+async function asyncGetAnimeId(session, animeName = getAnimeName()) {
+  return new Promise(resolve => {
+    const cached = siteVars.cached.animeId[session];
+    if (cached) return resolve(cached);
+
+    const id = (async () => {
+      if (isAnime() && animeSession === session) {
+        const linkHref = $('[data-target="#modalBookmark"]').attr('href');
+        if (linkHref) return +linkHref.split('/')[2];
+      }
+
+      const data = await asyncGetAnimeData(animeName);
+      if (data) return data.id;
+
+      if (!session) return undefined;
+      const response = await asyncGetResponseData(`/api?m=release&id=${session}`);
+      if (!response) return undefined;
+      return response[0].anime_id;
+    })();
+    if (id) siteVars.cached.animeId[session] = id;
+    return resolve(id);
+  });
 }
 
 // Main animepahe page
