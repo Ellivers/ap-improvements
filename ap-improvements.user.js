@@ -2280,8 +2280,9 @@ a.youtube-preview::before {
   padding: 0;
   box-shadow: none!important;
 }
-.anitracker-title-icon:hover {
+.anitracker-title-icon:hover,.anitracker-title-icon:focus-visible {
   opacity: 1!important;
+  color: #ff006c!important;
 }
 .anitracker-title-icon-check {
   color: white;
@@ -8650,11 +8651,11 @@ function addTitleIcons(animeid) {
     return false;
   })();
 
-  $(`<i title="Bookmark this anime" class="fa fa-bookmark anitracker-title-icon anitracker-bookmark-toggle">
+  $(`<i title="Bookmark this anime" class="fa fa-bookmark anitracker-title-icon anitracker-bookmark-toggle" tabindex="0">
     <i style="display: none;" class="fa fa-check anitracker-title-icon-check" aria-hidden="true"></i>
   </i>`).appendTo(div)
 
-  if (notifIcon) $(`<i title="Add to episode feed" class="fa fa-bell anitracker-title-icon anitracker-notifications-toggle">
+  if (notifIcon) $(`<i title="Add to episode feed" class="fa fa-bell anitracker-title-icon anitracker-notifications-toggle" tabindex="0">
     <i style="display: none;" class="fa fa-check anitracker-title-icon-check" aria-hidden="true"></i>
   </i>`).appendTo(div);
 
@@ -8667,7 +8668,8 @@ function addTitleIcons(animeid) {
     $('.anitracker-notifications-toggle .anitracker-title-icon-check').show();
   }
 
-  $('.anitracker-bookmark-toggle').on('click', (e) => {
+  $('.anitracker-bookmark-toggle').on('click keydown', (e) => {
+    if (e.type === 'keydown' && e.key !== "Enter") return;
     const check = $(e.currentTarget).find('.anitracker-title-icon-check');
     const storage = getStorage();
     const entry = storage.bookmarks.find(g => g.id === animeid);
@@ -8675,7 +8677,8 @@ function addTitleIcons(animeid) {
     openBookmarkStatusEditModal(animeid, !entry, true);
   });
 
-  $('.anitracker-notifications-toggle').on('click', (e) => {
+  $('.anitracker-notifications-toggle').on('click keydown', (e) => {
+    if (e.type === 'keydown' && e.key !== "Enter") return;
     const check = $(e.currentTarget).find('.anitracker-title-icon-check');
     if (!check.is(':visible') && getStorage().notifications.anime.length >= getStorageLimits().notifications.anime) {
       alert(`[AnimePahe Improvements]\n\nYou already have too many episode feeds (maximum ${getStorageLimits().notifications.anime})`);
