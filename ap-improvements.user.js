@@ -4487,7 +4487,7 @@ $(document).on('keydown', (e, other = undefined) => {
   if (pressedKeybind(e, storage.settings.keybindNextEpisode)) return $('.sequel a')[0]?.click();
   if (pressedKeybind(e, storage.settings.keybindPrevEpisode)) return $('.prequel a')[0]?.click();
 
-  else if (!['Control','Shift','Alt'].includes(e.key) && !e.msg /*If this was a message from iframe, don't do recursive stuff*/) {
+  else if (!['Control','Shift','Alt','Enter'].includes(e.key) && !e.msg /*If this was a message from iframe, don't do recursive stuff*/) {
     sendMessage({action:"key",key:e.key,event:{key:e.key, code:e.originalEvent.code, ctrlKey:e.ctrlKey, shiftKey:e.shiftKey, altKey:e.altKey, metaKey:e.metaKey, msg:true}});
     $('.embed-responsive-item')[0].contentWindow.focus();
     if ([" "].includes(e.key) || (["ArrowUp", "ArrowDown"].includes(e.key) && e.ctrlKey)) e.preventDefault();
