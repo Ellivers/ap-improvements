@@ -5396,7 +5396,7 @@ function addBookmark(id, name, additionalData = {}) {
   storage.bookmarks.push(obj);
   saveData(storage);
 
-  if (!isAnime()) return;
+  if (!isAnime() && !isEpisode()) return;
   if (getAnimeId(getAnimeSessionFromUrl()) === +id) {
     $('.anitracker-bookmark-toggle .anitracker-title-icon-check').show();
   }
@@ -5413,7 +5413,7 @@ function removeBookmark(id) {
   storage.bookmarks = storage.bookmarks.filter(g => g.id !== +id);
   saveData(storage);
 
-  if (!isAnime()) return;
+  if (!isAnime() && !isEpisode()) return;
   if (getAnimeId(getAnimeSessionFromUrl()) === +id) {
     $('.anitracker-bookmark-toggle .anitracker-title-icon-check').hide();
   }
