@@ -4604,7 +4604,7 @@ function openNotificationsModal() {
     }
 
     [...storage.notifications.anime].sort((a,b) => a.latest_episode > b.latest_episode ? 1 : -1).forEach(g => {
-      const latestEp = toUTCDate(g.latest_episode);
+      const latestEp = g.latest_episode !== undefined ? toUTCDate(g.latest_episode) : new Date(undefined);
       const latestEpString = g.latest_episode !== undefined ? `${getDayName(latestEp.getDay())} ${latestEp.toLocaleTimeString([], {timeStyle:'short'})} (${timeSince(latestEp.getTime())} ago)` : "None found";
       $(`
       <div class="anitracker-modal-list-entry" animeid="${g.id}" animename="${toHtmlCodes(g.name)}">
