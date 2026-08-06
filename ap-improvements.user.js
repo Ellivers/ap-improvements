@@ -2270,13 +2270,10 @@ a.youtube-preview::before {
 .anitracker-text-button:hover, .anitracker-text-button:focus-visible {
   color:white;
 }
-.nav-search {
-  float: left!important;
-}
 .anitracker-title-icon {
   margin-left: 1rem!important;
   opacity: .8!important;
-  color: #ff006c!important;
+  color: inherit !important;
   font-size: 2rem!important;
   vertical-align: middle;
   cursor: pointer;
@@ -2827,6 +2824,9 @@ header.main-header nav .main-nav li.nav-item > a:focus {
 .index>* {
   width: 100%;
 }
+.nav-search {
+  float: left!important;
+}
 header.main-header nav .nav-search .search-results-wrap a {
   width: 100%;
 }
@@ -3094,11 +3094,10 @@ $(document).on('visibilitychange', () => {
 function updatePage() {
   updateSwitches();
   updateEpisodePages();
-
   const storage = getStorage();
-  const animeId = isAnime() ? getAnimeId(getAnimeSessionFromUrl()) : undefined;
 
-  if (animeId) {
+  if (isAnime() || isEpisode()) asyncGetAnimeId(getAnimeSessionFromUrl()).then(animeId => {
+    if (!animeId) return;
     const isBookmarked = storage.bookmarks.find(a => a.id === animeId) !== undefined;
     if (isBookmarked) $('.anitracker-bookmark-toggle .anitracker-title-icon-check').show();
     else $('.anitracker-bookmark-toggle .anitracker-title-icon-check').hide();
@@ -3106,7 +3105,7 @@ function updatePage() {
     const hasNotifications = storage.notifications.anime.find(a => a.id === animeId) !== undefined;
     if (hasNotifications) $('.anitracker-notifications-toggle .anitracker-title-icon-check').show();
     else $('.anitracker-notifications-toggle .anitracker-title-icon-check').hide();
-  }
+  });
 
   if (!modalIsOpen()) return;
 
@@ -8636,6 +8635,8 @@ function addTitleIcons(animeid) {
   const animename = getAnimeName();
   $('h1 .fa').remove();
 
+  const div = $(`<div style="display:inline;color: ${isAnime() ? '#ff006c' : 'var(--secondary)'};"></div>`).appendTo(isAnime() ? '.title-wrapper>h1' : '.theatre-info>h1');
+
   const notifIcon = (() => {
     if (initialStorage.debug?.notifs) return true;
     if (initialStorage.notifications.anime.find(a => a.name === animename)) return true;
@@ -8647,16 +8648,17 @@ function addTitleIcons(animeid) {
     }
     else if (isEpisode) return $('.anime-status').text().includes("Currently Airing");
     return false;
-  })() ?
-  `<i title="Add to episode feed" class="fa fa-bell anitracker-title-icon anitracker-notifications-toggle">
-    <i style="display: none;" class="fa fa-check anitracker-title-icon-check" aria-hidden="true"></i>
-  </i>` : '';
+  })();
 
-  $(`
-  <i title="Bookmark this anime" class="fa fa-bookmark anitracker-title-icon anitracker-bookmark-toggle">
+  $(`<i title="Bookmark this anime" class="fa fa-bookmark anitracker-title-icon anitracker-bookmark-toggle">
     <i style="display: none;" class="fa fa-check anitracker-title-icon-check" aria-hidden="true"></i>
-  </i>${notifIcon}${isAnime() ? '<a href="/a/${animeid}" title="Shortcut Link" class="fa fa-link btn anitracker-title-icon" data-toggle="modal" data-target="#modalBookmark"></a>' : ''}
-  `).appendTo(isAnime() ? '.title-wrapper>h1' : '.theatre-info>h1');
+  </i>`).appendTo(div)
+
+  if (notifIcon) $(`<i title="Add to episode feed" class="fa fa-bell anitracker-title-icon anitracker-notifications-toggle">
+    <i style="display: none;" class="fa fa-check anitracker-title-icon-check" aria-hidden="true"></i>
+  </i>`).appendTo(div);
+
+  if (isAnime()) $(`<a href="/a/${animeid}" title="Shortcut Link" class="fa fa-link btn anitracker-title-icon" data-toggle="modal" data-target="#modalBookmark"></a>`).appendTo(div);
 
   if (initialStorage.bookmarks.find(g => g.id === animeid)) {
     $('.anitracker-bookmark-toggle .anitracker-title-icon-check').show();
