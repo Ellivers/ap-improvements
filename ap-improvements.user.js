@@ -8716,8 +8716,8 @@ if (isAnime()) {
     asyncGetAnimeId(animeSession).then(id => {
       deleteEpisodesFromTracker(undefined, getAnimeName(), id);
 
-      temporaryHtmlChange($('#anitracker-clear-episodes-from-tracker'), 1500, 'Cleared!');
       hideButtonSpinner(this);
+      temporaryHtmlChange($('#anitracker-clear-episodes-from-tracker'), 1500, 'Cleared!');
 
       updateEpisodePages();
     });
