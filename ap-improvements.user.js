@@ -2815,6 +2815,12 @@ header.main-header nav .main-nav li.nav-item > a:focus {
   height: 100%;
   width: 0;
 }
+.anitracker-button-spinner {
+  width:1.2em;
+  height:1.2em;
+  vertical-align:center;
+  border-width:3px;
+}
 .index .col-12:nth-child(4n-3), .index .col-12:nth-child(4n-2) {
   background-color: rgb(20, 19, 25);
 }
@@ -4827,8 +4833,7 @@ function openNotificationsModal() {
       if (isAnime() && getAnimeId(getAnimeSessionFromUrl()) === animeId) updateEpisodePages();
     });
 
-    $('.anitracker-notification-item.anitracker-temp').removeClass('anitracker-temp');
-
+    $('.anitracker-notification-item.anitracker-temp').removeClass('anitracker-temp'); // Temporary class for adding event listeners
   }
 
   addModalEvent($('#anitracker-modal-body'), 'scroll', function() {
@@ -5448,6 +5453,7 @@ function toggleNotifications(name, id = undefined) {
 
     return false;
   }
+  if (!id) return;
   if (storage.notifications.anime.length >= getStorageLimits().notifications.anime) return;
 
   if (isSyncEnabled(storage)) {
@@ -5456,7 +5462,7 @@ function toggleNotifications(name, id = undefined) {
 
   storage.notifications.anime.push({
     name: name,
-    id: getAnimeId(getAnimeSessionFromUrl()),
+    id: id,
     updateFrom: Date.now()
   });
   saveData(storage);
@@ -7596,40 +7602,44 @@ console.log('[AnimePahe Improvements]', obj, animeSession, episodeSession);
 
 function setSessionData() {
   const animeName = getAnimeName();
-  const animeId = getAnimeId(animeSession, animeName);
+  return new Promise(resolve => {
+    asyncGetAnimeId(animeSession, animeName).then(animeId => {
+      if (!animeId) console.error("[AnimePahe Improvements] Couldn't find anime ID");
+      const storage = getStorage();
+      if (isEpisode()) {
+        if (isSyncEnabled(storage)) {
+          storage.sync.temp.addedData.push({type: 'linkList', episodeSession: episodeSession});
+        }
 
-  const storage = getStorage();
-  if (isEpisode()) {
-    if (isSyncEnabled(storage)) {
-      storage.sync.temp.addedData.push({type: 'linkList', episodeSession: episodeSession});
-    }
+        storage.linkList.push({
+          animeId: animeId,
+          animeSession: animeSession,
+          episodeSession: episodeSession,
+          type: 'episode',
+          animeName: animeName,
+          episodeNum: getEpisodeNum()
+        });
+      }
+      else {
+        if (isSyncEnabled(storage)) {
+          storage.sync.temp.addedData.push({type: 'linkList', animeSession: animeSession});
+        }
 
-    storage.linkList.push({
-      animeId: animeId,
-      animeSession: animeSession,
-      episodeSession: episodeSession,
-      type: 'episode',
-      animeName: animeName,
-      episodeNum: getEpisodeNum()
+        storage.linkList.push({
+          animeId: animeId,
+          animeSession: animeSession,
+          type: 'anime',
+          animeName: animeName
+        });
+      }
+      if (storage.linkList.length > getStorageLimits().linkList) {
+        storage.linkList.splice(0,1);
+      }
+
+      saveData(storage);
+      resolve();
     });
-  }
-  else {
-    if (isSyncEnabled(storage)) {
-      storage.sync.temp.addedData.push({type: 'linkList', animeSession: animeSession});
-    }
-
-    storage.linkList.push({
-      animeId: animeId,
-      animeSession: animeSession,
-      type: 'anime',
-      animeName: animeName
-    });
-  }
-  if (storage.linkList.length > getStorageLimits().linkList) {
-    storage.linkList.splice(0,1);
-  }
-
-  saveData(storage);
+  });
 }
 
 if (!obj && !is404) {
@@ -8201,6 +8211,19 @@ function temporaryHtmlChange(elem, delay, html, timeout = undefined) {
   }, delay);
 }
 
+function showButtonSpinner(elem) {
+  $(elem).find('i').hide();
+  return $(`
+  <div class="spinner-border anitracker-button-spinner" role="status">
+    <span class="sr-only">Loading...</span>
+  </div>`).prependTo(elem);
+}
+
+function hideButtonSpinner(elem) {
+  $(elem).find('.anitracker-button-spinner').remove();
+  $(elem).find('i').show();
+}
+
 $(`
 <button class="btn btn-dark" id="anitracker-clear-from-tracker" title="Remove this page from the session tracker">
   <i class="fa fa-trash" aria-hidden="true"></i>
@@ -8211,23 +8234,28 @@ $('#anitracker-clear-from-tracker').on('click', function() {
   const animeName = getAnimeName();
 
   if (isEpisode()) {
-    deleteEpisodeFromTracker(animeName, getEpisodeNum(), getAnimeId(animeSession, animeName));
+    showButtonSpinner(this);
+    asyncGetAnimeId(animeSession, animeName).then(id => {
+      deleteEpisodeFromTracker(animeName, getEpisodeNum(), id);
 
-    if ($('.embed-responsive-item').length) {
-      const storage = getStorage();
-      const videoUrl = stripUrl($('.embed-responsive-item').attr('src'));
-      for (const videoData of storage.videoTimes) {
-        if (!videoData.videoUrls.includes(videoUrl)) continue;
-        if (isSyncEnabled(storage)) {
-          storage.sync.temp.removedData.push({type: 'videoTimes', animeName: videoData.animeName, episodeNum: videoData.episodeNum});
+      if ($('.embed-responsive-item').length) {
+        const storage = getStorage();
+        const videoUrl = stripUrl($('.embed-responsive-item').attr('src'));
+        for (const videoData of storage.videoTimes) {
+          if (!videoData.videoUrls.includes(videoUrl)) continue;
+          if (isSyncEnabled(storage)) {
+            storage.sync.temp.removedData.push({type: 'videoTimes', animeName: videoData.animeName, episodeNum: videoData.episodeNum});
+          }
+
+          const index = storage.videoTimes.indexOf(videoData);
+          storage.videoTimes.splice(index, 1);
+          saveData(storage);
+          break;
         }
-
-        const index = storage.videoTimes.indexOf(videoData);
-        storage.videoTimes.splice(index, 1);
-        saveData(storage);
-        break;
       }
-    }
+      hideButtonSpinner(this);
+      temporaryHtmlChange($(this), 1500, 'Cleared!');
+    });
   }
   else {
     const storage = getStorage();
@@ -8238,9 +8266,8 @@ $('#anitracker-clear-from-tracker').on('click', function() {
     storage.linkList = storage.linkList.filter(a => !(a.type === 'anime' && a.animeName === animeName));
 
     saveData(storage);
+    temporaryHtmlChange($(this), 1500, 'Cleared!');
   }
-
-  temporaryHtmlChange($('#anitracker-clear-from-tracker'), 1500, 'Cleared!');
 });
 
 function improvePoster() {
@@ -8622,11 +8649,15 @@ if (isAnime()) {
   </button>`).appendTo('#anitracker');
 
   $('#anitracker-clear-episodes-from-tracker').on('click', function() {
-    deleteEpisodesFromTracker(undefined, getAnimeName(), getAnimeId(animeSession));
+    showButtonSpinner(this);
+    asyncGetAnimeId(animeSession).then(id => {
+      deleteEpisodesFromTracker(undefined, getAnimeName(), id);
 
-    temporaryHtmlChange($('#anitracker-clear-episodes-from-tracker'), 1500, 'Cleared!');
+      temporaryHtmlChange($('#anitracker-clear-episodes-from-tracker'), 1500, 'Cleared!');
+      hideButtonSpinner(this);
 
-    updateEpisodePages();
+      updateEpisodePages();
+    });
   });
 
   if (!isRandomAnime()) {
@@ -8684,15 +8715,18 @@ if (isAnime()) {
     });
 
     $('#anitracker-save-session-button').on('click', function() {
-      setSessionData();
-      $('#anitracker-save-session-button').off();
-      $(this).text('Saved!');
+      showButtonSpinner(this);
+      setSessionData().then(() => {
+        $('#anitracker-save-session-button').off();
+        $(this).text('Saved!');
 
-      updateAnimeCover();
+        updateAnimeCover();
 
-      setTimeout(() => {
-        $(this).parent().remove();
-      }, 1500);
+        hideButtonSpinner(this);
+        setTimeout(() => {
+          $(this).parent().remove();
+        }, 1500);
+      });
     });
   }
 
@@ -9126,8 +9160,8 @@ function addGeneralButtons() {
           &nbsp;Reset Player
         </button>
       </div><br>
-      <a class="btn-group" style="margin-top: 5px;" href="https://github.com/Ellivers/open-anime-timestamps/issues/new?title=Anime%20%22${encodeURIComponent(getAnimeName())}%22%20has%20incorrect%20timestamps&body=Anime%20ID:%20${getAnimeId(animeSession)}%0AAffected%20episode(s):%20${getEpisodeNum()}%0A%0A(Add%20more%20info%20here...)" target="_blank">
-        <button class="btn btn-secondary anitracker-flat-button" id="anitracker-report-timestamps" title="Open a new issue for incorrect or missing timestamps on this episode">
+      <a class="btn-group" style="margin-top: 5px;" id="anitracker-report-timestamps" href="https://github.com/Ellivers/open-anime-timestamps/issues/new?title=Anime%20%22${encodeURIComponent(getAnimeName())}%22%20has%20incorrect%20timestamps&body=Anime%20ID:%20LOADING_ID%0AAffected%20episode(s):%20${getEpisodeNum()}%0A%0A(Add%20more%20info%20here...)" target="_blank">
+        <button class="btn btn-secondary anitracker-flat-button" title="Open a new issue for incorrect or missing timestamps on this episode">
           <i class="fa fa-external-link"></i>
           &nbsp;Report Timestamp Issue
         </button>
@@ -9138,6 +9172,11 @@ function addGeneralButtons() {
           &nbsp;Edit/add timestamps
         </button>
       </div>`).appendTo('#anitracker-player-options');
+
+      asyncGetAnimeId(animeSession).then(id => {
+        const elem = $('#anitracker-report-timestamps');
+        elem.attr('href', elem.attr('href').replace('LOADING_ID',id));
+      });
 
       $('#anitracker-reset-player').on('click', function() {
         closeModal();
@@ -9183,11 +9222,6 @@ function addGeneralButtons() {
             &nbsp;Mark As Watched
           </button>
         </div>
-        <div class="anitracker-mark-watched-spinner anitracker-spinner" style="display: none;vertical-align: bottom;">
-            <div class="spinner-border" role="status">
-              <span class="sr-only">Loading...</span>
-            </div>
-        </div>
         <div class="btn-group" style="display:block;margin-top: 5px;">
           <button class="btn btn-secondary" id="anitracker-unmark-watched" title="Unmark all fully watched episodes of this anime">
             <i class="fa fa-eye-slash" aria-hidden="true"></i>
@@ -9196,13 +9230,13 @@ function addGeneralButtons() {
         </div>
       </div>`).appendTo('#anitracker-modal-body');
 
-      $('#anitracker-mark-watched').on('click', function(e) {
-        $(e.currentTarget).prop('disabled', true);
-        $('.anitracker-mark-watched-spinner').css('display','inline');
+      $('#anitracker-mark-watched').on('click', function() {
+        $(this).prop('disabled', true);
+        showButtonSpinner(this);
         getAllEpisodes(animeSession).then((episodes) => {
-          $(e.currentTarget).prop('disabled', false);
+          $(this).prop('disabled', false);
           if (!episodes.length) {
-            $('.anitracker-mark-watched-spinner').css('display','none');
+            hideButtonSpinner(this);
             return;
           }
 
@@ -9235,9 +9269,12 @@ function addGeneralButtons() {
       });
 
       $('#anitracker-unmark-watched').on('click', function() {
-        closeModal();
-        removeWatchedAnime(getAnimeId(animeSession));
-        updateEpisodePages();
+        showButtonSpinner(this);
+        asyncGetAnimeId(animeSession).then(id => {
+          closeModal();
+          removeWatchedAnime(id);
+          updateEpisodePages();
+        });
       });
     }
 
@@ -11359,7 +11396,9 @@ if (isEpisode()) {
 }
 
 if (initialStorage.settings.autoDelete === true && isEpisode() && paramArray.find(a => a[0] === 'ref' && a[1] === 'customlink') === undefined) {
-  deleteEpisodesFromTracker(getEpisodeNum(), getAnimeName(), getAnimeId(animeSession));
+  asyncGetAnimeId(animeSession).then(id => {
+    deleteEpisodesFromTracker(getEpisodeNum(), getAnimeName(), id);
+  });
 }
 
 function updateSwitches() {
