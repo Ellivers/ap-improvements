@@ -13,7 +13,7 @@
 // @grant       GM_setValue
 // @grant       GM_xmlhttpRequest
 // @grant       GM_info
-// @version     4.10.1
+// @version     4.11.0
 // @author      Ellivers
 // @license     MIT
 // @description Improvements and additions for the AnimePahe site
