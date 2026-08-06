@@ -6942,11 +6942,11 @@ function getAnimeId(session, animeName = getAnimeName()) {
 }
 
 async function asyncGetAnimeId(session, animeName = getAnimeName()) {
-  return new Promise(resolve => {
+  return new Promise(async resolve => {
     const cached = siteVars.cached.animeId[session];
     if (cached) return resolve(cached);
 
-    const id = (async () => {
+    const id = await (async () => {
       if (isAnime() && animeSession === session) {
         const linkHref = $('[data-target="#modalBookmark"]').attr('href');
         if (linkHref) return +linkHref.split('/')[2];
