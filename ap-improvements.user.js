@@ -8024,20 +8024,17 @@ if (isEpisode()) {
   $('.prequel,.sequel').addClass('anitracker-thumbnail');
 
   $(`
-  <span relationType="Prequel" class="dropdown-item anitracker-relation-link" id="anitracker-prequel-link">
+  <span relationType="Prequel" class="dropdown-item anitracker-relation-link" id="anitracker-prequel-link" tabindex="0">
     Previous Anime
   </span>`).prependTo('.episode-menu #scrollArea');
-
   $(`
-  <span relationType="Sequel" class="dropdown-item anitracker-relation-link" id="anitracker-sequel-link">
+  <span relationType="Sequel" class="dropdown-item anitracker-relation-link" id="anitracker-sequel-link" tabindex="0">
     Next Anime
   </span>`).appendTo('.episode-menu #scrollArea');
 
-  $('.anitracker-relation-link').on('click', function() {
-    if (this.href) {
-      $(this).off();
-      return;
-    }
+  $('.anitracker-relation-link').on('click keydown', function(e) {
+    if (e.type === 'keydown' && e.key !== "Enter") return;
+    if (this.href) return $(this).off();
 
     $(this).parents(':eq(2)').find('.anitracker-player-dropup-spinner').show();
 
@@ -8169,9 +8166,10 @@ async function getDownloadPage(redirectUrl) {
 
 function replaceDownloadButtons() {
   for (const aTag of $('#pickDownload a')) {
-    $(aTag).changeElementType('span');
+    $(aTag).attr('tabindex','0').changeElementType('span');
   }
-  $('#pickDownload>span').on('click', function() {
+  $('#pickDownload>span').on('click keydown', function(e) {
+    if (e.type === 'keydown' && e.key !== "Enter") return;
     $(this).parents(':eq(1)').find('.anitracker-player-dropup-spinner').show();
 
     const dlBtn = $(this);
