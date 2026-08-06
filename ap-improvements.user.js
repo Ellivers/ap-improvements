@@ -8632,6 +8632,65 @@ function updateEpisodePage(entry, allowCache = true) {
   })();
 }
 
+function addTitleIcons(animeid) {
+  const animename = getAnimeName();
+  $('h1 .fa').remove();
+
+  const notifIcon = (() => {
+    if (initialStorage.debug?.notifs) return true;
+    if (initialStorage.notifications.anime.find(a => a.name === animename)) return true;
+    if (isAnime) {
+      for (const info of $('.anime-info p>strong')) {
+        if (!$(info).text().startsWith('Status:')) continue;
+        return $(info).text().includes("Not yet aired") || $(info).find('a').text().includes("Currently Airing");
+      }
+    }
+    else if (isEpisode) return $('.anime-status').text().includes("Currently Airing");
+    return false;
+  })() ?
+  `<i title="Add to episode feed" class="fa fa-bell anitracker-title-icon anitracker-notifications-toggle">
+    <i style="display: none;" class="fa fa-check anitracker-title-icon-check" aria-hidden="true"></i>
+  </i>` : '';
+
+  $(`
+  <i title="Bookmark this anime" class="fa fa-bookmark anitracker-title-icon anitracker-bookmark-toggle">
+    <i style="display: none;" class="fa fa-check anitracker-title-icon-check" aria-hidden="true"></i>
+  </i>${notifIcon}${isAnime() ? '<a href="/a/${animeid}" title="Shortcut Link" class="fa fa-link btn anitracker-title-icon" data-toggle="modal" data-target="#modalBookmark"></a>' : ''}
+  `).appendTo(isAnime() ? '.title-wrapper>h1' : '.theatre-info>h1');
+
+  if (initialStorage.bookmarks.find(g => g.id === animeid)) {
+    $('.anitracker-bookmark-toggle .anitracker-title-icon-check').show();
+  }
+  if (initialStorage.notifications.anime.find(g => g.id === animeid)) {
+    $('.anitracker-notifications-toggle .anitracker-title-icon-check').show();
+  }
+
+  $('.anitracker-bookmark-toggle').on('click', (e) => {
+    const check = $(e.currentTarget).find('.anitracker-title-icon-check');
+    const storage = getStorage();
+    const entry = storage.bookmarks.find(g => g.id === animeid);
+
+    openBookmarkStatusEditModal(animeid, !entry, true);
+  });
+
+  $('.anitracker-notifications-toggle').on('click', (e) => {
+    const check = $(e.currentTarget).find('.anitracker-title-icon-check');
+    if (!check.is(':visible') && getStorage().notifications.anime.length >= getStorageLimits().notifications.anime) {
+      alert(`[AnimePahe Improvements]\n\nYou already have too many episode feeds (maximum ${getStorageLimits().notifications.anime})`);
+      showMessage('Too many feeds!');
+      return;
+    }
+
+    if (toggleNotifications(animename, animeid)) {
+      check.show();
+      showMessage('Added to feed!');
+      return;
+    }
+    check.hide();
+    showMessage('Removed from feed');
+  });
+}
+
 if (isAnime()) {
   if ($($('.anime-poster img')[0]).attr('src')) {
     improvePoster();
@@ -8760,61 +8819,8 @@ if (isAnime()) {
   }).observe($('.episode-list-wrapper')[0], { childList: true, subtree: false });
 
   // Title icons
-  const animename = getAnimeName();
-  const animeid = getAnimeId(animeSession, animename); // Pre-cache anime data
-  $('h1 .fa').remove();
-
-  const notifIcon = (() => {
-    if (initialStorage.debug?.notifs) return true;
-    if (initialStorage.notifications.anime.find(a => a.name === animename)) return true;
-    for (const info of $('.anime-info p>strong')) {
-      if (!$(info).text().startsWith('Status:')) continue;
-      return $(info).text().includes("Not yet aired") || $(info).find('a').text().includes("Currently Airing");
-    }
-    return false;
-  })() ?
-  `<i title="Add to episode feed" class="fa fa-bell anitracker-title-icon anitracker-notifications-toggle">
-    <i style="display: none;" class="fa fa-check anitracker-title-icon-check" aria-hidden="true"></i>
-  </i>` : '';
-
-  $(`
-  <i title="Bookmark this anime" class="fa fa-bookmark anitracker-title-icon anitracker-bookmark-toggle">
-    <i style="display: none;" class="fa fa-check anitracker-title-icon-check" aria-hidden="true"></i>
-  </i>${notifIcon}<a href="/a/${animeid}" title="Shortcut Link" class="fa fa-link btn anitracker-title-icon" data-toggle="modal" data-target="#modalBookmark"></a>
-  `).appendTo('.title-wrapper>h1');
-
-  if (initialStorage.bookmarks.find(g => g.id === animeid)) {
-    $('.anitracker-bookmark-toggle .anitracker-title-icon-check').show();
-  }
-  if (initialStorage.notifications.anime.find(g => g.id === animeid)) {
-    $('.anitracker-notifications-toggle .anitracker-title-icon-check').show();
-  }
-
-  $('.anitracker-bookmark-toggle').on('click', (e) => {
-    const check = $(e.currentTarget).find('.anitracker-title-icon-check');
-    const storage = getStorage();
-    const entry = storage.bookmarks.find(g => g.id === animeid);
-
-    openBookmarkStatusEditModal(animeid, !entry, true);
-  });
-
-  $('.anitracker-notifications-toggle').on('click', (e) => {
-    const check = $(e.currentTarget).find('.anitracker-title-icon-check');
-    if (!check.is(':visible') && getStorage().notifications.anime.length >= getStorageLimits().notifications.anime) {
-      alert(`[AnimePahe Improvements]\n\nYou already have too many episode feeds (maximum ${getStorageLimits().notifications.anime})`);
-      showMessage('Too many feeds!');
-      return;
-    }
-
-    if (toggleNotifications(animename, animeid)) {
-      check.show();
-      showMessage('Added to feed!');
-      return;
-    }
-    check.hide();
-    showMessage('Removed from feed');
-
-  });
+  const animeid = getAnimeId(animeSession, getAnimeName()); // Pre-cache anime data
+  addTitleIcons(animeid);
 
   if (initialStorage.settings.relativeEpNums) setRelativeEpNums(true);
 }
@@ -11380,18 +11386,24 @@ if (isEpisode()) {
   </div>`).appendTo('#anitracker');
   addOptionSwitch('autoPlayNext','Auto-Play Next','Automatically go to the next episode when the current one has ended.','#anitracker');
 
-  $('.anitracker-copy-button').on('click', (e) => {
-    const targ = $(e.currentTarget);
-    const type = targ.attr('copy');
-    const id = getAnimeId(animeSession);
-    const episode = getEpisodeNum();
-    if (['link','link-time'].includes(type)) {
-      navigator.clipboard.writeText(window.location.origin + '/customlink?a=' + id + '&e=' + episode + (type !== 'link-time' ? '' : ('&t=' + currentEpisodeTime.toString())));
-    }
-    targ.popover('show');
-    setTimeout(() => {
-      targ.popover('hide');
-    }, 1000);
+  const copyButtons = $('.anitracker-copy-button');
+  showButtonSpinner(copyButtons);
+  asyncGetAnimeId(animeSession).then(id => {
+    addTitleIcons(id);
+
+    hideButtonSpinner(copyButtons);
+    copyButtons.on('click', (e) => {
+      const targ = $(e.currentTarget);
+      const type = targ.attr('copy');
+      const episode = getEpisodeNum();
+      if (['link','link-time'].includes(type)) {
+        navigator.clipboard.writeText(window.location.origin + '/customlink?a=' + id + '&e=' + episode + (type !== 'link-time' ? '' : ('&t=' + currentEpisodeTime.toString())));
+      }
+      targ.popover('show');
+      setTimeout(() => {
+        targ.popover('hide');
+      }, 1000);
+    });
   });
 }
 
