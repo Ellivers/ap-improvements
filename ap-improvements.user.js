@@ -3462,8 +3462,9 @@ const is404 = $('h1').text().includes('404');
 function updateFromImport(diff, force = {}) {
   if (force.page || (diff.bookmarksAdded + diff.notificationsAdded + diff.settingsUpdated)) updatePage();
   if (force.epPage || diff.watchedEpisodesAdded || diff.videoTimesUpdated || diff.videoTimeEntryUpdated) updateEpisodePages();
-  if ((diff.videoTimesUpdated + diff.videoTimesAdded) && isEpisode()) {
-    sendMessage({action:"newer_time", time:getStorage().videoTimes.find(a => a.videoUrls.includes($('.embed-responsive-item')[0].src))?.time});
+  if (diff.videoTimesUpdated || diff.videoTimesAdded) {
+    if (isEpisode()) sendMessage({action:"newer_time", time:getStorage().videoTimes.find(a => a.videoUrls.includes($('.embed-responsive-item')[0].src))?.time});
+    if (isHome() && !$('#anitracker-continue-watching-section').length) setupContinueWatchingSection();
   }
 }
 
@@ -9580,6 +9581,7 @@ function addGeneralButtons() {
 
         saveData(getDefaultData());
         updatePage();
+        updateContinueWatchingEpisodes();
         openShowDataModal();
       }
     });
