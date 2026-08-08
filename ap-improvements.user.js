@@ -5592,17 +5592,19 @@ function getFiltersFromParams(params) {
       if (filterRules[key] === undefined) continue;
 
       const exclude = filter.startsWith('!');
-      if (key === 'season' && seasonFilterRegex.test(filter)) {
-        const parts = seasonFilterRegex.exec(filter);
-        if (!parts.includes(undefined) && ![parseInt(parts[2]),parseInt(parts[4])].includes(NaN)) {
-          filters.push({
-            type: 'season',
-            value: {
-              from: { season: getSeasonValue(parts[1]), year: parseInt(parts[2]) },
-              to: { season: getSeasonValue(parts[3]), year: parseInt(parts[4]) }
-            },
-            exclude: exclude
-          });
+      if (key === 'season') {
+        if (seasonFilterRegex.test(filter)) {
+          const parts = seasonFilterRegex.exec(filter);
+          if (!parts.includes(undefined) && ![parseInt(parts[2]),parseInt(parts[4])].includes(NaN)) {
+            filters.push({
+              type: 'season',
+              value: {
+                from: { season: getSeasonValue(parts[1]), year: parseInt(parts[2]) },
+                to: { season: getSeasonValue(parts[3]), year: parseInt(parts[4]) }
+              },
+              exclude: exclude
+            });
+          }
         }
         continue;
       }
