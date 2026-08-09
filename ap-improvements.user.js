@@ -723,6 +723,7 @@ const _css = `
         }
         const data = JSON.parse(req.response)[anidbId];
         if (!data) {
+          console.log(`[AnimePahe Improvements] No timestamp data found for this anime.`);
           resolve(false);
           return;
         }
@@ -9767,7 +9768,8 @@ function addGeneralButtons() {
             Seek thumbnails debugging
           </label>
         </div>
-        <input id="anitracker-decode-watched-input" placeholder="Decode watched format"><button class="btn btn-secondary anitracker-decode-watched-button">Decode</button>
+        <input id="anitracker-decode-watched-input" placeholder="Decode watched format"><button class="btn btn-secondary anitracker-decode-watched-button">Decode</button><br>
+        <input id="anitracker-encode-base64-input" placeholder="Encode to base64"><button class="btn btn-secondary anitracker-encode-base64-button">Encode</button>
         <div>Override function response: <input placeholder="Function" id="anitracker-funcresover-fn" style="width:50px;">
         <input placeholder="Value" id="anitracker-funcresover-val" style="width:50px;"><button class="btn btn-secondary anitracker-functionresover-button">Confirm</button></div>
         <div class="btn-group" style="display:block;">
@@ -9794,6 +9796,12 @@ function addGeneralButtons() {
           const decoded = decodeWatched($('#anitracker-decode-watched-input').val());
           console.log(decoded);
           alert(JSON.stringify(decoded));
+        });
+        $('.anitracker-encode-base64-button').on('click', () => {
+          $.anitrackerCachedScript('https://cdn.jsdelivr.net/npm/js-base64@3.7.8/base64.min.js', function() {
+            console.log(Base64.encode($('#anitracker-encode-base64-input').val()));
+            showMessage('Encoded');
+          });
         });
         $('.anitracker-functionresover-button').on('click', () => {
           eval(`${$('#anitracker-funcresover-fn').val()} = () => {
@@ -11013,6 +11021,12 @@ async function syncData() {
             text: 'Nothing is currently being synced.<br>Check settings.'
           };
           break;
+        case 12:
+          storage.sync.currentMessage = {
+            type: 'error',
+            text: 'The data was too large to send to the server.<br>Please remove any unnecessary data.'
+          };
+          break;
       }
 
       saveData(storage);
@@ -11052,6 +11066,7 @@ async function syncData() {
   // 9 - rate limited due to PUT
   // 10 - service unavailable
   // 11 - no need to sync due to no enabled settings
+  // 12 - PUT content is too large
   async function runSync(code) {
     /*syncing order of operations:
     1. get data from server
@@ -11212,6 +11227,10 @@ async function syncData() {
         }
         else if (req.status === 429) {
           resolve(9);
+          return;
+        }
+        else if (req.status === 413) {
+          resolve(12);
           return;
         }
         else if (req.status !== 204) {
