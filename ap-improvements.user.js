@@ -4479,14 +4479,19 @@ $(document).on('keydown', (e, other = undefined) => {
   if (isTextInput) return;
 
   const storage = getStorage();
-  if (pressedKeybind(e, storage.settings.keybindBookmarks)) return openBookmarksModal();
-  if (pressedKeybind(e, storage.settings.keybindNotifications)) return openNotificationsModal();
-  if (pressedKeybind(e, storage.settings.keybindSearch)) return setTimeout(() => {$('.input-search').focus()}, 1);
+  if (!document.fullscreenElement) {
+    if (pressedKeybind(e, storage.settings.keybindBookmarks)) return openBookmarksModal();
+    if (pressedKeybind(e, storage.settings.keybindNotifications)) return openNotificationsModal();
+    if (pressedKeybind(e, storage.settings.keybindSearch)) return setTimeout(() => {$('.input-search').focus()}, 1);
+  }
 
   if (!isEpisode()) return; // Everything below is for episode pages
 
   if (pressedKeybind(e, storage.settings.keybindResetPlayer)) return resetPlayer();
-  if (pressedKeybind(e, storage.settings.keybindTheatreMode)) return toggleTheatreMode();
+  if (pressedKeybind(e, storage.settings.keybindTheatreMode)) {
+    if (document.fullscreenElement) return document.exitFullscreen();
+    else return toggleTheatreMode();
+  }
   if (pressedKeybind(e, storage.settings.keybindNextEpisode)) return $('.sequel a')[0]?.click();
   if (pressedKeybind(e, storage.settings.keybindPrevEpisode)) return $('.prequel a')[0]?.click();
 
