@@ -1201,10 +1201,10 @@ const _css = `
     sendMessage({action: "id_request"});
     setTimeout(() => {
       if (waitingState.idRequest === 1) {
-        waitingState.idRequest = -1; // Failed to get the anime ID from the main page within 2 seconds
+        waitingState.idRequest = -1; // Failed to get the anime ID from the main page within 8 seconds
         updateStoredTime();
       }
-    }, 2000);
+    }, 8000);
   }
 
   function seeked() {
@@ -3257,6 +3257,7 @@ if (isEpisode()) {
       currentEpisodeTime = Math.trunc(data);
       return;
     }
+    else if (!data || !data.action) return;
 
     const action = data.action;
     if (action === 'id_request') {
