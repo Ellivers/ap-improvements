@@ -4478,6 +4478,12 @@ $(document).on('keydown', (e, other = undefined) => {
   if (modalIsOpen()) {
     if (e.key === 'Escape') return closeModal();
     if (e.key === 'Backspace' && !isTextInput) return modalBackFunction();
+    if (e.ctrlKey && e.key === 'f' && $('.anitracker-modal-search').length) {
+      const elems = $('.anitracker-modal-search');
+      elems[0].scrollIntoView(true);
+      elems[0].focus();
+      e.preventDefault();
+    }
     return;
   }
 
