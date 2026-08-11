@@ -3251,15 +3251,14 @@ let currentEpisodeTime = 0;
 if (isEpisode()) {
   window.onmessage = function(e) {
     const data = e.data;
-    if (initialStorage.debug?.msg) console.log('Received from iframe: ' + (typeof(e.data) === 'object' ? JSON.stringify(e.data) : e.data));
+    if (initialStorage.debug?.msg) console.log('Received from iframe: ' + (typeof(data) === 'object' ? JSON.stringify(data) : data));
 
     if (typeof(data) === 'number') {
       currentEpisodeTime = Math.trunc(data);
       return;
     }
-    else if (!data || !data.action) return;
 
-    const action = data.action;
+    const action = data?.action;
     if (action === 'id_request') {
       asyncGetAnimeId(getAnimeSessionFromUrl()).then(id => {
         sendMessage({action:"id_response",id:id});
