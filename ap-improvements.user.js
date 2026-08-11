@@ -9166,14 +9166,7 @@ function addGeneralButtons() {
   function openOptionsModal() {
     $('#anitracker-modal-body').empty();
 
-    if (isAnime() || isEpisode())
-      $(`<div class="btn-group">
-        <button class="btn btn-secondary" id="anitracker-refresh-session" title="Refresh the session for the current page">
-          <i class="fa fa-refresh" aria-hidden="true"></i>
-          &nbsp;Refresh Session
-        </button></div>`).appendTo('#anitracker-modal-body');
-
-    $(`<div class="anitracker-dark-area" id="anitracker-player-options" style="${isAnime() || isEpisode() ? 'margin-top:10px;' : ''}"><span style="display:block;">Video player:</span></div>`).appendTo('#anitracker-modal-body');
+    $(`<div class="anitracker-dark-area" id="anitracker-player-options"><span style="display:block;">Video player:</span></div>`).appendTo('#anitracker-modal-body');
 
     addOptionSwitch('autoPlayVideo', 'Auto-Play Video', 'Automatically play the video when it is loaded. (You might need to tell your browser to allow auto-playing on this website)', '#anitracker-player-options');
     addOptionSwitch('theatreMode', 'Theatre Mode', 'Expand the video player for a better experience on bigger screens.', '#anitracker-player-options');
@@ -9311,6 +9304,21 @@ function addGeneralButtons() {
       });
     }
 
+    if (isAnime() || isEpisode())
+      $(`<div class="anitracker-center-content" style="width:100%;margin-top: 10px;">
+        <button class="btn btn-secondary" id="anitracker-refresh-session" title="Refresh the session for the current page">
+          <i class="fa fa-refresh" aria-hidden="true"></i>
+          &nbsp;Refresh Session
+        </button></div>`).appendTo('#anitracker-modal-body');
+
+    $(`
+    <div class="anitracker-center-content" style="width:100%;margin-top: 5px;">
+      <button class="btn btn-secondary anitracker-flat-button" id="anitracker-changelog" title="Show previous changelogs">
+        <i class="fa fa-history" aria-hidden="true"></i>
+        &nbsp;Version History...
+      </button>
+    </div>`).appendTo('#anitracker-modal-body');
+
     $('#anitracker-refresh-session').on('click', function(e) {
       const elem = $('#anitracker-refresh-session');
       const timeout = temporaryHtmlChange(elem, 10000, '<i class="fa fa-refresh" aria-hidden="true" style="animation: anitracker-spin 1s linear infinite;"></i>&nbsp;&nbsp;Refreshing...');
@@ -9320,6 +9328,63 @@ function addGeneralButtons() {
         else if ([2,3].includes(result)) temporaryHtmlChange(elem, 2200, 'Failed: Couldn\'t find session', timeout);
         else temporaryHtmlChange(elem, 2200, 'Failed.', timeout);
       });
+    });
+
+    $('#anitracker-changelog').on('click', function() {
+      $('#anitracker-modal-body').empty();
+
+      $(`
+      <h4 style="margin-bottom:0;">Version History</h4>
+      <div style="margin-top:20px;">
+        <div id="anitracker-changelog-spinner" class="anitracker-spinner anitracker-center-content" style="width:100%;">
+          <div class="spinner-border" role="status">
+            <span class="sr-only">Loading...</span>
+          </div>
+        </div>
+      </div>`).appendTo('#anitracker-modal-body');
+
+      const req = new XMLHttpRequest();
+      req.open('GET', `https://raw.githubusercontent.com/Ellivers/ap-improvements/refs/heads/${initialStorage.debug?.devChangelog ? 'dev' : 'master'}/changelogs.md`, true);
+      req.onload = () => {
+        $('#anitracker-changelog-spinner').remove();
+        if (req.status !== 200) {
+          $('<span class="text-danger">Couldn\'t get version history.</span>').appendTo('#anitracker-modal-body');
+          return;
+        }
+        $(`<span>Current version: ${GM_info.script.version}</span>`).insertAfter('#anitracker-modal-body>h4');
+
+        const lines = req.response.split('\n');
+        let outerList;
+        let innerList;
+        for (const line of lines) {
+          const finalText = line.replace(/\s*[#\-]*\s*/,'');
+          if (line.startsWith('###')) {
+            const matches = / (\d{4}\-\d{2}\-\d{2})^/.exec(finalText);
+            if (matches) finalText.replace(/\d{4}\-\d{2}\-\d{2}/, new Date(matches[1]).toLocaleDateString())
+
+            const elem = $('<h4></h4>');
+            elem.text(finalText);
+            elem.appendTo('#anitracker-modal-body');
+            outerList = $('<ul></ul>').appendTo('#anitracker-modal-body');
+            continue;
+          }
+          if (!outerList) continue;
+
+          const elem = $('<li></li>');
+          elem.text(finalText);
+          if (line.startsWith('-')) {
+            elem.appendTo(outerList);
+            innerList = undefined;
+            continue;
+          }
+          if (!line.startsWith('  -')) continue;
+          if (!innerList) innerList = $('<ul></ul>').appendTo(outerList);
+          elem.appendTo(innerList);
+        }
+      };
+      req.send();
+
+      openModal(openOptionsModal);
     });
 
     $('#anitracker-edit-keybinds').on('click', () => {
@@ -9785,6 +9850,12 @@ function addGeneralButtons() {
             Seek thumbnails debugging
           </label>
         </div>
+        <div class="form-check">
+          <input class="form-check-input" type="checkbox" value="" id="anitracker-debug-dev-changelog" ${options.devChangelog ? "checked" : ""}>
+          <label class="form-check-label" for="anitracker-debug-dev-changelog">
+            Dev changelog
+          </label>
+        </div>
         <input id="anitracker-decode-watched-input" placeholder="Decode watched format"><button class="btn btn-secondary anitracker-decode-watched-button">Decode</button><br>
         <input id="anitracker-encode-base64-input" placeholder="Encode to base64"><button class="btn btn-secondary anitracker-encode-base64-button">Encode</button>
         <div>Override function response: <input placeholder="Function" id="anitracker-funcresover-fn" style="width:50px;">
@@ -9804,6 +9875,7 @@ function addGeneralButtons() {
           storage.debug.msg = $('#anitracker-debug-msg').prop('checked');
           storage.debug.notifs = $('#anitracker-debug-notifs').prop('checked');
           storage.debug.seekThumbnails = $('#anitracker-debug-seek-thumbnails').prop('checked');
+          storage.debug.devChangelog = $('#anitracker-debug-dev-changelog').prop('checked');
           saveData(storage);
 
           openShowDataModal();
