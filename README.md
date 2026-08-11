@@ -1,7 +1,7 @@
 # ap-improvements
 Improvements and additions for AnimePahe.
 
-The "dev" branch is for the in-development version of the script.
+The [dev](https://github.com/Ellivers/ap-improvements/tree/dev) branch is for the in-development version of the script.
 
 If you find a bug or have a suggestion, feel free to [open an issue](https://github.com/Ellivers/ap-improvements/issues/new/choose)!
 

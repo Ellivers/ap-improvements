@@ -10282,6 +10282,12 @@ function addGeneralButtons() {
               &nbsp;Disconnect
             </button>
           </div>
+          <div>
+            <button class="btn btn-danger anitracker-flat-button anitracker-delete-sync-button" title="Delete this sync code">
+              <i class="fa fa-trash" aria-hidden="true"></i>
+              &nbsp;Delete
+            </button>
+          </div>
         </div>`).appendTo('#anitracker-modal-body');
 
         if (storage.sync.inProgress) $('.anitracker-sync-button>i').addClass('anitracker-spin');
@@ -10309,7 +10315,7 @@ function addGeneralButtons() {
           const storage = getStorage();
 
           $(`
-          <p class="anitracker-thin-text">Disconnect from sync?</p>
+          <p class="anitracker-thin-text">Disconnect this device from sync?</p>
           <div class="anitracker-center-content">
             <div style="display:flex;gap:16px;" id="anitracker-disconnect-prompt">
               <div><button class="btn btn-primary anitracker-disconnect-sync-confirm-button" title="Confirm disconnect">Yes</button></div>
@@ -10832,6 +10838,8 @@ async function syncConnectUser(code) {
         return;
       }
 
+      // Saves an ETag of what the data was after the user is added
+      // This is to make sure that the gotten data after adding the user is up-to-date with the new data that includes the new user
       const etag = req.getResponseHeader('ETag');
       if (etag) {
         const storage = getStorage();
@@ -10906,6 +10914,151 @@ async function syncDisconnectUser(code) {
     });
 
     req.send();
+  });
+}
+
+// Removes the sync code.
+// Returned statuses:
+// 0 - success
+// 1 - network error
+// 2 - unknown error
+// 3 - outdated client error
+// 4 - rate limited
+// 5 - service unavailable
+// 6 - etag didn't match
+async function syncDelete(code, etag) {
+  return new Promise(resolve => {
+    const req = new XMLHttpRequest();
+    req.open('DELETE', syncApi + '/data', true);
+    req.setRequestHeader('Anitracker-Version', GM_info.script.version);
+    req.setRequestHeader('Anitracker-Auth', code);
+    req.setRequestHeader('If-Match', etag);
+
+    req.onload = () => {
+      if (isOutdatedClient(req)) {
+        showOutdatedClientMessage(req);
+        resolve(3);
+        return;
+      }
+      else if (req.status === 503) {
+        showServiceUnavailableMessage(req);
+        resolve(5);
+        return;
+      }
+      else if ([404, 401].includes(req.status)) {
+        resolve(0);
+        return;
+      }
+      else if (req.status === 429) {
+        showRateLimitMessage();
+        resolve(4);
+        return;
+      }
+      else if (req.status === 412) {
+        resolve(6);
+        return;
+      }
+      else if (req.status !== 204) {
+        console.error(`[AnimePahe Improvements] Got status code ${req.status} when attempting to remove user from sync: ${req.response}`);
+        resolve(2);
+        return;
+      }
+
+      resolve(0);
+    };
+    req.onerror = (() => {
+      resolve(1);
+      return;
+    });
+    req.ontimeout = (() => {
+      resolve(1);
+      return;
+    });
+
+    req.send();
+  });
+}
+
+// Gets the data from the server.
+// Returned statuses:
+// 0 - success
+// 1 - network error
+// 2 - code is invalid
+// 3 - unknown error
+// 5 - data mismatch after adding user
+// 7 - outdated client error
+// 8 - rate limited
+// 10 - service unavailable
+function syncGetData(code) {
+  return new Promise(resolveFunc => {
+    const req = new XMLHttpRequest();
+    req.open('GET', syncApi + '/data', true);
+    req.setRequestHeader('Anitracker-Version', GM_info.script.version);
+    req.setRequestHeader('Anitracker-Auth', code);
+
+    req.onload = () => {
+      if (isOutdatedClient(req)) {
+        siteVars.syncErrorCooldown = 30; // Wait 30 minutes on auto-sync if the version is incorrect
+        showOutdatedClientMessage(req);
+        resolve(7);
+        return;
+      }
+      else if (req.status === 503) {
+        siteVars.syncErrorCooldown = 20; // Wait 20 minutes on auto-sync if the server is down
+        showServiceUnavailableMessage(req);
+        resolve(10);
+        return;
+      }
+      if (req.status === 404) {
+        resolve(2);
+        return;
+      }
+      else if (req.status === 429) {
+        showRateLimitMessage();
+        resolve(8);
+        return;
+      }
+      else if (req.status !== 200) {
+        console.error(`[AnimePahe Improvements] Got status code ${req.status} when attempting to get sync data: ${req.response}`);
+        resolve(3);
+        return;
+      }
+
+      const etag = req.getResponseHeader('ETag');
+      if (!etag) {
+        console.error(`[AnimePahe Improvements] Got no ETag alongside sync data. Headers: ${req.getAllResponseHeaders()}`);
+        resolve(3);
+        return;
+      }
+
+      const storage = getStorage();
+      if (storage.sync.temp.requiredHash !== '' && etag !== storage.sync.temp.requiredHash) {
+        storage.sync.temp.requiredHash = '';
+        saveData(storage);
+        resolve(5);
+        return;
+      }
+
+      resolve(0, req.response, etag);
+    };
+    req.onerror = (() => {
+      resolve(1);
+      return;
+    });
+    req.ontimeout = (() => {
+      resolve(1);
+      return;
+    });
+
+    req.send();
+
+    function resolve(status, data, etag) {
+      resolveFunc({
+        status: status,
+        data: data,
+        etag: etag
+      });
+    }
   });
 }
 
@@ -11090,68 +11243,16 @@ async function syncData() {
         return;
       }
 
-      let req = new XMLHttpRequest();
-      req.open('GET', syncApi + '/data', true);
-      req.setRequestHeader('Anitracker-Version', GM_info.script.version);
-      req.setRequestHeader('Anitracker-Auth', code);
-
-      req.onload = afterGet;
-      req.onerror = (() => {
-        resolve(1);
-        return;
-      });
-      req.ontimeout = (() => {
-        resolve(1);
-        return;
-      });
-      req.send();
-
-      function afterGet() {
-        if (isOutdatedClient(req)) {
-          siteVars.syncErrorCooldown = 30; // Wait 30 minutes on auto-sync if the version is incorrect
-          showOutdatedClientMessage(req);
-          resolve(7);
-          return;
-        }
-        else if (req.status === 503) {
-          siteVars.syncErrorCooldown = 20; // Wait 20 minutes on auto-sync if the server is down
-          showServiceUnavailableMessage(req);
-          resolve(10);
-          return;
-        }
-        if (req.status === 404) {
-          resolve(2);
-          return;
-        }
-        else if (req.status === 429) {
-          showRateLimitMessage();
-          resolve(8);
-          return;
-        }
-        else if (req.status !== 200) {
-          console.error(`[AnimePahe Improvements] Got status code ${req.status} when attempting to get sync data: ${req.response}`);
-          resolve(3);
+      syncGetData(code).then(response => {
+        if (response.status !== 0) {
+          resolve(response.status);
           return;
         }
 
-        const etag = req.getResponseHeader('ETag');
-        if (!etag) {
-          console.error(`[AnimePahe Improvements] Got no ETag alongside sync data. Headers: ${req.getAllResponseHeaders()}`);
-          resolve(3);
-          return;
-        }
-
-        let storage = getStorage();
-
-        if (storage.sync.temp.requiredHash !== '' && etag !== storage.sync.temp.requiredHash) {
-          storage.sync.temp.requiredHash = '';
-          saveData(storage);
-          resolve(5);
-          return;
-        }
+        storage = getStorage();
         storage.sync.temp.requiredHash = '';
 
-        const dbResponse = JSON.parse(req.response);
+        const dbResponse = JSON.parse(response.data);
 
         // If the database data hasn't been changed and there are no changes to save, do nothing
         if (storage.sync.lastSynced > dbResponse.lastUpdated && (storage.sync.temp.removedData.length + storage.sync.temp.addedData.length) === 0) {
@@ -11200,14 +11301,16 @@ async function syncData() {
         }
         if (storage.debug?.sync) console.log('putreasons:', putReasons, storage.sync.temp.removedData, storage.sync.temp.addedData);
 
-        req = new XMLHttpRequest();
+        const req = new XMLHttpRequest();
         req.open('PUT', syncApi + '/data', true);
         req.setRequestHeader('Anitracker-Version', GM_info.script.version);
         req.setRequestHeader('Anitracker-Auth', code);
         req.setRequestHeader('Anitracker-PUT-Reasons', putReasons.join(', '));
-        req.setRequestHeader('If-Match', etag);
+        req.setRequestHeader('If-Match', response.etag);
 
-        req.onload = afterPut;
+        req.onload = () => {
+          afterPut(req);
+        };
 
         try {
           $.anitrackerCachedScript('https://cdn.jsdelivr.net/npm/js-base64@3.7.8/base64.min.js', function() {
@@ -11223,9 +11326,9 @@ async function syncData() {
           resolve(4);
           return;
         }
-      }
+      });
 
-      function afterPut() {
+      function afterPut(req) {
         if (req.status === 412) {
           console.error(`[AnimePahe Improvements] Data mismatch when attempting to put sync data. ${etag} vs ${req.getResponseHeader('ETag')}`);
           resolve(6);
