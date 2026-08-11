@@ -10318,7 +10318,7 @@ function addGeneralButtons() {
           <p class="anitracker-thin-text">Disconnect this device from sync?</p>
           <div class="anitracker-center-content">
             <div style="display:flex;gap:16px;" id="anitracker-disconnect-prompt">
-              <div><button class="btn btn-primary anitracker-disconnect-sync-confirm-button" title="Confirm disconnect">Yes</button></div>
+              <button class="btn btn-primary anitracker-disconnect-sync-confirm-button" title="Confirm disconnect">Yes</button>
               <button class="btn btn-secondary anitracker-disconnect-sync-cancel-button" title="Cancel">No</button>
             </div>
           </div>
@@ -10391,7 +10391,7 @@ function addGeneralButtons() {
             <p class="anitracker-thin-text anitracker-secondary-info">Existing data on all connected devices/browsers will remain as-is.</p>
             <div class="anitracker-center-content">
               <div style="display:flex;gap:16px;">
-                <div><button class="btn btn-danger anitracker-delete-sync-confirm-button" title="Confirm deletion">Yes</button></div>
+                <button class="btn btn-danger anitracker-delete-sync-confirm-button" title="Confirm deletion">Yes</button>
                 <button class="btn btn-secondary anitracker-delete-sync-cancel-button" title="Cancel">No</button>
               </div>
             </div>
@@ -10413,7 +10413,6 @@ function addGeneralButtons() {
               </div>
             </div>`).insertAfter('#anitracker-delete-sync-prompt');
             $('#anitracker-delete-sync-prompt').hide();
-            return;
 
             let storage = getStorage();
             syncGetData(storage.sync.syncCode).then(dataResponse => {
@@ -10461,36 +10460,38 @@ function addGeneralButtons() {
                   $('#anitracker-delete-sync-prompt').show();
                   loadingElem.remove();
                   loading = false;
-                  if (dataResponse.status === 1) {
-                    storage.sync.currentMessage = {
-                      type: "error",
-                      text: "Couldn't remove data. Please check you internet connection."
-                    };
-                    saveData(storage);
-                    updateSyncMessageElem(storage);
-                    return;
-                  }
-                  else if (dataResponse.status === 2) {
-                    storage.sync.currentMessage = {
-                      type: "error",
-                      text: "Couldn't remove data due to unknown error."
-                    };
-                    saveData(storage);
-                    updateSyncMessageElem(storage);
-                    return;
-                  }
-                  else if (dataResponse.status === 6) {
-                    storage.sync.currentMessage = {
-                      type: "error",
-                      text: "Couldn't remove data. Try again in a few minutes."
-                    };
-                    saveData(storage);
-                    updateSyncMessageElem(storage);
-                    return;
-                  }
                 }
-
-                success();
+                else {
+                  success();
+                  return;
+                }
+                if (delStatus === 1) {
+                  storage.sync.currentMessage = {
+                    type: "error",
+                    text: "Couldn't remove data. Please check you internet connection."
+                  };
+                  saveData(storage);
+                  updateSyncMessageElem(storage);
+                  return;
+                }
+                else if (delStatus === 2) {
+                  storage.sync.currentMessage = {
+                    type: "error",
+                    text: "Couldn't remove data due to unknown error."
+                  };
+                  saveData(storage);
+                  updateSyncMessageElem(storage);
+                  return;
+                }
+                else if (delStatus === 6) {
+                  storage.sync.currentMessage = {
+                    type: "error",
+                    text: "Couldn't remove data. Try again in a few minutes."
+                  };
+                  saveData(storage);
+                  updateSyncMessageElem(storage);
+                  return;
+                }
               });
             });
 
@@ -11088,7 +11089,7 @@ async function syncDelete(code, etag) {
         resolve(6);
         return;
       }
-      else if (req.status !== 204) {
+      else if (req.status !== 202) {
         console.error(`[AnimePahe Improvements] Got status code ${req.status} when attempting to remove user from sync: ${req.response}`);
         resolve(2);
         return;
