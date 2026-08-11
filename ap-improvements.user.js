@@ -5742,6 +5742,7 @@ function loadIndexPage() {
 
   const selectedFilters = [];
   const appliedFilters = [];
+  const appliedRuleChanges = [];
 
   function getElemsFromFilterType(filterType) {
     const elems = {};
@@ -5794,7 +5795,7 @@ function loadIndexPage() {
   }
 
   function updateApplyButton() {
-    setChangesToApply(JSON.stringify(selectedFilters) !== JSON.stringify(appliedFilters) || getChangedRulesList(filterRules).length);
+    setChangesToApply(JSON.stringify(selectedFilters) !== JSON.stringify(appliedFilters) || JSON.stringify(appliedRuleChanges) !== JSON.stringify(getChangedRulesList(filterRules)));
   }
 
   function showDropdown(elem, parentElem) {
@@ -6130,8 +6131,8 @@ function loadIndexPage() {
     if ($('.anitracker-filter-spinner').length) return; // If already searching
     setSpinner(screenSpinner);
 
-    appliedFilters.length = 0;
-    appliedFilters.push(...JSON.parse(JSON.stringify(filters)));
+    appliedFilters.splice(0,appliedFilters.length,...JSON.parse(JSON.stringify(filters)));
+    appliedRuleChanges.splice(0,appliedRuleChanges.length,...getChangedRulesList(filterRules));
 
     setChangesToApply(false);
 
