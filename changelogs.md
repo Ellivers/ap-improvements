@@ -1,3 +1,23 @@
+### 4.11.0 (in development)
+- Added bookmark and episode feed buttons to episode pages
+- Added a Delete button in the sync menu, for deleting the sync code entirely
+  - It will still be automatically deleted if all users disconnect from it
+- Added a Version History menu through a button at the bottom of the Options menu
+- Added toast messages for marking all episodes as watched/unwatched
+- Lessened performance impact from loading a page
+- Pressing the Theater Mode keybind while having the video player in fullscreen now exits fullscreen
+- Pressing Ctrl+F in a modal menu with a search bar now focuses the first search bar in the menu
+- Fixed errors in the Manage Feed menu when having anime with no episodes added to the feed
+- Fixed the video player being incorrectly focused when pressing Enter on an episode page
+- Fixed keyboard navigation for the expandable menus below the video player
+- Fixed the search query not being kept when changing sorting direction in various menus
+- Fixed the search query not being kept when changing sorting type in the Bookmarks menu
+- Fixed certain keybinds being able to be activated while having the video player in fullscreen
+- Fixed the Continue Watching section not being added after importing data
+- Fixed changing filter rules on the index page not always updating the Apply button
+- Fixed errors from entering an invalid season range filter in the index page's URL
+- More small fixes
+
 ### 4.10.0 (2026-08-02)
 - Made the following keybinds modifiable:
   - Toggle Theater Mode (T)
@@ -44,16 +64,16 @@
 - Fixed video duration data being stored with decimals
 - And some more
 
-### 4.9.3
+### 4.9.3 (2026-06-27)
 - Fixed errors in the Manage Feed menu when having anime with no episodes added to the feed
 - Fixed having certain anime in the episode feed causing an error when refreshing
 - Fixed broken anime ID data from 4.9.0
 
-### 4.9.2
+### 4.9.2 (2026-06-25)
 - Fixed a sync error after unmarking watched episodes for an anime with no watched episodes
 - Other small fixes
 
-### 4.9.1
+### 4.9.1 (2026-06-24)
 - Search bars are no longer automatically selected on mobile
 - Updated the look of episode feed items
 - The bookmark menu buttons now look better on mobile
@@ -68,7 +88,7 @@
 - Other small styling updates
 - Other small fixes
 
-### 4.9.0
+### 4.9.0 (2026-06-14)
 - Added a Download Preferences menu in Options, where you can select the preferred resolution and language of episodes downloaded through the episode options menu
 - Added a Watching Section option, which allows you to show/hide the Continue Watching section of the homepage
 - Moved the Manage Data and Options buttons higher up on the homepage
@@ -78,7 +98,7 @@
 - Fixed not being able to get a bookmark image for certain anime
 - Other small fixes
 
-### 4.8.1
+### 4.8.1 (2026-06-13)
 - Updated collection items to look more like the site's new search result style
 - The Manage Feed schedule now marks the current day
 - Made site search results more easily clickable
@@ -86,7 +106,7 @@
   - Applied when they are first loaded, not retroactively
 - Fixed the "View full poster" link on anime pages
 
-### 4.8.0
+### 4.8.0 (2026-06-12)
 - Revamped the homepage
   - Added a section that shows the 6 most recent episodes you started watching
     - With the Show More button below the section, you can view all current video progress and remove episodes you don't want to keep
@@ -125,3 +145,205 @@
 - Fixed rare error caused by the sub group's name
 - Fixed pressing the shortcut key for the site search bar sometimes putting a character in the search bar
 - And more small stuff
+
+### 4.7.2 (2026-05-14)
+- Fixed auto-loading the video sometimes not working on Chromium-based browsers
+
+### 4.7.1 (2026-04-29)
+- Renamed the "Auto-Clear Links" option to "Auto-Clear Episodes"
+- Changed the hover text of the anime page link button from "Get Link" to "Shortcut Link"
+- Video progress time is now stored without decimals
+- Fixed too many episodes in the episode feed causing it to delete newer episodes instead of older ones
+- Fixed episode timestamps not being found for sequels with continuing episode numbers
+- Fixed anime index results having no hover text
+- Fixed the "to" season selection dropdown button being too wide when Fall is selected
+- Some more small fixes
+
+### 4.7.0 (2026-04-10)
+- Added an option to have the header follow scrolling and stay at the top of the screen
+- Updated the look of the Options menu
+- Added the ability to press S to quickly open the site search bar, as an alternative to F2
+- Added a button in the Options menu on episode pages to define or edit timestamps
+  - This is an advanced feature. Use it if you'd like to contribute to defining sections in anime episodes
+- Changed the bookmark Delete button to be red
+- Added a bookmark icon to the Add Bookmark button
+- A small message is now shown when adding and removing anime from bookmarks and the episode feed
+- Keyboard shortcuts are now handled more consistently between the main page and video player
+- Fixed hotkeys activating while typing in the index page's filter selection boxes
+- Fixed not being able to find episode timestamps
+- Fixed not being able to find anime covers from Anilist
+- Fixed the hotkeys B and N (bookmarks and episode feed) not working when having the video player focused
+- Fixed hotkeys not working on the 404 page
+- Fixed a few typos
+- And some more small things
+
+### 4.6.1 (2026-04-5)
+- Added support for the new domain
+
+### 4.6.0 (2026-02-13)
+- Added watched statuses to bookmarks. You can change the status of a bookmark anytime you want.
+  - You can also sort bookmarks by status
+- You can now sort bookmarks alphabetically
+- Made the background for lists in modal menus darker, to make the text more readable on certain screens
+- Updated visuals for the modal close/back button when hovered and clicked
+- While the episode feed is loading, it now shows the loading status
+- The default bookmark menu layout is now the grid layout
+- Videos now show time elapsed instead of time remaining by default
+- In data sync options, the corresponding time is now shown for the entered auto-sync value
+- A message is now shown when toggling the Skip Button setting to remind that the video player must be reloaded
+- Various other improvements
+- This version is now required for the data sync feature, due to bookmark statuses being added
+- Fixed data sync failing when the data contained certain characters
+- Fixed finding anime page covers not being async
+
+### 4.5.0 (2025-10-26)
+- Anime page covers (banners) are now primarily from AniList, which should mean generally higher-quality covers
+- Added a feature to go to a specific page of episodes on an anime page
+- You can now press "B" to open the bookmarks menu
+- You can now press "N" to open the episode feed (notifications) menu
+- Fixed the search bar not being automatically selected when opening the bookmark menu
+- Fixed entering a non-number in the Sync Interval setting causing an error
+- Added handling for rare cases where a bookmark's image becomes invalid after it has been loaded
+
+### 4.4.0 (2025-10-07)
+- Added an option to enable data syncing between devices
+  - Accessed through a Sync Data button in the Manage Data menu
+  - Each device can select what data to sync and how often to automatically sync it
+  - Create a sync code on one device and then enter the code on devices you want to sync with
+- Added Download button in the episode menu dropdown, which takes you to the episode's download page
+- Added an alternative grid layout to the bookmark list, which shows an image for each anime
+- Searching on the anime index page has been improved to always put results that include the search query first
+- The anime index page now shows alternating colors for the result rows
+- Added a new system for quick messages shown at the bottom of the screen
+- When clicking the Get Name button on an entry in the Watched Episodes storage menu, the session for that anime is now saved
+- When visiting a random anime, the tab name now has a prefix to show that
+- In cases where the modal menu has a back button, clicking outside the modal or pressing escape now closes it instead of going back
+  - Pressing backspace still goes back to the previous menu
+- You can now input more video player keybinds while the player isn't focused
+- Emptying the main search bar now removes search results
+- Pressing the "Clear Episodes from Tracker" button no longer freezes the page for a short moment
+- Importing a partial "notifications" object is now supported
+- The modal menu fade-in animation is now only played when it is opened
+- The modal menu now has a limited width on larger screens
+- Added descriptions to the expandable menus below the video player
+- Fixed the modal menu's fade out animation not working on Chrome
+- Fixed certain actions like Ctrl + C not working on episode pages
+- Fixed timestamps (h:mm:ss) not being displayed with a 0 before the minute number, when applicable
+- Fixed messages that show "X seconds ago" not being plural when displaying 0 seconds
+- Fixed descriptions for results when searching with the main search bar
+- Fixed the bookmark and episode feed header icons touching the search bar on mobile
+- Fixed the episode feed anime entries not always graying out the "Get All" button, even if all available episodes were in the feed
+- Fixed the resolution/dub not changing when clicking a badge icon on a resolution selection button
+- Fixed Auto-Play Next being able to go to the next episode while the page for another episode was already loading
+- Fixed placeholder text being added to the dropdown boxes in the index page when removing all filters of that type by pressing backspace, despite the input box still being focused
+- Fixed the back button on modal menus having the description "Close modal"
+- Other fixes and small changes
+- Know issue: closing multiple AP tabs at the exact same time can sometimes cause it to stop syncing data in the background (if enabled). This can be fixed by opening a new AP tab (and, optionally, closing it afterwards).
+
+### 4.3.2 (2025-09-11)
+- Now also runs on the new domain
+
+### 4.3.1 (2025-07-26)
+- Renamed Time interval filter to "Season range" and fixed some associated element descriptions
+- Fixed error when imported data doesn't contain one of the anime that the current site data has in the episode feed
+
+### 4.3.0 (2025-07-18)
+- Adding an anime to the episode feed now makes it look for episodes after the time you added the anime, rather than after the time you last opened the episode feed menu
+- The buttons at the bottom of the Manage Data menu now look better on mobile devices
+- Rerolling a random anime is now much faster
+- Added a proper description to the site's Search field
+- Fixed the Watched Episodes storage entry being from oldest to newest instead of the other way around
+- Fixed issues caused by errors when getting a list of episodes for an anime with no episodes
+
+### 4.2.0 (2025-06-17)
+- Added a progress bar on anime pages for how much each episode has been watched
+- Videos can now be marked (and unmarked) as watched
+- Entire anime entries can be marked or unmarked as watched
+  - Watched data can be managed in the Manage Data menu
+- Added an episode options menu for each episode on an anime page
+  - You can copy the link to the episode or mark/unmark it as watched
+- Added an option to copy episode screenshots to clipboard instead of downloading them (enabled by default)
+- Renamed the Settings button to Options
+- Moved the Refresh Session button into the Options menu
+- Added a button in the Options menu to report issues with timestamps on the current episode
+- Added a button on the index page to reset selected filters
+- Swapped the positions of the Random Anime and Search buttons on the index page
+- Tweaked the way certain modal menus look
+- Changed video seeking thumbnails to better show the point you're seeking to
+- Closing the Handle Episode Feed menu no longer takes you back to the Episode Feed menu
+- Anime collections in search results now have the name of the first entry, rather than the name of the first result of that series
+- Links to episodes now try to find the correct anime if none with the exact specified name is found
+- Video Progress and Video Playback Speed entries in the Manage Data menu now have links to their anime pages (if they were saved with a recent format)
+- Added descriptions to the Reroll Anime and Save Session buttons on random anime result pages
+- Added descriptions to the storage entries in the Manage Data menu
+- Added description to the search bar within storage entries
+- Added description to the search bar on the index page
+- Changed the color of the spinning loading indicators from red to the site's main pink color
+- Changed the shape of index page filter rule buttons
+- Further tweaked some styling on the index page filter selection
+- Other small styling tweaks
+- Increased the limit for episode feed entries being stored at once from 100 to 150
+- Old video progress entries (without ID) are now converted to the new format when the video is loaded
+- Video speed entries can now be imported
+- When importing data, warnings are now shown in the log for data entries with an incorrect format
+- Fixed pages showing anime with certain status being incorrectly redirected to the index page
+- Fixed using certain keybound actions while writing in a text input
+- Fixed seek points on the video progress bar sometimes being able to go beyond where the bar ends
+- Various other fixes
+
+### 4.1.0 (2025-01-24)
+- Index filter selector changes:
+  - You can now change the rule for how positive and negative filters are combined
+  - Improved many visual elements
+  - Renamed "Find" button to "Apply"
+  - "Apply" button is now a standard color when no changes have been made
+  - Added the option to change filter rules for negative "type" and "demographic" filters
+  - Fixed the status filter dropdown not appearing after opening another dropdown
+  - Fixed the status filter dropdown not displaying its selection correctly when refreshing the page
+  - Fixed performance when applying negative season time filters
+- Tweaked the modal open animation.
+  - It's still the same length, but looks a little different.
+- Added a "Reduce Motion" setting
+- Fixed errors for episodes that contain multiple episodes
+
+### 4.0.0 (2025-01-10)
+- Completely reworked the index search page.
+  - Now allows for negative filters
+  - Layout is slightly changed
+  - Now looks better on mobile
+  - Much better keyboard navigation
+- Now supports skipping recaps, openings, endings, and next episode previews.
+  - Along with this, points are added on the progress bar to mark these different sections
+  - All of these features are not yet available for all anime
+  - Added settings to disable the skip button and the points on the progress bar, separately
+- Now saves the set video playback speed per anime.
+  - This data is viewable and can be deleted in the "Manage Data" menu
+- Organized the settings menu into two categories
+- Added a setting to disable the seek thumbnails that appear when seeking through the progress bar
+- Made the player slightly bigger with theatre mode on
+- The close button on modals is now tab selectable
+- Fixed rare instances of some episodes not having seek thumbnails
+
+### 3.23.2 (2025-01-05)
+- Fixed errors when loading video
+
+### 3.23.1 (2024-12-30)
+- Fixed additional log messages about upgrading version
+
+### 3.23 (2024-12-30)
+- Added "Auto-Play Video" option
+- Renamed "Auto-play" option to "Auto-Play Next"
+
+### 3.22.2 (2024-12-26)
+- Reverted modal z-index change since it appeared underneath the video player
+
+### 3.22.1 (2024-12-24)
+- Allowed snow effect to go above the modal
+
+### 3.22 (2024-12-22)
+- Significantly improved the video seeking image tooltip.
+- Search collections now display titles in the correct release order.
+- The season filter's initial inputs are now automatically set to the current season.
+- Fixed "Clean up" buttons in the Manage Data menu not correctly displaying entries after being used.
+- Images with links to a prequel or sequel are now hidden with the Hide Thumbnails setting on.
+- More fixes.
