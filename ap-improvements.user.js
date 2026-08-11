@@ -455,6 +455,11 @@ function pressedKeybind(event, keybind) {
   return (key.toLowerCase() === event.key.toLowerCase() && event.shiftKey === Boolean(shift) && event.ctrlKey === Boolean(ctrl));
 }
 
+// Only works for full URLs
+function getPathname(url) {
+  return new URL(url).pathname;
+}
+
 function isSyncEnabled(storage) {
   return storage.sync.syncCode !== '';
 }
@@ -3435,13 +3440,13 @@ async function getDataFromAnimeId(id) {
     const req = new XMLHttpRequest();
     req.open('GET', `/a/${id}`, true);
     req.onload = () => {
-      const responseLocation = new URL(req.responseURL);
-      if (!isAnime(responseLocation.pathname)) {
+      const pathname = getPathname(req.responseURL);
+      if (!isAnime(pathname)) {
         resolve(undefined);
         return;
       }
       resolve({
-        session: responseLocation.pathname.split('/')[2],
+        session: pathname.split('/')[2],
         title: $($(req.response).find('.title-wrapper h1 span')[0]).text(),
         poster: $($(req.response).find('.anime-poster img')[0]).data('src').replace('.md','')
       });
@@ -5371,7 +5376,7 @@ function openBookmarkStatusEditModal(id, adding=false) {
   const imgElem = $('.anitracker-image-wrapper');
   imgElem.find('img').on('load', function() {
     $(this).css('opacity', '1');
-    entry.posterUrl = new URL($(this).attr('src')).pathname;
+    entry.posterUrl = getPathname($(this).attr('src'));
   });
   if (entry.posterUrl === undefined) {
     getBookmarkImage(imgElem, entry);
