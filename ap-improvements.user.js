@@ -10253,7 +10253,6 @@ function addGeneralButtons() {
         return storage.sync.currentMessage ?
             `<span class="anitracker-sync-message anitracker-dark-area anitracker-thin-text ${storage.sync.currentMessage.type}">${storage.sync.currentMessage.text}</span>` : '<span class="anitracker-sync-message anitracker-dark-area anitracker-thin-text" style="display:none;"></span>';
       }
-      let disconnectFailed = false;
       const syncedTime = storage.sync.lastSynced ? new Date(storage.sync.lastSynced).toLocaleString() : 'Not synced yet';
 
       if (syncEnabled && !storage.debug?.noSyncSim) {
@@ -10312,6 +10311,7 @@ function addGeneralButtons() {
         $('.anitracker-disconnect-sync-button').on('click', (e) => {
           $('#anitracker-modal-body').empty();
           let loading = false;
+          let disconnectFailed = false;
           const storage = getStorage();
 
           $(`
@@ -10377,6 +10377,136 @@ function addGeneralButtons() {
           });
 
           $('.anitracker-disconnect-sync-cancel-button').on('click', openSyncDataModal);
+          openModal(openSyncDataModal);
+        });
+
+        $('.anitracker-delete-sync-button').on('click', (e) => {
+          $('#anitracker-modal-body').empty();
+          let loading = false;
+          const storage = getStorage();
+
+          $(`
+          <div id="anitracker-delete-sync-prompt">
+            <p class="anitracker-thin-text">Delete sync code?</p>
+            <p class="anitracker-thin-text anitracker-secondary-info">Existing data on all connected devices/browsers will remain as-is.</p>
+            <div class="anitracker-center-content">
+              <div style="display:flex;gap:16px;">
+                <div><button class="btn btn-danger anitracker-delete-sync-confirm-button" title="Confirm deletion">Yes</button></div>
+                <button class="btn btn-secondary anitracker-delete-sync-cancel-button" title="Cancel">No</button>
+              </div>
+            </div>
+            ${getSyncMessageElem(storage)}
+          </div>
+          `).appendTo('#anitracker-modal-body');
+
+          $('.anitracker-delete-sync-confirm-button').on('click', () => {
+            if (loading) return;
+            loading = true;
+
+            const loadingElem = $(`
+            <div style="padding:10px;">
+              <p class="anitracker-thin-text" id="anitracker-delete-sync-status">Fetching data...</p>
+              <div class="anitracker-spinner anitracker-center-content">
+                <div class="spinner-border" role="status">
+                  <span class="sr-only">Loading...</span>
+                </div>
+              </div>
+            </div>`).insertAfter('#anitracker-delete-sync-prompt');
+            $('#anitracker-delete-sync-prompt').hide();
+            return;
+
+            let storage = getStorage();
+            syncGetData(storage.sync.syncCode).then(dataResponse => {
+              storage = getStorage();
+
+              if (![0,2].includes(dataResponse.status)) {
+                $('#anitracker-delete-sync-prompt').show();
+                loadingElem.remove();
+                loading = false;
+
+                if (dataResponse.status === 1) {
+                  storage.sync.currentMessage = {
+                    type: "error",
+                    text: "Couldn't remove data. Please check you internet connection."
+                  };
+                  saveData(storage);
+                  updateSyncMessageElem(storage);
+                  return;
+                }
+                else if (dataResponse.status === 3) {
+                  storage.sync.currentMessage = {
+                    type: "error",
+                    text: "Couldn't remove data due to unknown error."
+                  };
+                  saveData(storage);
+                  updateSyncMessageElem(storage);
+                  return;
+                }
+                else if (dataResponse.status === 5) {
+                  storage.sync.currentMessage = {
+                    type: "error",
+                    text: "Couldn't remove data. Try again in a few minutes."
+                  };
+                  saveData(storage);
+                  updateSyncMessageElem(storage);
+                  return;
+                }
+              }
+
+              if (dataResponse.status === 2) return success(); // If the code already doesn't exist
+
+              syncDelete(storage.sync.syncCode, dataResponse.etag).then(delStatus => {
+                if (delStatus !== 0) {
+                  storage = getStorage();
+                  $('#anitracker-delete-sync-prompt').show();
+                  loadingElem.remove();
+                  loading = false;
+                  if (dataResponse.status === 1) {
+                    storage.sync.currentMessage = {
+                      type: "error",
+                      text: "Couldn't remove data. Please check you internet connection."
+                    };
+                    saveData(storage);
+                    updateSyncMessageElem(storage);
+                    return;
+                  }
+                  else if (dataResponse.status === 2) {
+                    storage.sync.currentMessage = {
+                      type: "error",
+                      text: "Couldn't remove data due to unknown error."
+                    };
+                    saveData(storage);
+                    updateSyncMessageElem(storage);
+                    return;
+                  }
+                  else if (dataResponse.status === 6) {
+                    storage.sync.currentMessage = {
+                      type: "error",
+                      text: "Couldn't remove data. Try again in a few minutes."
+                    };
+                    saveData(storage);
+                    updateSyncMessageElem(storage);
+                    return;
+                  }
+                }
+
+                success();
+              });
+            });
+
+            function success() {
+              const storage = getStorage();
+              storage.sync.currentMessage = null;
+              saveData(storage);
+              if (storage.debug?.dontLeave === true) return loading = false;
+              removeSync();
+
+              showMessage('Sync deleted');
+              openSyncDataModal();
+            }
+          });
+
+          $('.anitracker-delete-sync-cancel-button').on('click', openSyncDataModal);
           openModal(openSyncDataModal);
         });
       }
@@ -11309,7 +11439,7 @@ async function syncData() {
         req.setRequestHeader('If-Match', response.etag);
 
         req.onload = () => {
-          afterPut(req);
+          afterPut(req, response.etag);
         };
 
         try {
@@ -11328,7 +11458,7 @@ async function syncData() {
         }
       });
 
-      function afterPut(req) {
+      function afterPut(req, etag) {
         if (req.status === 412) {
           console.error(`[AnimePahe Improvements] Data mismatch when attempting to put sync data. ${etag} vs ${req.getResponseHeader('ETag')}`);
           resolve(6);
