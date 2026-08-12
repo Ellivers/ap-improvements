@@ -4734,7 +4734,8 @@ function openNotificationsModal() {
 
     if (data === -1) {
       $('#anitracker-notifications-list-spinner').remove();
-      $("<span>An error occurred.</span>").appendTo('#anitracker-modal-body .anitracker-modal-list');
+      $(`<span class="text-danger">An error occurred with the following anime:</span><br>
+        <span class="text-danger">${toHtmlCodes(anime.name)}</span>`).appendTo('#anitracker-modal-body .anitracker-modal-list');
       return;
     }
     animeData.push({
