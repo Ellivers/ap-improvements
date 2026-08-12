@@ -13,7 +13,7 @@
 // @grant       GM_setValue
 // @grant       GM_xmlhttpRequest
 // @grant       GM_info
-// @version     4.10.0
+// @version     4.10.1
 // @author      Ellivers
 // @license     MIT
 // @description Improvements and additions for the AnimePahe site
@@ -4707,7 +4707,8 @@ function openNotificationsModal() {
 
     if (data === -1) {
       $('#anitracker-notifications-list-spinner').remove();
-      $("<span>An error occurred.</span>").appendTo('#anitracker-modal-body .anitracker-modal-list');
+      $(`<span class="text-danger">An error occurred with the following anime:</span><br>
+        <span class="text-danger">${toHtmlCodes(anime.name)}</span>`).appendTo('#anitracker-modal-body .anitracker-modal-list');
       return;
     }
     animeData.push({
@@ -7283,7 +7284,13 @@ async function addContinueWatchingEpisodes(storage, episodeCount, clearAll = fal
       // If no data or sessionEntry anime session, get session by visiting the page using ID
       if (!data && !sessionEntry?.animeSession && id) {
         const reqData = await getDataFromAnimeId(id);
-        animeSession = reqData.session;
+        animeSession = reqData?.session;
+      }
+
+      // Get the anime name from session entry, if previous request failed or no ID
+      if (!data && !sessionEntry?.animeSession && !animeSession && sessionEntry) {
+        const reqData = await asyncGetAnimeData(sessionEntry.animeName, id);
+        animeSession = reqData?.session;
       }
 
       if (!animeSession) {
@@ -8308,7 +8315,7 @@ function applyEpisodeOptionsEvents(elems) {
     dropdown.hide();
 
     if (action === 'copy') {
-      navigator.clipboard.writeText(window.location.origin + '/customlink?a=' + animeId + '&e=' + episode);
+      navigator.clipboard.writeText(window.location.origin + '/customlink?a=' + encodeURIComponent(animeName) + '&e=' + episode);
       showMessage('Copied link!');
       return;
     }
@@ -8719,7 +8726,7 @@ if (isAnime()) {
   $(`
   <i title="Bookmark this anime" class="fa fa-bookmark anitracker-title-icon anitracker-bookmark-toggle">
     <i style="display: none;" class="fa fa-check anitracker-title-icon-check" aria-hidden="true"></i>
-  </i>${notifIcon}<a href="/a/${animeid}" title="Shortcut Link" class="fa fa-link btn anitracker-title-icon" data-toggle="modal" data-target="#modalBookmark"></a>
+  </i>${notifIcon}
   `).appendTo('.title-wrapper>h1');
 
   if (initialStorage.bookmarks.find(g => g.id === animeid)) {
@@ -11320,10 +11327,9 @@ if (isEpisode()) {
   $('.anitracker-copy-button').on('click', (e) => {
     const targ = $(e.currentTarget);
     const type = targ.attr('copy');
-    const id = getAnimeId(animeSession);
     const episode = getEpisodeNum();
     if (['link','link-time'].includes(type)) {
-      navigator.clipboard.writeText(window.location.origin + '/customlink?a=' + id + '&e=' + episode + (type !== 'link-time' ? '' : ('&t=' + currentEpisodeTime.toString())));
+      navigator.clipboard.writeText(window.location.origin + '/customlink?a=' + encodeURIComponent(getAnimeName()) + '&e=' + episode + (type !== 'link-time' ? '' : ('&t=' + currentEpisodeTime.toString())));
     }
     targ.popover('show');
     setTimeout(() => {
