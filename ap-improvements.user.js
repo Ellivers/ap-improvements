@@ -7268,7 +7268,7 @@ async function addContinueWatchingEpisodes(storage, episodeCount, clearAll = fal
           <div class="spinner-border" role="status">
             <span class="sr-only">Loading...</span>
           </div>
-        </div><div class="anitracker-progress-bar" style="width:12rem;height:10px;margin: auto;"><div></div></div></div>
+        </div><div class="anitracker-progress-bar" style="width:12rem;height:10px;margin: auto;"><div></div></div>
       </div>`).appendTo('.anitracker-episode-list-wrapper .episode-list.row');
     }
 
@@ -7338,7 +7338,13 @@ async function addContinueWatchingEpisodes(storage, episodeCount, clearAll = fal
       // If no data or sessionEntry anime session, get session by visiting the page using ID
       if (!data && !sessionEntry?.animeSession && id) {
         const reqData = await getDataFromAnimeId(id);
-        animeSession = reqData.session;
+        animeSession = reqData?.session;
+      }
+
+      // Get the anime name from session entry, if previous request failed or no ID
+      if (!data && !sessionEntry?.animeSession && !animeSession && sessionEntry) {
+        const reqData = await asyncGetAnimeData(sessionEntry.animeName, id);
+        animeSession = reqData?.session;
       }
 
       if (!animeSession) {
@@ -8679,7 +8685,7 @@ function addTitleIcons(animeid) {
     <i style="display: none;" class="fa fa-check anitracker-title-icon-check" aria-hidden="true"></i>
   </i>`).appendTo(div);
 
-  if (isAnime()) $(`<a href="/a/${animeid}" title="Shortcut Link" class="fa fa-link btn anitracker-title-icon" data-toggle="modal" data-target="#modalBookmark"></a>`).appendTo(div);
+  //if (isAnime()) $(`<a href="/a/${animeid}" title="Shortcut Link" class="fa fa-link btn anitracker-title-icon" data-toggle="modal" data-target="#modalBookmark"></a>`).appendTo(div);
 
   if (initialStorage.bookmarks.find(g => g.id === animeid)) {
     $('.anitracker-bookmark-toggle .anitracker-title-icon-check').show();
@@ -11752,7 +11758,7 @@ if (isEpisode()) {
       const type = targ.attr('copy');
       const episode = getEpisodeNum();
       if (['link','link-time'].includes(type)) {
-        navigator.clipboard.writeText(window.location.origin + '/customlink?a=' + id + '&e=' + episode + (type !== 'link-time' ? '' : ('&t=' + currentEpisodeTime.toString())));
+        navigator.clipboard.writeText(window.location.origin + '/customlink?a=' + encodeURIComponent(getAnimeName()) + '&e=' + episode + (type !== 'link-time' ? '' : ('&t=' + currentEpisodeTime.toString())));
       }
       targ.popover('show');
       setTimeout(() => {
