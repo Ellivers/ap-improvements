@@ -5,11 +5,9 @@
 - Added a Version History menu through a button at the bottom of the Options menu
 - Added toast messages for marking all episodes as watched/unwatched
 - Lessened performance impact from loading a page
-- Copying a shortcut link to an episode now uses its name instead of its ID, due to site changes
 - Moved the Refresh Session button towards the bottom of the Options menu
 - Pressing the Theater Mode keybind while having the video player in fullscreen now exits fullscreen
 - Pressing Ctrl+F in a modal menu with a search bar now focuses the first search bar in the menu
-- Getting an error in the episode feed now shows which anime caused the error
 - Fixed errors in the Manage Feed menu when having anime with no episodes added to the feed
 - Fixed the video player being incorrectly focused when pressing Enter on an episode page
 - Fixed keyboard navigation for the expandable menus below the video player
@@ -20,8 +18,13 @@
 - Fixed changing filter rules on the index page not always updating the Apply button
 - Fixed errors from entering an invalid season range filter in the index page's URL
 - More small fixes
-- Known issues:
-  - Due to site changes with how IDs are handled, certain anime will now produce errors in eg. the episode feed. I don't think there's anything I can do about this.
+
+### 4.10.1 (2026-08-12)
+- Removed the Shortcut Link button on anime pages, due to it being removed from the site
+- Copying a shortcut link to an episode now uses its name instead of its ID, due to site changes
+- Getting an error in the episode feed now shows which anime caused the error
+- Fixed errors while loading the Continue Watching section, due to site changes
+- Known issue: Due to site changes with how IDs are handled, certain anime will now produce errors in eg. the episode feed. I'm working on a solution.
 
 ### 4.10.0 (2026-08-02)
 - Made the following keybinds modifiable:
