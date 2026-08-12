@@ -9357,10 +9357,10 @@ function addGeneralButtons() {
         let outerList;
         let innerList;
         for (const line of lines) {
-          const finalText = line.replace(/\s*[#\-]*\s*/,'');
+          let finalText = line.replace(/^\s*[#\-]*\s*/,'');
           if (line.startsWith('###')) {
-            const matches = / (\d{4}\-\d{2}\-\d{2})^/.exec(finalText);
-            if (matches) finalText.replace(/\d{4}\-\d{2}\-\d{2}/, new Date(matches[1]).toLocaleDateString())
+            const matches = / \((\d{4}\-\d{2}\-\d{2})\)$/.exec(finalText);
+            if (matches) finalText = finalText.replace(/\d{4}\-\d{2}\-\d{2}/, new Date(matches[1]).toLocaleDateString());
 
             const elem = $('<h4></h4>');
             elem.text(finalText);

@@ -5,6 +5,7 @@
 - Added a Version History menu through a button at the bottom of the Options menu
 - Added toast messages for marking all episodes as watched/unwatched
 - Lessened performance impact from loading a page
+- Moved the Refresh Session button towards the bottom of the Options menu
 - Pressing the Theater Mode keybind while having the video player in fullscreen now exits fullscreen
 - Pressing Ctrl+F in a modal menu with a search bar now focuses the first search bar in the menu
 - Fixed errors in the Manage Feed menu when having anime with no episodes added to the feed
@@ -177,7 +178,7 @@
 - Fixed a few typos
 - And some more small things
 
-### 4.6.1 (2026-04-5)
+### 4.6.1 (2026-04-05)
 - Added support for the new domain
 
 ### 4.6.0 (2026-02-13)
