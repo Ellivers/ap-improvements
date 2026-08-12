@@ -9354,32 +9354,35 @@ function addGeneralButtons() {
         $(`<span>Current version: ${GM_info.script.version}</span>`).insertAfter('#anitracker-modal-body>h4');
 
         const lines = req.response.split('\n');
-        let outerList;
-        let innerList;
+        let currentList;
+        let currentIndentation = 0;
         for (const line of lines) {
           let finalText = line.replace(/^\s*[#\-]*\s*/,'');
           if (line.startsWith('###')) {
             const matches = / \((\d{4}\-\d{2}\-\d{2})\)$/.exec(finalText);
             if (matches) finalText = finalText.replace(/\d{4}\-\d{2}\-\d{2}/, new Date(matches[1]).toLocaleDateString());
 
-            const elem = $('<h4></h4>');
-            elem.text(finalText);
+            const elem = $('<h4></h4>').text(finalText);
             elem.appendTo('#anitracker-modal-body');
-            outerList = $('<ul></ul>').appendTo('#anitracker-modal-body');
+            currentList = $('<ul></ul>').appendTo('#anitracker-modal-body');
+            currentIndentation = 0;
             continue;
           }
-          if (!outerList) continue;
+          if (!currentList) continue;
 
-          const elem = $('<li></li>');
-          elem.text(finalText);
-          if (line.startsWith('-')) {
-            elem.appendTo(outerList);
-            innerList = undefined;
-            continue;
+          // Small markdown unordered list parser lol
+          const elem = $('<li></li>').text(finalText);
+          const spaces = /^( *)\-/.exec(line);
+          if (!spaces) continue;
+          const newIndentation = spaces[1] ? (spaces[1].length / 2) : 0;
+          if (newIndentation > currentIndentation) for (let i = currentIndentation; i < newIndentation; i++) {
+            currentList = $('<ul></ul>').appendTo(currentList);
           }
-          if (!line.startsWith('  -')) continue;
-          if (!innerList) innerList = $('<ul></ul>').appendTo(outerList);
-          elem.appendTo(innerList);
+          if (newIndentation < currentIndentation) for (let i = currentIndentation; i > newIndentation; i--) {
+            currentList = currentList.parent();
+          }
+          currentIndentation = newIndentation;
+          elem.appendTo(currentList);
         }
       };
       req.send();
