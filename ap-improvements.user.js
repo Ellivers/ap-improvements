@@ -8389,7 +8389,7 @@ function applyEpisodeOptionsEvents(elems) {
     dropdown.hide();
 
     if (action === 'copy') {
-      navigator.clipboard.writeText(window.location.origin + '/customlink?a=' + animeId + '&e=' + episode);
+      navigator.clipboard.writeText(window.location.origin + '/customlink?a=' + encodeURIComponent(animeName) + '&e=' + episode);
       showMessage('Copied link!');
       return;
     }
