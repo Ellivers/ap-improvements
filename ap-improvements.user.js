@@ -2966,6 +2966,7 @@ const siteVars = {
     animeData: [],
     firstEpisode: {},
     animeId: {},
+    animeSession: {},
   },
 };
 
@@ -4928,23 +4929,28 @@ function openBookmarksModal() {
     if (!isReversed()) entries.reverse();
   }
 
-  function layoutEntries(storage = getStorage(), goToTop = true) {
+  async function layoutEntries(storage = getStorage(), goToTop = true) {
     $('.anitracker-modal-list').empty();
 
     const entries = [...storage.bookmarks];
     sortEntries(entries);
     const searchInput = $('.anitracker-modal-search').val().toLowerCase();
 
-    if (layout === 'list') {
-      $('.anitracker-modal-list').removeClass('flex');
-      entries.forEach(g => {
-        const statusAttrs = getStatusAttributes(g.status);
+    if (layout === 'list') $('.anitracker-modal-list').removeClass('flex');
+    else $('.anitracker-modal-list').addClass('flex');
 
-        const elem = $(`
+    for (const g of entries) {
+      const statusAttrs = getStatusAttributes(g.status);
+      const session = await getAnimeSession(g.name);
+      const href = session ? `href="/anime/${session}"` : '';
+      let elem;
+
+      if (layout === 'list') {
+        elem = $(`
         <div class="anitracker-modal-list-entry anitracker-bookmark-list-entry" animeid="${g.id}">
           ${g.newlyAdded ? '<i class="anitracker-bookmark-new"></i>' : ''}
-          <a href="/a/${g.id}" target="_blank" title="${toHtmlCodes(g.name)}">
-            ${g.name}
+          <a ${href} target="_blank" title="${toHtmlCodes(g.name)}" tabindex="0">
+            <span>${g.name}</span>
           </a><br>
           <div>
             <button class="anitracker-bookmark-list-status anitracker-change-status-button" style="color:${statusAttrs[2]};" title="Change bookmark watching status">${statusAttrs[0]}</button>
@@ -4954,22 +4960,16 @@ function openBookmarksModal() {
             </button>
           </div>
         </div>`).appendTo('#anitracker-modal-body .anitracker-modal-list');
-        if (!g.name.toLowerCase().includes(searchInput)) elem.hide();
-      });
-    }
-    else {
-      $('.anitracker-modal-list').addClass('flex');
-      entries.forEach(g => {
-        const statusAttrs = getStatusAttributes(g.status);
-
-        const elem = $(`
+      }
+      else {
+        elem = $(`
         <div class="anitracker-modal-list-entry anitracker-bookmark-grid-entry" animeid="${g.id}">
-          <a href="/a/${g.id}" target="_blank" title="${toHtmlCodes(g.name)}">
+          <a ${href} target="_blank" title="${toHtmlCodes(g.name)}" tabindex="0">
             ${g.newlyAdded ? '<i class="anitracker-bookmark-new"></i>' : ''}
             <div class="anitracker-big-poster-icon">
               <img src="${g.posterUrl ? `https://i.${window.location.host}/${g.posterUrl}` : 'data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw=='}" loading="lazy">
             </div>
-            ${g.name}
+            <span>${g.name}</span>
           </a>
           <div style="display: flex;flex-direction: column;gap: 2px;">
             <button class="anitracker-bookmark-grid-status anitracker-change-status-button" style="color:${statusAttrs[2]};" title="Change bookmark watching status">${statusAttrs[0]}</button>
@@ -4979,7 +4979,6 @@ function openBookmarksModal() {
             </button>
           </div>
         </div>`).appendTo('#anitracker-modal-body .anitracker-modal-list');
-        if (!g.name.toLowerCase().includes(searchInput)) elem.hide();
 
         elem.find('img').on('load', function() {$(this).css('opacity', '1')});
         if (g.posterUrl === undefined) {
@@ -4990,7 +4989,28 @@ function openBookmarksModal() {
           getBookmarkImage(elem, g);
           $(this).off('error');
         });
-      });
+      }
+      if (!g.name.toLowerCase().includes(searchInput)) elem.hide();
+      if (!session) {
+        const spinner = $(`
+        <div class="anitracker-spinner" style="display: inline;">
+          <div class="spinner-border" role="status" style="width: 1em;height: 1em;">
+            <span class="sr-only">Loading...</span>
+          </div>
+        </div>`).insertBefore(elem.find('a>span'));
+        asyncGetAnimeData(g.name, g.id).then(data => {
+          spinner.remove();
+          if (!data) return;
+          const storage2 = getStorage();
+          const obj = storage2.bookmarks.find(a => a.id === g.id);
+          if (!obj) return;
+          obj.name = data.title;
+          saveData(storage2);
+          elem.find('a>span').text(data.title);
+          elem.find('a').attr('href', '/anime/' + data.session);
+          console.log(`[AnimePahe Improvements] Replaced old bookmark name "${g.name}" with new "${data.title}"`);
+        });
+      }
     }
 
     if (goToTop) scrollModalToTop();
@@ -5257,15 +5277,17 @@ function openBookmarksModal() {
     $(`<span style="display: block;">No bookmarks yet!</span>`).appendTo('#anitracker-modal-body .anitracker-modal-list');
   }
   else {
-    layoutEntries(storage);
-    storage.bookmarks.forEach(b => {delete b.newlyAdded;});
-    saveData(storage);
+    waitForSessionList($('#anitracker-modal-body .anitracker-modal-list')).then(() => {
+      layoutEntries(storage);
+      storage.bookmarks.forEach(b => {delete b.newlyAdded;});
+      saveData(storage);
+    });
   }
 
   openModal();
 }
 
-function getBookmarkImage(elem, g) {
+function getBookmarkImage(elem, g, session = undefined) {
   $(`
   <div class="anitracker-spinner-parent" style="position: relative;">
     <div class="anitracker-spinner anitracker-center-content" style="position: absolute;width: 100%;align-items: center;aspect-ratio: 1;">
@@ -5280,8 +5302,9 @@ function getBookmarkImage(elem, g) {
     elem.find('.anitracker-spinner-parent').remove();
     if (animeData) poster = animeData.poster;
     else {
-      const page = await asyncGetPage(`/a/${g.id}`);
-      poster = $(page.find('.anime-poster img')[0]).data('src').replace('.md','');
+      if (!session) session = await getAnimeSession(g.name);
+      const page = await asyncGetPage(`/anime/${session}`);
+      poster = $(page?.find('.anime-poster img')[0])?.data('src').replace('.md','');
     }
 
     if (!poster) return;
@@ -5385,11 +5408,12 @@ function openBookmarkStatusEditModal(id, adding=false) {
     $(this).css('opacity', '1');
     entry.posterUrl = getPathname($(this).attr('src'));
   });
+  const session = (isAnime() || isEpisode()) ? getAnimeSessionFromUrl() : undefined;
   if (entry.posterUrl === undefined) {
-    getBookmarkImage(imgElem, entry);
+    getBookmarkImage(imgElem, entry, session);
     return;
   }
-  imgElem.find('img').on('error', () => {getBookmarkImage(imgElem, entry)});
+  imgElem.find('img').on('error', () => {getBookmarkImage(imgElem, entry, session)});
 }
 
 $('.anitracker-header-bookmark').on('click', openBookmarksModal);
@@ -6948,11 +6972,6 @@ function getAnimeId(session, animeName = getAnimeName()) {
   if (cached) return cached;
 
   const id = (() => {
-    if (isAnime() && animeSession === session) {
-      const linkHref = $('[data-target="#modalBookmark"]').attr('href');
-      if (linkHref) return +linkHref.split('/')[2];
-    }
-
     const data = getAnimeData(animeName);
     if (data) return data.id;
 
@@ -6971,11 +6990,6 @@ async function asyncGetAnimeId(session, animeName = getAnimeName()) {
     if (cached) return resolve(cached);
 
     const id = await (async () => {
-      if (isAnime() && animeSession === session) {
-        const linkHref = $('[data-target="#modalBookmark"]').attr('href');
-        if (linkHref) return +linkHref.split('/')[2];
-      }
-
       const data = await asyncGetAnimeData(animeName);
       if (data) return data.id;
 
@@ -6986,6 +7000,40 @@ async function asyncGetAnimeId(session, animeName = getAnimeName()) {
     })();
     if (id) siteVars.cached.animeId[session] = id;
     return resolve(id);
+  });
+}
+
+function getAnimeSession(animeName = getAnimeName()) {
+  return new Promise(async resolve => {
+    if (!Object.keys(siteVars.cached.animeSession).length) {
+      const page = await asyncGetPage('/anime');
+      if (!page) {
+        resolve(undefined);
+        return;
+      }
+      const animeList = getAnimeList($(page));
+      animeList.forEach(g => {
+        siteVars.cached.animeSession[g.name] = getAnimeSessionFromUrl(g.link);
+      });
+    }
+    resolve(siteVars.cached.animeSession[animeName]);
+  });
+}
+
+// Make a spinner and wait to make sure the session list has been loaded
+function waitForSessionList(elem) {
+  const spinner = $(`
+  <div class="anitracker-spinner anitracker-center-content" style="width: 100%;min-height:5rem;align-items:center;">
+    <div class="spinner-border" role="status">
+      <span class="sr-only">Loading...</span>
+    </div>
+  </div>`).appendTo(elem);
+
+  return new Promise(resolve => {
+    getAnimeSession('').then(() => {
+      resolve();
+      spinner.remove();
+    });
   });
 }
 
