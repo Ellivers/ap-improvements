@@ -2966,7 +2966,7 @@ const siteVars = {
     animeData: [],
     firstEpisode: {},
     animeId: {},
-    animeSession: {},
+    animeSession: [],
   },
 };
 
@@ -6875,6 +6875,103 @@ function makeSearchable(string) {
   return encodeURIComponent(string.replace(' -',' '));
 }
 
+/* - have a list of each info-getting function, ordered in speed with fastest first. each entry has a list of output keys
+  - do a while loop while reqdata length is > 0.
+  find out which function encompasses the most of reqdata by making a .map and sort the map by amount of reqdata support, then use the function.
+  at the end of each loop, if the function was successful, remove all data from reqdata that the function outputs.
+  make sure that function isn't run again, no matter the outcome
+  */
+
+const animeInfoFunctions = [
+  {
+    "id": "storage_session",
+    "outputs": ["id","session","name"],
+    "instant": true,
+    "fn": (iinfo = {}, config = {}) => {
+      const storage = getStorage();
+      const found = storage.linkList.find(a => a.animeName === iinfo.name || (a.animeId && a.animeId === iinfo.id) || a.animeSession === iinfo.session);
+      if (!found) return undefined;
+      return {
+        name: found.animeName,
+        id: found.animeId,
+        session: found.animeSession,
+      };
+    }
+  },
+  {
+    "id": "index",
+    "outputs": ["session","name"],
+    "instant": true,
+    "fn": getAnimeSession,
+  },
+  {
+    "id": "search_query",
+    "outputs": ["name","id","session","poster"],
+    "fn": getAnimeInfoFromSearch
+  },
+  {
+    "id": "episode_list",
+    "outputs": ["id"],
+    "fn": async (iinfo = {}, config = {}) => {
+      if (!iinfo.session) return undefined;
+      const cached = siteVars.cached.animeId[iinfo.session];
+      if (cached) return cached;
+      
+      return new Promise(resolve => {
+        const response = await asyncGetResponseData(`/api?m=release&id=${iinfo.session}`);
+        if (!response) return resolve(undefined);
+        siteVars.cached.animeId[iinfo.session] = response[0].anime_id;
+        resolve({
+          id: response[0].anime_id
+        });
+      });
+    }
+  }
+]
+// Gets any anime info except for video player stuff
+// Available inputs & outputs: name, id, anidb_id, session, poster
+function getAnimeInfo(iinfo = {}, reqinfo = [], config = {}) {
+  const oinfo = {};
+  const used = [];
+  const debug = initialStorage.debug?.animeInfo;
+  return new Promise(async resolve => {
+    if (!iinfo || !Object.values(iinfo).find(a => a)) return resolve({});
+
+    while (reqinfo.length > 0) {
+      const rankedFunctions = animeInfoFunctions.map(a => {
+        if (used.includes(a.id) || (config.requireInstant && !a.instant) || config.ignored.includes(a.id)) {
+          return {matches:0};
+        }
+        let matches = 0;
+        a.outputs.forEach(g => {
+          if (reqinfo.includes(g)) matches++;
+        });
+        return {
+          fn: a.fn,
+          matches: matches,
+          id: a.id,
+        };
+      }).sort((a,b) => b.matches - a.matches);
+      if (!rankedFunctions[0].matches) {
+        console.error(`[AnimePahe Improvements] After ${used.length} functions, no remaining function matched ${reqinfo}`);
+        resolve(oinfo);
+        return;
+      }
+      if (debug) console.log('chose',rankedFunctions[0].id,'for #',used.length);
+
+      used.push(rankedFunctions[0]);
+      const result = await rankedFunctions[0](iinfo, config);
+      if (!result) continue;
+      for (const [key, value] of Object.entries(result)) {
+        if (!oinfo[key]) oinfo[key] = value;
+        if (value) reqinfo = reqinfo.filter(a => a !== key);
+      }
+    }
+
+    resolve(oinfo);
+  });
+}
+
 function getAnimeData(name = getAnimeName(), id = undefined, guess = false) {
   const cached = (() => {
     if (id) return siteVars.cached.animeData.find(a => a?.id === id);
@@ -6903,18 +7000,12 @@ function getAnimeData(name = getAnimeName(), id = undefined, guess = false) {
   return data;
 }
 
-async function asyncGetAnimeData(name = getAnimeName(), id = undefined, guess = false) {
-  const cached = (() => {
-    if (id) return siteVars.cached.animeData.find(a => a?.id === id);
-    else return siteVars.cached.animeData.find(a => a?.title === name);
-  })();
+async function getAnimeInfoFromSearch(iinfo = {}, config = {}) {
+  const cached = siteVars.cached.animeSearch.find(a => a.id === iinfo.id || a.title === iinfo.name || a.session === iinfo.session || a.poster === iinfo.poster);
+  if (cached) return cached;
+  if (!iinfo.name) return undefined;
 
   return new Promise(async (resolve, reject) => {
-    if (cached) {
-      resolve(cached);
-      return;
-    }
-
     // API pages for search don't work............
     /*let lastPage = 2;
     let page = 1;
@@ -6941,29 +7032,30 @@ async function asyncGetAnimeData(name = getAnimeName(), id = undefined, guess = 
 
       page++;
     }*/
-    const response = await asyncGetResponseData(`/api?m=search&q=${makeSearchable(name)}`);
+    const response = await asyncGetResponseData(`/api?m=search&q=${makeSearchable(iinfo.name)}`);
     if (!response) {
       resolve(response);
       return;
     }
     const data = (() => {
       for (const anime of response) {
-        if (!id && anime.title === name) return anime;
-        if (id && anime.id === id) return anime;
+        if (anime.id === iinfo.id || anime.title === iinfo.name || anime.session === iinfo.session || anime.poster === iinfo.poster) return anime;
       }
+      if (config.allowGuessing && response.length) return response[0];
     })();
-    if (data) {
-      siteVars.cached.animeData.push(data);
-      resolve(data);
-      return;
-    }
-    if (guess && response.length) {
-      resolve(response[0]);
-      return;
+    if (!data) {
+      console.error(`[AnimePahe Improvements] Search for anime "${iinfo.name}" not found`);
+      return resolve(undefined);
     }
 
-    console.error(`[AnimePahe Improvements] Anime "${name}" not found`);
-    resolve(undefined);
+    const rValue = {
+      name: data.title,
+      id: data.id,
+      session: data.session,
+      poster: data.poster,
+    }
+    siteVars.cached.animeData.push(rValue);
+    resolve(rValue);
   });
 }
 
@@ -7003,7 +7095,9 @@ async function asyncGetAnimeId(session, animeName = getAnimeName()) {
   });
 }
 
-function getAnimeSession(animeName = getAnimeName()) {
+function getAnimeSession(iinfo = {}, config = {}) {
+  if (!iinfo.name && !iinfo.session) return undefined;
+
   return new Promise(async resolve => {
     if (!Object.keys(siteVars.cached.animeSession).length) {
       const page = await asyncGetPage('/anime');
@@ -7013,10 +7107,13 @@ function getAnimeSession(animeName = getAnimeName()) {
       }
       const animeList = getAnimeList($(page));
       animeList.forEach(g => {
-        siteVars.cached.animeSession[g.name] = getAnimeSessionFromUrl(g.link);
+        siteVars.cached.animeSession.push({
+          name: g.name,
+          session: getAnimeSessionFromUrl(g.link),
+        });
       });
     }
-    resolve(siteVars.cached.animeSession[animeName]);
+    resolve(siteVars.cached.animeSession.find(a => a.name === iinfo.name || a.session === iinfo.session));
   });
 }
 
