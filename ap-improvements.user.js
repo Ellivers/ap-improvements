@@ -6885,6 +6885,16 @@ function makeSearchable(string) {
   return encodeURIComponent(string.replace(' -',' '));
 }
 
+function trimPosterUrl(posterUrl) {
+  const parts = /(?:https:\/\/)(?:i\.\w+\.\w+)\/(.*)/.exec(posterUrl);
+  if (!parts) return undefined;
+  return parts[1];
+}
+
+function makePosterUrl(poster) {
+  return `https://i.${window.location.host}/${poster}`;
+}
+
 // List of info-getting functions, from fastest to slowest
 const animeInfoFunctions = [
   {
@@ -6899,6 +6909,23 @@ const animeInfoFunctions = [
         name: found.animeName,
         id: found.animeId,
         session: found.animeSession,
+      };
+    }
+  },
+  {
+    "id": "storage_episode_session",
+    "outputs": ["episode_session"],
+    "instant": true,
+    "fn": (iinfo = {}, config = {}) => {
+      if (iinfo.episode === undefined) return undefined; // Can be falsy
+      const storage = getStorage();
+      const found = storage.linkList.find(a => a.type === 'episode' && a.episodeNum === iinfo.episode && (a.animeName === iinfo.name || (a.animeId && a.animeId === iinfo.id) || a.animeSession === iinfo.session));
+      if (!found) return undefined;
+      return {
+        name: found.animeName,
+        id: found.animeId,
+        session: found.animeSession,
+        episode_session: found.episodeSession
       };
     }
   },
@@ -6957,7 +6984,7 @@ const animeInfoFunctions = [
             searchedSessions.push(session);
             const relations = await getBranches(iinfo.startSession);
             for (const rel of relations) {
-              if (rel.session !== iinfo.session && rel.title !== iinfo.name && rel.poster !== iinfo.poster) continue;
+              if (rel.session !== iinfo.session && rel.title !== iinfo.name && trimPosterUrl(rel.poster) !== iinfo.poster) continue;
               return resolve(rel);
             }
             for (const rel of relations) {
@@ -6972,7 +6999,7 @@ const animeInfoFunctions = [
         else resolve({
           name: result.title,
           session: result.session,
-          poster: result.poster,
+          poster: trimPosterUrl(result.poster),
         });
       });
       async function getBranches(session) {
@@ -6986,7 +7013,7 @@ const animeInfoFunctions = [
 // Gets any anime info except for video player stuff
 // Available inputs & outputs: name, id, session, poster
 // TODO:
-// - make poster format consistent
+// - add bookmark source function
 // - something with anidb_id?
 function getAnimeInfo(iinfo = {}, reqinfo = [], config = {}) {
   /* - have a list of each info-getting function, ordered in speed with fastest first. each entry has a list of output keys
@@ -7115,7 +7142,7 @@ async function getAnimeInfoFromSearch(iinfo = {}, config = {}) {
     }
     const data = (() => {
       for (const anime of response) {
-        if (anime.id === iinfo.id || anime.title === iinfo.name || anime.session === iinfo.session || anime.poster === iinfo.poster) return anime;
+        if (anime.id === iinfo.id || anime.title === iinfo.name || anime.session === iinfo.session || trimPosterUrl(anime.poster) === iinfo.poster) return anime;
       }
       if (config.allowGuessing && response.length) return response[0];
     })();
@@ -7128,7 +7155,7 @@ async function getAnimeInfoFromSearch(iinfo = {}, config = {}) {
       name: data.title,
       id: data.id,
       session: data.session,
-      poster: data.poster,
+      poster: trimPosterUrl(data.poster),
     }
     siteVars.cached.animeData.push(rValue);
     resolve(rValue);
@@ -7312,19 +7339,10 @@ function setupContinueWatchingSection() {
         let img = `<div class="anitracker-video-progress-image-placeholder">
                      <i class="fa fa-play" aria-hidden="true" style="font-size: 2.5em;margin-left: 5px;"></i>
                    </div>`;
-        const sessionEntry = (() => {
-          let returnVal;
-          if (entry.animeId) {
-            returnVal = storage.linkList.find(a => a.animeId === entry.animeId && a.type === 'episode' && a.episodeNum === entry.episodeNum);
-            if (!returnVal) returnVal = storage.linkList.find(a => a.animeId === entry.animeId && a.type === 'anime');
-          }
-          else {
-            returnVal = storage.linkList.find(a => a.animeName === entry.animeName && a.type === 'episode' && a.episodeNum === entry.episodeNum);
-            if (!returnVal) returnVal = storage.linkList.find(a => a.animeName === entry.animeName && a.type === 'anime');
-          }
-          return returnVal;
-        })();
-        const animeId = entry.animeId ?? sessionEntry?.animeId;
+        const data = getAnimeInfo({
+          name: entry.animeName,
+          id: entry.animeId
+        }, ["name","id","session","episode_session","poster"]);
 
         if (animeId) {
           const bookmark = storage.bookmarks.find(a => a.id === entry.animeId);
