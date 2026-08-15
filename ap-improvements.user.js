@@ -6926,6 +6926,43 @@ const animeInfoFunctions = [
         });
       });
     }
+  },
+  {
+    "id": "relation_tree", // Extremely slow
+    "outputs": ["session","name","poster"],
+    "fn": async (iinfo = {}, config = {}) => {
+      if (!iinfo.startSession) return undefined;
+      const searchedSessions = [];
+      return new Promise(async resolve => {
+        async function searchBranches(session) {
+          return new Promise(async resolve => {
+            searchedSessions.push(session);
+            const relations = await getBranches(iinfo.startSession);
+            for (const rel of relations) {
+              if (rel.session !== iinfo.session && rel.title !== iinfo.name && rel.poster !== iinfo.poster) continue;
+              return resolve(rel);
+            }
+            for (const rel of relations) {
+              const result = await searchBranches(rel.session);
+              if (result) return resolve(result);
+            }
+            resolve(undefined);
+          });
+        }
+        const result = await searchBranches(iinfo.startSession);
+        if (!result) resolve(undefined);
+        else resolve({
+          name: result.title,
+          session: result.session,
+          poster: result.poster,
+        });
+      });
+      async function getBranches(session) {
+        const relations = await getRelationList(session);
+        if (!relations) return [];
+        return relations.filter(a => a.relation_type !== 'Character');
+      }
+    }
   }
 ]
 // Gets any anime info except for video player stuff
@@ -6933,39 +6970,50 @@ const animeInfoFunctions = [
 function getAnimeInfo(iinfo = {}, reqinfo = [], config = {}) {
   const oinfo = {};
   const used = [];
+  const dontUseAgain = [];
   const debug = initialStorage.debug?.animeInfo;
   return new Promise(async resolve => {
     if (!iinfo || !Object.values(iinfo).find(a => a)) return resolve({});
 
-    while (reqinfo.length > 0) {
-      const rankedFunctions = animeInfoFunctions.map(a => {
-        if (used.includes(a.id) || (config.requireInstant && !a.instant) || config.ignored.includes(a.id)) {
-          return {matches:0};
+    for (let i = 0; i < 1; i++) {
+      while (reqinfo.length > 0) {
+        const rankedFunctions = animeInfoFunctions.map(a => {
+          if ((config.requireInstant && !a.instant) || config.ignored.includes(a.id)) {
+            dontUseAgain.push(a.id);
+            return {matches:0};
+          }
+          let matches = 0;
+          if (!used.includes(a.id)) a.outputs.forEach(g => {
+            if (reqinfo.includes(g)) matches++;
+          });
+          return {
+            fn: a.fn,
+            matches: matches,
+            id: a.id,
+          };
+        }).sort((a,b) => b.matches - a.matches);
+        if (!rankedFunctions[0].matches) {
+          console.warn(`[AnimePahe Improvements] After ${used.length} functions, no remaining function matched ${reqinfo}`);
+          break;
         }
-        let matches = 0;
-        a.outputs.forEach(g => {
-          if (reqinfo.includes(g)) matches++;
-        });
-        return {
-          fn: a.fn,
-          matches: matches,
-          id: a.id,
-        };
-      }).sort((a,b) => b.matches - a.matches);
-      if (!rankedFunctions[0].matches) {
-        console.error(`[AnimePahe Improvements] After ${used.length} functions, no remaining function matched ${reqinfo}`);
-        resolve(oinfo);
-        return;
+        if (debug) console.log('chose',rankedFunctions[0].id,'for #',used.length);
+  
+        used.push(rankedFunctions[0]);
+        const result = await rankedFunctions[0](iinfo, config);
+        if (debug) console.log('got result',result,'with iinfo',JSON.parse(JSON.stringify(iinfo)));
+        if (!result) continue;
+        dontUseAgain.push(rankedFunctions[0].id)
+        for (const [key, value] of Object.entries(result)) {
+          if (!oinfo[key]) oinfo[key] = value;
+          if (!iinfo[key]) iinfo[key] = value;
+          if (value) reqinfo = reqinfo.filter(a => a !== key);
+        }
       }
-      if (debug) console.log('chose',rankedFunctions[0].id,'for #',used.length);
 
-      used.push(rankedFunctions[0]);
-      const result = await rankedFunctions[0](iinfo, config);
-      if (!result) continue;
-      for (const [key, value] of Object.entries(result)) {
-        if (!oinfo[key]) oinfo[key] = value;
-        if (value) reqinfo = reqinfo.filter(a => a !== key);
-      }
+      if (!reqinfo.length || i === 1) break;
+      if (debug) console.log('round two with left:',reqinfo);
+      used.length = 0;
+      used.push(...dontUseAgain);
     }
 
     resolve(oinfo);
