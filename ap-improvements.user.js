@@ -4941,8 +4941,12 @@ function openBookmarksModal() {
 
     for (const g of entries) {
       const statusAttrs = getStatusAttributes(g.status);
-      const session = await getAnimeSession(g.name);
-      const href = session ? `href="/anime/${session}"` : '';
+      const foundData = await getAnimeInfo({
+        name: g.name,
+        id: g.id,
+        poster: g.posterUrl
+      }, ["session"], {requireInstant: true});
+      const href = foundData.session ? `href="/anime/${foundData.session}"` : '';
       let elem;
 
       if (layout === 'list') {
@@ -4991,24 +4995,30 @@ function openBookmarksModal() {
         });
       }
       if (!g.name.toLowerCase().includes(searchInput)) elem.hide();
-      if (!session) {
+      if (!foundData.session) {
         const spinner = $(`
         <div class="anitracker-spinner" style="display: inline;">
           <div class="spinner-border" role="status" style="width: 1em;height: 1em;">
             <span class="sr-only">Loading...</span>
           </div>
         </div>`).insertBefore(elem.find('a>span'));
-        asyncGetAnimeData(g.name, g.id).then(data => {
+        getAnimeInfo({
+          name: g.name,
+          id: g.id,
+          poster: g.poster,
+        }, ["name","session"]).then(data => {
           spinner.remove();
-          if (!data) return;
+          if (!data.session) return;
           const storage2 = getStorage();
           const obj = storage2.bookmarks.find(a => a.id === g.id);
           if (!obj) return;
-          obj.name = data.title;
+          if (data.name) {
+            obj.name = data.name;
+            elem.find('a>span').text(data.name);
+          }
           saveData(storage2);
-          elem.find('a>span').text(data.title);
           elem.find('a').attr('href', '/anime/' + data.session);
-          console.log(`[AnimePahe Improvements] Replaced old bookmark name "${g.name}" with new "${data.title}"`);
+          console.log(`[AnimePahe Improvements] Replaced old bookmark name "${g.name}" with new "${data.name}"`);
         });
       }
     }
@@ -6936,6 +6946,7 @@ const animeInfoFunctions = [
       return new Promise(async resolve => {
         async function searchBranches(session) {
           return new Promise(async resolve => {
+            if (searchedSessions.includes(session)) return resolve(undefined);
             searchedSessions.push(session);
             const relations = await getBranches(iinfo.startSession);
             for (const rel of relations) {
