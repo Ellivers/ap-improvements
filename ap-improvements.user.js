@@ -5018,7 +5018,7 @@ function openBookmarksModal() {
           }
           saveData(storage2);
           elem.find('a').attr('href', '/anime/' + data.session);
-          console.log(`[AnimePahe Improvements] Replaced old bookmark name "${g.name}" with new "${data.name}"`);
+          if (data.name) console.log(`[AnimePahe Improvements] Replaced old bookmark name "${g.name}" with new "${data.name}"`);
         });
       }
     }
@@ -6885,13 +6885,7 @@ function makeSearchable(string) {
   return encodeURIComponent(string.replace(' -',' '));
 }
 
-/* - have a list of each info-getting function, ordered in speed with fastest first. each entry has a list of output keys
-  - do a while loop while reqdata length is > 0.
-  find out which function encompasses the most of reqdata by making a .map and sort the map by amount of reqdata support, then use the function.
-  at the end of each loop, if the function was successful, remove all data from reqdata that the function outputs.
-  make sure that function isn't run again, no matter the outcome
-  */
-
+// List of info-getting functions, from fastest to slowest
 const animeInfoFunctions = [
   {
     "id": "storage_session",
@@ -6905,6 +6899,19 @@ const animeInfoFunctions = [
         name: found.animeName,
         id: found.animeId,
         session: found.animeSession,
+      };
+    }
+  },
+  {
+    "id": "storage_video",
+    "outputs": ["id"],
+    "instant": true,
+    "fn": (iinfo = {}, config = {}) => {
+      const storage = getStorage();
+      const found = storage.videoTimes.find(a => a.animeName === iinfo.name || (a.animeId && a.animeId === iinfo.id) || iinfo.videoUrls?.find(g => a.videoUrls.includes(g)));
+      if (!found) return undefined;
+      return {
+        id: found.animeId // Don't return the name, due to it likely being incorrect
       };
     }
   },
@@ -6938,7 +6945,7 @@ const animeInfoFunctions = [
     }
   },
   {
-    "id": "relation_tree", // Extremely slow
+    "id": "relation_tree", // Very slow
     "outputs": ["session","name","poster"],
     "fn": async (iinfo = {}, config = {}) => {
       if (!iinfo.startSession) return undefined;
@@ -6977,8 +6984,17 @@ const animeInfoFunctions = [
   }
 ]
 // Gets any anime info except for video player stuff
-// Available inputs & outputs: name, id, anidb_id, session, poster
+// Available inputs & outputs: name, id, session, poster
+// TODO:
+// - make poster format consistent
+// - something with anidb_id?
 function getAnimeInfo(iinfo = {}, reqinfo = [], config = {}) {
+  /* - have a list of each info-getting function, ordered in speed with fastest first. each entry has a list of output keys
+  - do a while loop while reqdata length is > 0.
+  find out which function encompasses the most of reqdata by making a .map and sort the map by amount of reqdata support, then use the function.
+  at the end of each loop, if the function was successful, remove all data from reqdata that the function outputs.
+  make sure that function isn't run again, no matter the outcome
+  */
   const oinfo = {};
   const used = [];
   const dontUseAgain = [];
@@ -6987,7 +7003,8 @@ function getAnimeInfo(iinfo = {}, reqinfo = [], config = {}) {
     if (!iinfo || !Object.values(iinfo).find(a => a)) return resolve({});
 
     for (let i = 0; i < 1; i++) {
-      while (reqinfo.length > 0) {
+      while (reqinfo.length) {
+        // Find out which function is the most appropriate for the needed data
         const rankedFunctions = animeInfoFunctions.map(a => {
           if ((config.requireInstant && !a.instant) || config.ignored.includes(a.id)) {
             dontUseAgain.push(a.id);
