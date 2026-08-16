@@ -2963,7 +2963,7 @@ const siteVars = {
   syncErrorCooldown: 0,
   modalEvents: [],
   cached: {
-    animeData: [],
+    animeSearch: [],
     firstEpisode: {},
     animeId: {},
     animeSession: [],
@@ -5347,7 +5347,7 @@ function openBookmarkStatusEditModal(id, adding=false) {
       <div class="dropdown-menu anitracker-dropdown-content anitracker-status-dropdown" style="width:12em;"></div>
     </div>
     <div class="anitracker-image-wrapper anitracker-big-poster-icon" style="width:9em;height:9em;">
-      <img src="${entry.posterUrl ? makePosterUrl(entry.posteUrl, 'md') : 'data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw=='}" loading="lazy">
+      <img src="${entry.posterUrl ? makePosterUrl(entry.posterUrl, 'md') : 'data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw=='}" loading="lazy">
     </div>
   </div>
   `).appendTo('#anitracker-modal-body');
@@ -6940,7 +6940,7 @@ const animeInfoFunctions = [
     "fn": (iinfo = {}, config = {}) => {
       if (iinfo.episode === undefined) return undefined; // Can be falsy
       const storage = getStorage();
-      const found = storage.linkList.find(a => a.type === 'episode' && a.episodeNum === iinfo.episode && (a.animeName === iinfo.name || (a.animeId && a.animeId === iinfo.id) || a.animeSession === iinfo.session));
+      const found = storage.linkList.find(a => a.type === 'episode' && a.episodeNum === iinfo.episode && (a.animeName === iinfo.name || (a.animeId && a.animeId === iinfo.id) || a.animeSession === iinfo.session || iinfo.videoUrls?.find(g => a.videoUrls.includes(g))));
       if (!found) return undefined;
       return {
         name: found.animeName,
@@ -6956,7 +6956,7 @@ const animeInfoFunctions = [
     "instant": true,
     "fn": (iinfo = {}, config = {}) => {
       const storage = getStorage();
-      const found = storage.bookmarks.find(a => a.name === iinfo.name || a.id === iinfo.id || a.posteUrl === iinfo.poster);
+      const found = storage.bookmarks.find(a => a.name === iinfo.name || a.id === iinfo.id || (a.posterUrl && a.posterUrl === iinfo.poster));
       if (!found) return undefined;
       return {
         inacurrate_name: found.animeName,
@@ -7139,6 +7139,7 @@ function getAnimeInfo(iinfo = {}, reqinfo = [], config = {}) {
       used.push(...dontUseAgain);
     }
 
+    if (debug) console.log('result',oinfo);
     resolve(oinfo);
   });
 }
@@ -7225,7 +7226,7 @@ async function getAnimeInfoFromSearch(iinfo = {}, config = {}) {
       session: data.session,
       poster: trimPosterUrl(data.poster),
     }
-    siteVars.cached.animeData.push(rValue);
+    siteVars.cached.animeSearch.push(rValue);
     resolve(rValue);
   });
 }
@@ -7391,7 +7392,6 @@ function setupContinueWatchingSection() {
 
     $(`
     <h4 style="margin-bottom:0;">Video Progress</h4>
-    <p class="anitracker-secondary-info">Bookmarked entries have icons</p>
     <div class="btn-group" style="margin-left: 5px;">
       <input autocomplete="off" class="form-control anitracker-text-input-bar anitracker-modal-search" placeholder="Search">
       <button dir="down" class="btn btn-secondary dropdown-toggle anitracker-reverse-order-button anitracker-list-btn" title="Sort direction (down is default, and means newest first)"></button>
@@ -7402,29 +7402,29 @@ function setupContinueWatchingSection() {
 
     let entries = [...storage.videoTimes].reverse();
 
-    function layoutEntries() {
+    async function layoutEntries() {
       $('.anitracker-video-progress-item').remove();
       for (const entry of entries) {
         let img = `<div class="anitracker-video-progress-image-placeholder">
                      <i class="fa fa-play" aria-hidden="true" style="font-size: 2.5em;margin-left: 5px;"></i>
                    </div>`;
-        const data = getAnimeInfo({
+        const data = await getAnimeInfo({
           name: entry.animeName,
-          id: entry.animeId
-        }, ["name","id","session","episode_session","poster"]);
+          id: entry.animeId,
+          episode: entry.episodeNum,
+          videoUrls: entry.videoUrls,
+        }, ["name","id","session","episode_session","poster"], {requireInstant: true, ignored:['storage_video']});
+        if (data.poster) img = `<img src="${makePosterUrl(data.poster,'md')}">`;
 
-        if (animeId) {
-          const bookmark = storage.bookmarks.find(a => a.id === entry.animeId);
-          if (bookmark && bookmark.posterUrl) img = `
-          <img src="https://i.${window.location.host}/${bookmark.posterUrl}">`;
-        }
+        const href = (() => {
+          if (data.session && data.episode_session) return `/play/${data.session}/${data.episode_session}`;
+          else if (data.session) return `/anime/${data.session}`;
+          return '';
+        })();
+        const animeId = data.id || entry.animeId;
 
-        let href = '';
-        if (sessionEntry && sessionEntry.type === 'episode') href = `/play/${sessionEntry.animeSession}/${sessionEntry.episodeSession}`;
-        else if (animeId) href = `/a/${animeId}`;
-
-        const visibleAnimeName = sessionEntry?.animeName ?? entry.animeName;
-        const titleAttr = `${toHtmlCodes(visibleAnimeName)}${sessionEntry?.episodeSession ? ` Episode ${entry.episodeNum}` : ''}`;
+        const visibleAnimeName = data.name || entry.animeName;
+        const titleAttr = `${toHtmlCodes(visibleAnimeName)}${data.episode_session ? ` Episode ${entry.episodeNum}` : ''}`;
 
         const elem = $(`
         <div class="anitracker-big-list-item anitracker-video-progress-item">
@@ -7477,7 +7477,9 @@ function setupContinueWatchingSection() {
       });
       scrollModalToTop();
     }
-    layoutEntries();
+    waitForSessionList($('#anitracker-modal-body .anitracker-modal-list')).then(() => {
+      layoutEntries();
+    });
 
     if (!isMobileOrTablet()) setTimeout(() => {
       $('.anitracker-modal-search').focus();
