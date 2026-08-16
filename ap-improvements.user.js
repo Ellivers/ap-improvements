@@ -4417,20 +4417,15 @@ if (window.location.pathname.startsWith('/customlink')) {
       for (const entry of entries) {
         if (entry[0] === 'a') {
           const value = entry[1];
-          if (+value) {
-            const data = await getDataFromAnimeId(+value);
-            if (data) {
-              parts.animeSession = data.session;
-              continue;
-            }
-          }
-          const name = decodeURIComponent(value);
-          const animeData = await asyncGetAnimeData(name, undefined, true);
-          if (!animeData) return;
-          if (animeData.title !== name && !confirm(`[AnimePahe Improvements]\n\nCouldn't find any anime with name "${name}".\nGo to "${animeData.title}" instead?`)) {
+          const iinfo = {};
+          if (+value) iinfo.id = +value;
+          else iinfo.name = decodeURIComponent(value);
+          const data = await getAnimeInfo(iinfo,["session","name"],{allowGuessing:true});
+          if (!data.session) return;
+          if (iinfo.name && iinfo.name !== data.name && !confirm(`[AnimePahe Improvements]\n\nCouldn't find any anime with name "${name}".\nGo to "${animeData.title}" instead?`)) {
             return;
           }
-          parts.animeSession = animeData.session;
+          parts.animeSession = data.session;
           continue;
         }
         if (entry[0] === 'e') {
@@ -4798,12 +4793,12 @@ function openNotificationsModal() {
       const releaseTime = toUTCDate(ep.time);
       const elem = $(`
       <div class="anitracker-big-list-item anitracker-notification-item${ep.watched ? "" : " anitracker-notification-item-unwatched"} anitracker-temp" anime-data="${data.id}" episode-data="${ep.episode}">
-        <a href="/play/${data.session}/${ep.session}" target="_blank" title="${toHtmlCodes(data.title)}">
+        <a href="/play/${data.session}/${ep.session}" target="_blank" title="${toHtmlCodes(data.name)}">
           <div class="anitracker-image-wrapper">
-            <img src="${getSmallPosterUrl(data.poster)}" referrerpolicy="no-referrer" alt="[Thumbnail of ${toHtmlCodes(data.title)}]"}>
+            <img src="${makePosterUrl(data.poster,'th')}" referrerpolicy="no-referrer" alt="[Thumbnail of ${toHtmlCodes(data.name)}]"}>
           </div>
           <i class="fa ${ep.watched ? 'fa-eye-slash' : 'fa-eye'} anitracker-watched-toggle" tabindex="0" aria-hidden="true" title="Mark this episode as ${ep.watched ? 'unwatched' : 'watched'}"></i>
-          <div class="anitracker-main-text">${data.title}</div>
+          <div class="anitracker-main-text">${data.name}</div>
           <div class="anitracker-subtext">Episode <span class="anitracker-episode-text">${ep.episode}</span></div>
           <div class="anitracker-subtext">${timeSince(releaseTime)} ago (${releaseTime.toLocaleDateString()})</div>
         </a>
@@ -5523,12 +5518,15 @@ async function updateNotifications(animeName, storage = getStorage()) {
     toggleNotifications(animeName);
     return;
   }
-  let data = await asyncGetAnimeData(animeName, nobj.id);
-  if (!data) data = await getDataFromAnimeId(nobj.id);
-  if (!data) return -1;
+  const data = await getAnimeInfo({
+    name: animeName,
+    id: nobj.id
+  },['session','poster','name']);
+  if (!data.session || !data.name) return -1;
   const episodes = await getAllEpisodes(data.session, 'desc');
   if (episodes === undefined) return 0;
 
+  storage = getStorage();
   return new Promise((resolve, reject) => {
     if (!episodes.length) resolve(undefined);
 
@@ -5538,12 +5536,12 @@ async function updateNotifications(animeName, storage = getStorage()) {
 
     nobj.latest_episode = episodes[0].created_at;
 
-    if (nobj.name !== data.title) {
+    if (nobj.name !== data.name) {
       for (const ep of storage.notifications.episodes) {
         if (ep.animeName !== nobj.name) continue;
-        ep.animeName = data.title;
+        ep.animeName = data.name;
       }
-      nobj.name = data.title;
+      nobj.name = data.name;
     }
 
     const compareUpdateTime = nobj.updateFrom ?? storage.notifications.lastUpdated;
@@ -5556,7 +5554,7 @@ async function updateNotifications(animeName, storage = getStorage()) {
     for (const ep of episodes) {
       const epWatched = isWatched(nobj.id, ep.episode, watched) || getStoredTime(nobj.name, ep.episode, storage, nobj.id);
 
-      const found = storage.notifications.episodes.find(a => a.episode === ep.episode && (a.animeId === nobj.id || a.animeName === data.title));
+      const found = storage.notifications.episodes.find(a => a.episode === ep.episode && (a.animeId === nobj.id || a.animeName === data.name));
       if (found) {
         found.session = ep.session;
         if (!found.watched) found.watched = epWatched;
@@ -7643,13 +7641,18 @@ async function addContinueWatchingEpisodes(storage, episodeCount, clearAll = fal
         episode: entry.episodeNum,
       }, ["session","name","id","episode_session"], {ignored: ['storage_video']});
       if (data.id && isWatched(data.id, entry.episodeNum)) continue;
+
+      let sessionPossiblyInvalid = true;
       if (data.session && data.episode_session) {
         const url = `/play/${data.session}/${data.episode_session}`;
         const sessionResponse = await getPageResponse(url);
-        // If the page is redirected, the episode session was invalid but the anime session was not
-        if (sessionResponse.status === 200 && sessionResponse.responseURL !== url) delete data.episode_session;
+        if (sessionResponse.status === 200) {
+          sessionPossiblyInvalid = false;
+          // If the page is redirected, the episode session was invalid but the anime session was not
+          if (sessionResponse.responseURL !== url) delete data.episode_session;
+        }
       }
-      if (data.session) {
+      if (data.session && sessionPossiblyInvalid) {
         const sessionResponse = await getPageResponse('/anime/' + data.session);
         if (sessionResponse.status !== 200) {
           // If the anime session is expired, try to get a new one
