@@ -3104,13 +3104,13 @@ function updatePage() {
   updateEpisodePages();
   const storage = getStorage();
 
-  if (isAnime() || isEpisode()) asyncGetAnimeId(getAnimeSessionFromUrl()).then(animeId => {
-    if (!animeId) return;
-    const isBookmarked = storage.bookmarks.find(a => a.id === animeId) !== undefined;
+  if (isAnime() || isEpisode()) getAnimeInfo({session: getAnimeSessionFromUrl()},["id"]).then(data => {
+    if (!data.id) return;
+    const isBookmarked = storage.bookmarks.find(a => a.id === data.id) !== undefined;
     if (isBookmarked) $('.anitracker-bookmark-toggle .anitracker-title-icon-check').show();
     else $('.anitracker-bookmark-toggle .anitracker-title-icon-check').hide();
 
-    const hasNotifications = storage.notifications.anime.find(a => a.id === animeId) !== undefined;
+    const hasNotifications = storage.notifications.anime.find(a => a.id === data.id) !== undefined;
     if (hasNotifications) $('.anitracker-notifications-toggle .anitracker-title-icon-check').show();
     else $('.anitracker-notifications-toggle .anitracker-title-icon-check').hide();
   });
@@ -3266,8 +3266,9 @@ if (isEpisode()) {
 
     const action = data?.action;
     if (action === 'id_request') {
-      asyncGetAnimeId(getAnimeSessionFromUrl()).then(id => {
-        sendMessage({action:"id_response",id:id});
+      getAnimeInfo({session: getAnimeSessionFromUrl()},["id"]).then(data => {
+        if (!data.id) return console.error("[AnimePahe Improvements] Couldn't get anime ID to send to iframe");
+        sendMessage({action:"id_response",id:data.id});
       });
     }
     else if (action === 'anidb_id_request') {
@@ -7272,25 +7273,6 @@ function getAnimeId(session, animeName = getAnimeName()) {
   return id;
 }
 
-async function asyncGetAnimeId(session, animeName = getAnimeName()) {
-  return new Promise(async resolve => {
-    const cached = siteVars.cached.animeId[session];
-    if (cached) return resolve(cached);
-
-    const id = await (async () => {
-      const data = await asyncGetAnimeData(animeName);
-      if (data) return data.id;
-
-      if (!session) return undefined;
-      const response = await asyncGetResponseData(`/api?m=release&id=${session}`);
-      if (!response) return undefined;
-      return response[0].anime_id;
-    })();
-    if (id) siteVars.cached.animeId[session] = id;
-    return resolve(id);
-  });
-}
-
 async function getAnimeSession(iinfo = {}, config = {}) {
   if (!iinfo.name && !iinfo.session && !config.justCache) return undefined;
 
@@ -8541,8 +8523,11 @@ $('#anitracker-clear-from-tracker').on('click', function() {
 
   if (isEpisode()) {
     showButtonSpinner(this);
-    asyncGetAnimeId(animeSession, animeName).then(id => {
-      deleteEpisodeFromTracker(animeName, getEpisodeNum(), id);
+    getAnimeInfo({
+      session: animeSession,
+      name: animeName,
+    }, ["id"]).then(data => {
+      deleteEpisodeFromTracker(animeName, getEpisodeNum(), data.id);
 
       if ($('.embed-responsive-item').length) {
         const storage = getStorage();
@@ -9020,8 +9005,12 @@ if (isAnime()) {
 
   $('#anitracker-clear-episodes-from-tracker').on('click', function() {
     showButtonSpinner(this);
-    asyncGetAnimeId(animeSession).then(id => {
-      deleteEpisodesFromTracker(undefined, getAnimeName(), id);
+    const animeName = getAnimeName();
+    getAnimeInfo({
+      session: animeSession,
+      name: animeName
+    }, ["id"]).then(data => {
+      deleteEpisodesFromTracker(undefined, animeName, data.id);
 
       hideButtonSpinner(this);
       temporaryHtmlChange($('#anitracker-clear-episodes-from-tracker'), 1500, 'Cleared!');
@@ -9483,9 +9472,12 @@ function addGeneralButtons() {
         </button>
       </div>`).appendTo('#anitracker-player-options');
 
-      asyncGetAnimeId(animeSession).then(id => {
+      getAnimeInfo({
+        session: animeSession
+      }, ["id"]).then(data => {
+        if (!data.id) return;
         const elem = $('#anitracker-report-timestamps');
-        elem.attr('href', elem.attr('href').replace('LOADING_ID',id));
+        elem.attr('href', elem.attr('href').replace('LOADING_ID',data.id));
       });
 
       $('#anitracker-reset-player').on('click', function() {
@@ -9581,9 +9573,15 @@ function addGeneralButtons() {
 
       $('#anitracker-unmark-watched').on('click', function() {
         showButtonSpinner(this);
-        asyncGetAnimeId(animeSession).then(id => {
+        getAnimeInfo({
+          session: animeSession
+        }, ["id"]).then(data => {
+          if (!data.id) {
+            hideButtonSpinner(this);
+            return showMessage('Failed');
+          }
           closeModal();
-          removeWatchedAnime(id);
+          removeWatchedAnime(data.id);
           updateEpisodePages();
           showMessage('Unmarked all watched episodes');
         });
@@ -12034,30 +12032,33 @@ if (isEpisode()) {
   </div>`).appendTo('#anitracker');
   addOptionSwitch('autoPlayNext','Auto-Play Next','Automatically go to the next episode when the current one has ended.','#anitracker');
 
-  const copyButtons = $('.anitracker-copy-button');
-  showButtonSpinner(copyButtons);
-  asyncGetAnimeId(animeSession).then(id => {
-    addTitleIcons(id);
+  $('.anitracker-copy-button').on('click', (e) => {
+    const targ = $(e.currentTarget);
+    const type = targ.attr('copy');
+    const episode = getEpisodeNum();
+    if (['link','link-time'].includes(type)) {
+      navigator.clipboard.writeText(window.location.origin + '/customlink?a=' + encodeURIComponent(getAnimeName()) + '&e=' + episode + (type !== 'link-time' ? '' : ('&t=' + currentEpisodeTime.toString())));
+    }
+    targ.popover('show');
+    setTimeout(() => {
+      targ.popover('hide');
+    }, 1000);
+  });
 
-    hideButtonSpinner(copyButtons);
-    copyButtons.on('click', (e) => {
-      const targ = $(e.currentTarget);
-      const type = targ.attr('copy');
-      const episode = getEpisodeNum();
-      if (['link','link-time'].includes(type)) {
-        navigator.clipboard.writeText(window.location.origin + '/customlink?a=' + encodeURIComponent(getAnimeName()) + '&e=' + episode + (type !== 'link-time' ? '' : ('&t=' + currentEpisodeTime.toString())));
-      }
-      targ.popover('show');
-      setTimeout(() => {
-        targ.popover('hide');
-      }, 1000);
-    });
+  getAnimeInfo({
+    session: animeSession
+  }, ["id"]).then(data => {
+    if (!data.id) return;
+    addTitleIcons(data.id);
   });
 }
 
 if (initialStorage.settings.autoDelete === true && isEpisode() && paramArray.find(a => a[0] === 'ref' && a[1] === 'customlink') === undefined) {
-  asyncGetAnimeId(animeSession).then(id => {
-    deleteEpisodesFromTracker(getEpisodeNum(), getAnimeName(), id);
+  getAnimeInfo({
+    session: animeSession
+  }, ["id"]).then(data => {
+    if (!data.id) return console.error("[AnimePahe Improvements] Couldn't get anime ID for session clearing");
+    deleteEpisodesFromTracker(getEpisodeNum(), getAnimeName(), data.id);
   });
 }
 
