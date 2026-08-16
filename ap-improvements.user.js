@@ -6893,6 +6893,22 @@ function makePosterUrl(poster, format = '') {
   return `https://i.${window.location.host}/${poster}`;
 }
 
+function getAnimeDataFromPage(page = $(document)) {
+  const poster = trimPosterUrl($(page.find('.anime-poster img')[0])?.data('src'));
+  const name = $(page.find('.title-wrapper h1 span')[0]).text();
+  const ids = {};
+  for (const meta of page.find('head meta')) {
+    if (meta.name === 'id') ids.id = +meta.content;
+    if (meta.name === 'anidb') ids.anidb_id = +meta.content;
+  }
+  return {
+    name: name,
+    id: ids.id,
+    anidb_id: ids.anidb_id,
+    poster: trimPosterUrl(poster),
+  }
+}
+
 // List of info-getting functions, from fastest to slowest
 const animeInfoFunctions = [
   {
@@ -6901,17 +6917,13 @@ const animeInfoFunctions = [
     "instant": true,
     "fn": (iinfo = {}, config = {}) => {
       if ((!isAnime() && !isEpisode())) return undefined;
-      const poster = trimPosterUrl($($('.anime-poster img')[0])?.data('src'));
-      const ids = {};
-      for (const meta of $('head meta')) {
-        if (meta.name === 'id') ids.id = +meta.content;
-        if (meta.name === 'anidb') ids.anidb_id = +meta.content;
-      }
+      const data = getAnimeDataFromPage();
+      const session = getAnimeSessionFromUrl();
       // Require at least one part of iinfo to match
-      if (iinfo.name !== getAnimeName() && iinfo.session !== getAnimeSessionFromUrl() && iinfo.id !== ids.id && iinfo.anidb_id !== ids.anidb_id && iinfo.poster !== poster) return undefined;
+      if (iinfo.name !== data.name && iinfo.session !== session && iinfo.id !== data.id && iinfo.anidb_id !== data.anidb_id && iinfo.poster !== data.poster) return undefined;
       return {
-        name: getAnimeName(),
-        session: getAnimeSessionFromUrl(),
+        name: data.name,
+        session: session,
         id: ids.id,
         anidb_id: ids.anidb_id,
         poster: poster,
@@ -6922,9 +6934,11 @@ const animeInfoFunctions = [
     "id": "storage_session",
     "outputs": ["id","session","name"],
     "instant": true,
+    "possibly_expired": true,
     "fn": (iinfo = {}, config = {}) => {
       const storage = getStorage();
-      const found = storage.linkList.find(a => a.animeName === iinfo.name || (a.animeId && a.animeId === iinfo.id) || a.animeSession === iinfo.session);
+      const list = [...storage.linkList].reverse(); // Reverse to prioritize newer entries
+      const found = list.find(a => a.animeName === iinfo.name || (a.animeId && a.animeId === iinfo.id) || a.animeSession === iinfo.session);
       if (!found) return undefined;
       return {
         name: found.animeName,
@@ -6935,12 +6949,14 @@ const animeInfoFunctions = [
   },
   {
     "id": "storage_episode_session",
-    "outputs": ["episode_session"],
+    "outputs": ["id","session","name","episode_session"],
     "instant": true,
+    "possibly_expired": true,
     "fn": (iinfo = {}, config = {}) => {
       if (iinfo.episode === undefined) return undefined; // Can be falsy
       const storage = getStorage();
-      const found = storage.linkList.find(a => a.type === 'episode' && a.episodeNum === iinfo.episode && (a.animeName === iinfo.name || (a.animeId && a.animeId === iinfo.id) || a.animeSession === iinfo.session || iinfo.videoUrls?.find(g => a.videoUrls.includes(g))));
+      const list = [...storage.linkList].reverse(); // Reverse to prioritize newer entries
+      const found = list.find(a => a.type === 'episode' && a.episodeNum === iinfo.episode && (a.animeName === iinfo.name || (a.animeId && a.animeId === iinfo.id) || a.animeSession === iinfo.session || iinfo.videoUrls?.find(g => a.videoUrls.includes(g))));
       if (!found) return undefined;
       return {
         name: found.animeName,
@@ -6991,19 +7007,13 @@ const animeInfoFunctions = [
       if (!iinfo.session) return undefined;
       const page = await asyncGetPage(`/anime/${iinfo.session}`);
       if (!page) return undefined;
-      const poster = $(page.find('.anime-poster img')[0])?.data('src');
-      const name = $(page.find('.title-wrapper h1 span')[0]).text();
-      const ids = {};
-      for (const meta of page.find('head meta')) {
-        if (meta.name === 'id') ids.id = +meta.content;
-        if (meta.name === 'anidb') ids.anidb_id = +meta.content;
-      }
+      const data = getAnimeDataFromPage(page);
       return {
         session: iinfo.session,
-        name: name,
-        id: ids.id,
-        anidb_id: ids.anidb_id,
-        poster: trimPosterUrl(poster),
+        name: data.name,
+        id: data.id,
+        anidb_id: data.anidb_id,
+        poster: data.poster,
       }
     }
   },
@@ -7040,6 +7050,17 @@ const animeInfoFunctions = [
         async function searchBranches(session) {
           return new Promise(async resolve => {
             if (searchedSessions.includes(session)) return resolve(undefined);
+            const page = await asyncGetPage(`/anime/${session}`);
+            if (page) {
+              const pageData = getAnimeDataFromPage(page);
+              if (pageData.name === iinfo.name || pageData.id === iinfo.id || pageData.anidb_id === iinfo.anidb_id || pageData.poster === iinfo.poster) {
+                return resolve({
+                  name: pageData.name,
+                  session: session,
+                  poster: pageData.poster,
+                });
+              }
+            }
             searchedSessions.push(session);
             const relations = await getBranches(session);
             for (const rel of relations) {
@@ -7062,12 +7083,16 @@ const animeInfoFunctions = [
           startSession = data.session;
         }
         const result = await searchBranches(startSession);
-        if (!result) resolve(undefined);
-        else resolve({
+        if (!result) return resolve(undefined);
+        const returnData = {
           name: result.title,
           session: result.session,
           poster: trimPosterUrl(result.poster),
-        });
+        };
+        for (const [key, value] of Object.entries(result)) {
+          if (!['title','session','poster'].includes(key)) returnData[key] = value;
+        }
+        resolve(returnData);
       });
       async function getBranches(session) {
         const relations = await getRelationList(session);
@@ -7101,7 +7126,7 @@ function getAnimeInfo(iinfo = {}, reqinfo = [], config = {}) {
       while (reqinfo.length) {
         // Find out which function is the most appropriate for the needed data
         const rankedFunctions = animeInfoFunctions.map(a => {
-          if ((config.requireInstant && !a.instant) || config.ignored?.includes(a.id)) {
+          if ((config.requireInstant && !a.instant) || (config.forceFresh && a.possibly_expired) || config.ignored?.includes(a.id)) {
             dontUseAgain.push(a.id);
             return {matches:0};
           }
@@ -7610,65 +7635,36 @@ async function addContinueWatchingEpisodes(storage, episodeCount, clearAll = fal
       }
       if (entry.animeId && isWatched(entry.animeId, entry.episodeNum)) continue;
 
-      let sessionEntry;
-
-      const data = await asyncGetAnimeData(entry.animeName, entry.animeId);
-      if (!data) {
-        sessionEntry = (() => {
-          let returnVal;
-          const linkList = [...storage.linkList].reverse(); // Reverse it so newer entries are prioritized
-          if (entry.animeId) {
-            returnVal = linkList.find(a => a.animeId === entry.animeId && a.type === 'episode' && a.episodeNum === entry.episodeNum);
-            if (!returnVal) returnVal = linkList.find(a => a.animeId === entry.animeId && a.type === 'anime');
-          }
-          else {
-            returnVal = linkList.find(a => a.animeName === entry.animeName && a.type === 'episode' && a.episodeNum === entry.episodeNum);
-            if (!returnVal) returnVal = linkList.find(a => a.animeName === entry.animeName && a.type === 'anime');
-          }
-          return returnVal;
-        })();
-
-        // If we have animeId, we can get the session that way later
-        if (!sessionEntry && !entry.animeId) continue;
-      };
-
-      const id = data?.id || sessionEntry?.animeId || entry.animeId;
-
-      // The sessionEntry is allowed to be invalid ONLY if there is no alternative (no animeId)
-      // If there is an animeId, validate the animeSession (faster than failing at the episodes API call)
-      if (sessionEntry && id) {
-        const aSessionStatus = await getPageStatus(`/anime/${sessionEntry.animeSession}`);
-        if (aSessionStatus !== 200) {
-          sessionEntry.animeSession = undefined;
-          sessionEntry.episodeSession = undefined; // If we throw away the anime session, we have to throw away the episode session as well
+      const data = await getAnimeInfo({
+        name: entry.animeName,
+        id: entry.animeId,
+        videoUrls: entry.videoUrls,
+        episode: entry.episodeNum,
+      }, ["session","name","id","episode_session"], {ignored: ['storage_video']});
+      if (data.id && isWatched(data.id, entry.episodeNum)) continue;
+      if (data.session && data.episode_session) {
+        const url = `/play/${data.session}/${data.episode_session}`;
+        const sessionResponse = await getPageResponse(url);
+        // If the page is redirected, the episode session was invalid but the anime session was not
+        if (sessionResponse.status === 200 && sessionResponse.responseURL !== url) delete data.episode_session;
+      }
+      if (data.session) {
+        const sessionResponse = await getPageResponse('/anime/' + data.session);
+        if (sessionResponse.status !== 200) {
+          // If the anime session is expired, try to get a new one
+          const data2 = await getAnimeInfo({
+            name: data.name || entry.animeName,
+            id: entry.animeId,
+            videoUrls: entry.videoUrls,
+            episode: entry.episodeNum,
+          }, ["session"], {ignored: ['storage_video'], forceFresh: true});
+          if (data2.session) data.session = data2.session;
         }
       }
 
-      let animeSession = data?.session || sessionEntry?.animeSession;
-
-      // If no data or sessionEntry anime session, get session by visiting the page using ID
-      if (!data && !sessionEntry?.animeSession && id) {
-        const reqData = await getDataFromAnimeId(id);
-        animeSession = reqData?.session;
-      }
-
-      // Get the anime name from session entry, if previous request failed or no ID
-      if (!data && !sessionEntry?.animeSession && !animeSession && sessionEntry) {
-        const reqData = await asyncGetAnimeData(sessionEntry.animeName, id);
-        animeSession = reqData?.session;
-      }
-
-      if (!animeSession) {
-        if (id) addEpisode(entry, undefined, undefined, undefined, {animeId: id});
-        continue;
-      }
-
-      // Check a second time if watched, because ID could be newly available
-      if (id && isWatched(id, entry.episodeNum)) continue;
-
-      const episodeData = await getEpisodeData(animeSession, entry.episodeNum);
-      const firstEpisode = siteVars.cached.firstEpisode[animeSession]; // If not cached, it will be undefined
-      addEpisode(entry, episodeData, sessionEntry, data, {animeSession: animeSession, firstEpisode: firstEpisode});
+      const episodeData = await getEpisodeData(data.session, entry.episodeNum);
+      const firstEpisode = siteVars.cached.firstEpisode[data.session]; // If not cached, it will be undefined
+      addEpisode(entry, episodeData, data, {firstEpisode: firstEpisode});
 
       if (clearAll) $('#anitracker-continue-watching-progress .anitracker-progress-bar > div').width((processedAnime.length / episodeCount)*100 + '%');
     }
@@ -7726,7 +7722,7 @@ async function addContinueWatchingEpisodes(storage, episodeCount, clearAll = fal
     }
     applyEpisodeOptionsEvents($('.anitracker-episode-list-wrapper .episode-wrap'));
 
-    function addEpisode(videoTimeEntry, episodeEntry, sessionEntry, animeData, extra) {
+    function addEpisode(videoTimeEntry, episodeEntry, animeData, extra) {
       // Piece together anime data based on available info
       const episode = {
         time: videoTimeEntry.time,
@@ -7736,26 +7732,19 @@ async function addContinueWatchingEpisodes(storage, episodeCount, clearAll = fal
         firstEpisode: extra?.firstEpisode,
         videoTimeName: videoTimeEntry.animeName,
         videoTimeEpisode: videoTimeEntry.episodeNum,
+        animeSession: animeData.session,
       };
 
-      if (animeData) episode.animeSession = animeData.session;
-      else if (sessionEntry && sessionEntry.animeSession) episode.animeSession = sessionEntry.animeSession;
-      else if (extra?.animeSession) episode.animeSession = extra.animeSession;
-
       if (episodeEntry) episode.session = episodeEntry.session;
-      else if (sessionEntry && sessionEntry.episodeSession) episode.session = sessionEntry.episodeSession;
+      else if (animeData.episode_session) episode.session = animeData.episode_session;
 
-      if (animeData) episode.animeId = animeData.id;
-      else if (sessionEntry && sessionEntry.animeId) episode.animeId = sessionEntry.animeId;
+      if (animeData.id) episode.animeId = animeData.id;
       else if (videoTimeEntry.animeId) episode.animeId = videoTimeEntry.animeId;
-      else if (extra?.animeId) episode.animeId = extra.animeId;
 
-      if (animeData) episode.title = animeData.title;
-      else if (sessionEntry) episode.title = sessionEntry.animeName;
+      if (animeData.name) episode.title = animeData.name;
       else episode.title = videoTimeEntry.animeName;
 
       if (episodeEntry) episode.episode = episodeEntry.episode;
-      else if (sessionEntry && sessionEntry.episodeNum) episode.episode = sessionEntry.episodeNum;
       else episode.episode = videoTimeEntry.episodeNum;
 
       if (!episode.animeSession && !episode.animeId) return;
@@ -7772,12 +7761,12 @@ async function addContinueWatchingEpisodes(storage, episodeCount, clearAll = fal
     resolve();
   });
 
-  function getPageStatus(qurl) {
+  function getPageResponse(qurl) {
     const request = new XMLHttpRequest();
     request.open('GET', qurl, true);
     return new Promise(resolve => {
       request.onload = () => {
-        resolve(request.status);
+        resolve(request);
       }
       request.send();
     });
