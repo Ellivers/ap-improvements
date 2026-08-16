@@ -4986,11 +4986,11 @@ function openBookmarksModal() {
 
         elem.find('img').on('load', function() {$(this).css('opacity', '1')});
         if (g.posterUrl === undefined) {
-          getBookmarkImage(elem, g);
+          getBookmarkImage(elem, g, foundData.session);
           return;
         }
         elem.find('img').on('error', function() {
-          getBookmarkImage(elem, g);
+          getBookmarkImage(elem, g, foundData.session);
           $(this).off('error');
         });
       }
@@ -5297,7 +5297,7 @@ function openBookmarksModal() {
   openModal();
 }
 
-function getBookmarkImage(elem, g, session = undefined) {
+function getBookmarkImage(elem, bookmark, session = undefined) {
   $(`
   <div class="anitracker-spinner-parent" style="position: relative;">
     <div class="anitracker-spinner anitracker-center-content" style="position: absolute;width: 100%;align-items: center;aspect-ratio: 1;">
@@ -5308,19 +5308,19 @@ function getBookmarkImage(elem, g, session = undefined) {
 
   setTimeout(async () => {
     const data = await getAnimeInfo({
-      name: g.name,
-      id: g.id,
+      name: bookmark.name,
+      id: bookmark.id,
       session: session,
     }, ['poster'], {ignored:['storage_bookmark']});
     elem.find('.anitracker-spinner-parent').remove();
     
     if (!data.poster) return;
-    elem.find('img').attr('src', makePosterUrl(poster,'md'));
+    elem.find('img').attr('src', makePosterUrl(data.poster,'md'));
 
     const currentStorage = getStorage();
-    const found = currentStorage.bookmarks.find(b => b.name === g.name && b.id === g.id);
+    const found = currentStorage.bookmarks.find(b => b.name === bookmark.name && b.id === bookmark.id);
     if (!found) return;
-    found.posterUrl = trimPosterUrl(poster);
+    found.posterUrl = trimPosterUrl(data.poster);
     saveData(currentStorage);
   }, 0);
 }
@@ -7018,7 +7018,7 @@ const animeInfoFunctions = [
       const cached = siteVars.cached.animeId[iinfo.session];
       if (cached) return cached;
       
-      return new Promise(resolve => {
+      return new Promise(async resolve => {
         const response = await asyncGetResponseData(`/api?m=release&id=${iinfo.session}`);
         if (!response) return resolve(undefined);
         siteVars.cached.animeId[iinfo.session] = response[0].anime_id;
@@ -7118,8 +7118,8 @@ function getAnimeInfo(iinfo = {}, reqinfo = [], config = {}) {
         }
         if (debug) console.log('chose',rankedFunctions[0].id,'for #',used.length);
   
-        used.push(rankedFunctions[0]);
-        const result = await rankedFunctions[0](iinfo, config);
+        used.push(rankedFunctions[0].id);
+        const result = await rankedFunctions[0].fn(iinfo, config);
         if (debug) console.log('got result',result,'with iinfo',JSON.parse(JSON.stringify(iinfo)));
         if (!result) continue;
         dontUseAgain.push(rankedFunctions[0].id)
