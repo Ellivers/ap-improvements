@@ -693,6 +693,28 @@ const _css = `
   var timestamps = [];
   const anitrackerSettings = initialStorage.settings;
 
+  function setupTimestamps(anidbId, firstEpisode) {
+    const vidInfo = getVideoInfo();
+    getTimestamps(anidbId, vidInfo.episodeNum, firstEpisode).then(response => {
+      const storage = getStorage();
+      const storedVideoTime = getStoredTime(vidInfo.animeName, vidInfo.episodeNum, storage);
+
+      if (response === false) {
+        storedVideoTime.hasTimestamps = false;
+        delete storedVideoTime.timestampData;
+        saveData(storage);
+        return;
+      }
+
+      if (storage.settings.seekPoints) setSeekPoints(response);
+      if (storage.settings.skipButton) timestamps = response;
+
+      storedVideoTime.hasTimestamps = true;
+      storedVideoTime.timestampData = response;
+      saveData(storage);
+    });
+  }
+
   async function getAnidbIdFromTitle(title) {
     return new Promise((resolve) => {
       const req = new XMLHttpRequest();
@@ -821,7 +843,7 @@ const _css = `
 
     if (!storedVideoTime) {
       if (![-1,1].includes(waitingState.idRequest)) { // If the ID request hasn't failed and isn't ongoing
-        sendIdRequest();
+        sendIdRequests();
         return;
       }
       const vidInfo = getVideoInfo();
@@ -917,46 +939,19 @@ const _css = `
       waitingState.idRequest = 2;
 
       const storedPlaybackSpeed = storage.videoSpeed.find(a => a.animeId === data.id);
-      if (storedPlaybackSpeed) {
-        setSpeed(storedPlaybackSpeed.speed);
-      }
-
-      waitingState.anidbIdRequest = 1;
-      sendMessage({action:"anidb_id_request",id:data.id});
+      if (storedPlaybackSpeed) setSpeed(storedPlaybackSpeed.speed);
 
       return;
     }
     else if (action === 'anidb_id_response' && waitingState.anidbIdRequest === 1) {
-      // anidb_id_response also responds with pahe ID and the anime's first episode number
+      // anidb_id_response also responds with anime name and the anime's first episode number
       waitingState.anidbIdRequest = 2;
       let anidbId = data.id;
       if (anidbId === undefined) {
-        const episode = storage.linkList.find(e => e.type === 'episode' && e.animeId === data.originalId);
-        if (!episode) return;
-        anidbId = await getAnidbIdFromTitle(episode.animeName);
+        anidbId = await getAnidbIdFromTitle(data.animeName);
       }
-      if (anidbId === undefined) {
-        console.warn("[AnimePahe Improvements] Couldn't get AniDB ID");
-        return;
-      }
-      getTimestamps(anidbId, vidInfo.episodeNum, data.firstEpisode).then(response => {
-        const storage = getStorage();
-        const storedVideoTime = getStoredTime(vidInfo.animeName, vidInfo.episodeNum, storage);
-
-        if (response === false) {
-          storedVideoTime.hasTimestamps = false;
-          delete storedVideoTime.timestampData;
-          saveData(storage);
-          return;
-        }
-
-        if (storage.settings.seekPoints) setSeekPoints(response);
-        if (storage.settings.skipButton) timestamps = response;
-
-        storedVideoTime.hasTimestamps = true;
-        storedVideoTime.timestampData = response;
-        saveData(storage);
-      });
+      if (anidbId === undefined) return console.warn("[AnimePahe Improvements] Couldn't get AniDB ID");
+      setupTimestamps(anidbId, data.firstEpisode);
     }
     else if (action === 'video_url_response' && waitingState.videoUrlRequest === 1) {
       waitingState.videoUrlRequest = 2;
@@ -1200,14 +1195,27 @@ const _css = `
     });
   }
 
-  function sendIdRequest() {
-    if ([-1,1].includes(waitingState.idRequest)) return; // Return if the ID request either has failed or is ongoing
-    waitingState.idRequest = 1;
-    sendMessage({action: "id_request"});
+  function sendIdRequests() {
+    if (waitingState.idRequest === 0) { // If the ID request hasn't started yet
+      waitingState.idRequest = 1;
+      sendMessage({action: "id_request"});
+    }
+    if (waitingState.anidbIdRequest === 0) { // If the AniDB ID request hasn't started yet
+      waitingState.anidbIdRequest = 1;
+      sendMessage({action:"anidb_id_request"});
+    }
+
     setTimeout(() => {
       if (waitingState.idRequest === 1) {
         waitingState.idRequest = -1; // Failed to get the anime ID from the main page within 8 seconds
         updateStoredTime();
+      }
+      if (waitingState.anidbIdRequest === 1) {
+        waitingState.anidbIdRequest = -1;
+        getAnidbIdFromTitle(getVideoInfo().animeName).then(anidbId => {
+          if (!anidbId) return console.warn("[AnimePahe Improvements] Couldn't get AniDB ID");
+          setupTimestamps(anidbId, undefined);
+        });
       }
     }, 8000);
   }
@@ -1253,9 +1261,9 @@ const _css = `
       if (storedVideoTime.hasTimestamps) {
         if (storedVideoTime.timestampData.timestamps) {
           // Handle previous format
-          if (waitingState.anidbIdRequest !== 1 && storedVideoTime.animeId) {
+          if (waitingState.anidbIdRequest !== 1) {
             waitingState.anidbIdRequest = 1;
-            sendMessage({action:"anidb_id_request",id:storedVideoTime.animeId});
+            sendMessage({action:"anidb_id_request"});
           }
         }
         else {
@@ -1273,14 +1281,14 @@ const _css = `
         storedVideoTime.duration = Math.floor(player.duration);
         saveData(storage);
       }
-      if (!storedVideoTime.animeId) sendIdRequest();
+      if (!storedVideoTime.animeId) sendIdRequests();
       const storedPlaybackSpeed = storage.videoSpeed.find(a => a.animeId === storedVideoTime.animeId);
       if (storedPlaybackSpeed) setSpeed(storedPlaybackSpeed.speed);
       else player.playbackRate = 1;
     }
     else {
       player.playbackRate = 1;
-      sendIdRequest();
+      sendIdRequests();
       finishedLoading();
     }
 
@@ -3272,10 +3280,9 @@ if (isEpisode()) {
       });
     }
     else if (action === 'anidb_id_request') {
-      getAnidbId(data.id).then(idResult => {
-        getFirstEpisode(animeSession).then(epResponse => {
-          sendMessage({action:"anidb_id_response",id:idResult,originalId:data.id,firstEpisode:epResponse});
-        });
+      const pageData = getAnimeDataFromPage($(document),true);
+      getFirstEpisode(animeSession).then(epResponse => {
+        sendMessage({action:"anidb_id_response",id:pageData.anidb_id,animeName:pageData.name,firstEpisode:epResponse});
       });
     }
     else if (action === 'video_url_request') {
@@ -3422,19 +3429,6 @@ function toggleTheatreMode() {
   storage.settings.theatreMode = !storage.settings.theatreMode;
   saveData(storage);
   updateSwitches();
-}
-
-async function getAnidbId(paheId) {
-  return new Promise(async resolve => {
-    const page = await asyncGetPage(`/a/${paheId}`);
-    for (const link of page.find('.external-links a')) {
-      const elem = $(link);
-      if (!elem.text().includes('AniDB')) continue;
-      resolve(/\/\/anidb.net\/anime\/(\d+)/.exec(elem.attr('href'))[1]);
-      return;
-    }
-    resolve(undefined);
-  });
 }
 
 async function getDataFromAnimeId(id) {
