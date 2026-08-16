@@ -1,6 +1,8 @@
 # ap-improvements
 Improvements and additions for AnimePahe.
 
+## The script currently has various issues due to changes that were made on the site. I'm working to fix this, and the issues will be resolved in the next update.
+
 The "dev" branch is for the in-development version of the script.
 
 If you find a bug or have a suggestion, feel free to [open an issue](https://github.com/Ellivers/ap-improvements/issues/new/choose)!
