@@ -4858,12 +4858,12 @@ function openNotificationsModal() {
     if (!storage.notifications.anime.length) {
       $(`<span>Use the <i class="fa fa-bell" title="bell"></i> button on an ongoing anime to add it to the feed.</span>`).appendTo('#anitracker-modal-body .anitracker-modal-list');
       makeSchedule(storage.settings.notifScheduleStart);
-      openModal(openNotificationsModal);
+      openModal(openNotificationsModal, animation);
       return;
     }
 
-    waitForSessionList($('#anitracker-modal-body .anitracker-modal-list')).then(() => {
-      [...storage.notifications.anime].sort((a,b) => a.latest_episode > b.latest_episode ? 1 : -1).forEach(async g => {
+    waitForSessionList($('#anitracker-modal-body .anitracker-modal-list')).then(async () => {
+      for (const g of [...storage.notifications.anime].sort((a,b) => a.latest_episode > b.latest_episode ? 1 : -1)) {
         const latestEp = toUTCDate(g.latest_episode);
         const latestEpString = g.latest_episode !== undefined ? `${getDayName(latestEp.getDay())} ${latestEp.toLocaleTimeString([], {timeStyle:'short'})} (${timeSince(latestEp.getTime())} ago)` : "None found";
         const data = await getAnimeData({
@@ -4899,7 +4899,7 @@ function openNotificationsModal() {
           name: g.name,
           id: g.id,
         });
-      });
+      }
       makeSchedule(storage.settings.notifScheduleStart);
 
       $('.anitracker-modal-list-entry .anitracker-get-all-button').on('click', (e) => {
