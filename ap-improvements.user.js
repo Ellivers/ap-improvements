@@ -4172,22 +4172,22 @@ function searchComplete() {
 function displayCollection(seriesList, elem) {
   elem.empty().css('padding', '');
   $(`
-    <a title="${toHtmlCodes(seriesList[0].title + " - Collection")}" href="javascript:;">
-      <div class="result-thumbnail">
-        <div class="anitracker-collection-image-wrapper">
-          <img src="${makePosterUrl(seriesList[0].poster,'th')}" referrerpolicy="no-referrer" style="pointer-events: all !important;max-width: 30px;">
-        </div>
-        <div class="anitracker-collection-image-wrapper">
-          <img src="${makePosterUrl(seriesList[1].poster,'th')}" referrerpolicy="no-referrer" style="pointer-events: all !important;max-width: 30px;left:30px;">
-        </div>
+  <a title="${toHtmlCodes(seriesList[0].title + " - Collection")}" href="javascript:;">
+    <div class="result-thumbnail">
+      <div class="anitracker-collection-image-wrapper">
+        <img src="${makePosterUrl(seriesList[0].poster,'th')}" referrerpolicy="no-referrer" style="pointer-events: all !important;max-width: 30px;">
       </div>
-      <div class="result-metadata">
-        <div class="result-title">${toHtmlCodes(seriesList[0].title)}</div>
-        <div class="result-status"><strong>Collection</strong> ∙ ${seriesList.length} Entries</div>
+      <div class="anitracker-collection-image-wrapper">
+        <img src="${makePosterUrl(seriesList[1].poster,'th')}" referrerpolicy="no-referrer" style="pointer-events: all !important;max-width: 30px;left:30px;">
       </div>
-    </a>`).appendTo(elem);
+    </div>
+    <div class="result-metadata">
+      <div class="result-title">${toHtmlCodes(seriesList[0].title)}</div>
+      <div class="result-status"><strong>Collection</strong> ∙ ${seriesList.length} Entries</div>
+    </div>
+  </a>`).appendTo(elem);
 
-  function displayInModal() {
+  elem.on('click', () => {
     $('#anitracker-modal-body').empty();
     $(`
     <h4 style="margin-bottom:0px;">Collection - ${seriesList.length} Entries</h4>
@@ -4204,7 +4204,7 @@ function displayCollection(seriesList, elem) {
             <img src="${makePosterUrl(anime.poster,'th')}" referrerpolicy="no-referrer" alt="[Thumbnail of ${toHtmlCodes(anime.title)}]">
           </div>
           <div>
-            <div class="anitracker-main-text">${anime.title}</div>
+            <div class="anitracker-main-text">${toHtmlCodes(anime.title)}</div>
             <div class="anitracker-subtext">
               <strong>${anime.type}</strong> ∙ ${anime.episodes ? anime.episodes : '?'} Ep${anime.episodes === 1 ? '' : 's'} ∙ ${anime.season} ${anime.year}
             </div>
@@ -4216,9 +4216,7 @@ function displayCollection(seriesList, elem) {
 
     openModal();
     scrollModalToTop();
-  }
-
-  elem.on('click', displayInModal);
+  });
 }
 
 $('.input-search').attr('title','Search for anime');
@@ -4874,7 +4872,7 @@ function openNotificationsModal() {
         $(`
         <div class="anitracker-modal-list-entry" animeid="${g.id}" animename="${toHtmlCodes(g.name)}">
           <a href="${href}" target="_blank" title="${toHtmlCodes(g.name)}">
-            ${g.name}
+            ${toHtmlCodes(g.name)}
           </a><br>
           <span>
             Latest episode: ${latestEpString}
@@ -5056,7 +5054,7 @@ function openNotificationsModal() {
             <img src="${makePosterUrl(data.poster,'th')}" referrerpolicy="no-referrer" alt="[Thumbnail of ${toHtmlCodes(data.name)}]"}>
           </div>
           <i class="fa ${ep.watched ? 'fa-eye-slash' : 'fa-eye'} anitracker-watched-toggle" tabindex="0" aria-hidden="true" title="Mark this episode as ${ep.watched ? 'unwatched' : 'watched'}"></i>
-          <div class="anitracker-main-text">${data.name}</div>
+          <div class="anitracker-main-text">${toHtmlCodes(data.name)}</div>
           <div class="anitracker-subtext">Episode <span class="anitracker-episode-text">${ep.episode}</span></div>
           <div class="anitracker-subtext">${timeSince(releaseTime)} ago (${releaseTime.toLocaleDateString()})</div>
         </a>
@@ -5209,7 +5207,7 @@ function openBookmarksModal() {
         <div class="anitracker-modal-list-entry anitracker-bookmark-list-entry" animeid="${g.id}">
           ${g.newlyAdded ? '<i class="anitracker-bookmark-new"></i>' : ''}
           <a ${href} target="_blank" title="${toHtmlCodes(g.name)}" tabindex="0">
-            <span>${g.name}</span>
+            <span>${toHtmlCodes(g.name)}</span>
           </a><br>
           <div>
             <button class="anitracker-bookmark-list-status anitracker-change-status-button" style="color:${statusAttrs[2]};" title="Change bookmark watching status">${statusAttrs[0]}</button>
@@ -5228,7 +5226,7 @@ function openBookmarksModal() {
             <div class="anitracker-big-poster-icon">
               <img src="${g.posterUrl ? makePosterUrl(g.posterUrl,'md') : 'data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw=='}" loading="lazy">
             </div>
-            <span>${g.name}</span>
+            <span>${toHtmlCodes(g.name)}</span>
           </a>
           <div style="display: flex;flex-direction: column;gap: 2px;">
             <button class="anitracker-bookmark-grid-status anitracker-change-status-button" style="color:${statusAttrs[2]};" title="Change bookmark watching status">${statusAttrs[0]}</button>
@@ -5608,7 +5606,7 @@ function openBookmarkStatusEditModal(id, adding=false) {
   $(`
   <div style="display:flex;gap:10px;">
     <div class="anitracker-bookmark-edit-side" style="max-width:12em;">
-      <div><span style="display:inline-block;width:100%;">${entry.name}</span></div>
+      <div><span style="display:inline-block;width:100%;">${toHtmlCodes(entry.name)}</span></div>
       <button class="btn dropdown-toggle btn-secondary anitracker-status-dropdown-button" data-bs-toggle="dropdown" data-toggle="dropdown" data-value="${status}" title="Select anime watching status" style="background-color: ${statusAttrs[1]};width:100%;display:block;margin-bottom:16px;">${statusAttrs[0]}</button>
       <div class="dropdown-menu anitracker-dropdown-content anitracker-status-dropdown" style="width:12em;"></div>
     </div>
@@ -7396,7 +7394,7 @@ function setupContinueWatchingSection() {
             </div>
           </${href ? 'a' : 'div'}>
           <${href ? `a href="${href}" target="_blank"` : 'div'} class="anitracker-text-section" title="${titleAttr}">
-            <span class="anitracker-main-text" style="${href ? 'text-decoration:underline;' : ''}">${visibleAnimeName}</span>
+            <span class="anitracker-main-text" style="${href ? 'text-decoration:underline;' : ''}">${toHtmlCodes(visibleAnimeName)}</span>
             <span class="anitracker-normal-text">Episode ${entry.episodeNum}</span>
             <span class="anitracker-secondary-info">${secondsToHMS(entry.time)}${entry.duration ? ' / ' + secondsToHMS(entry.duration) : ''}</span>
           </${href ? 'a' : 'div'}>
@@ -10493,7 +10491,7 @@ function addGeneralButtons() {
           $(`
           <div class="anitracker-modal-list-entry" animeid="${g.animeId}">
             <span>
-              <a class="anitracker-watched-anime-id" href="${href}" target="_blank"${ linkListObj ? ` title="${toHtmlCodes(linkListObj.animeName)}"` : ''}>${linkListObj ? toHtmlCodes(linkListObj.animeName) : `ID ${g.animeId}`}</a> - ${episodes.length} episode${episodes.length === 1 ? '' : 's'}
+              <a class="anitracker-watched-anime-id" href="${href}" target="_blank"${linkListObj ? ` title="${toHtmlCodes(linkListObj.animeName)}"` : ''}>${linkListObj ? toHtmlCodes(linkListObj.animeName) : `ID ${g.animeId}`}</a> - ${episodes.length} episode${episodes.length === 1 ? '' : 's'}
             </span><br>
             <span class="anitracker-watched-episodes-list">
               ${episodes.join()}
