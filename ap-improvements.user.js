@@ -7093,12 +7093,13 @@ function getAnimeInfo(iinfo = {}, reqinfo = [], config = {}) {
   const debug = initialStorage.debug?.animeInfo;
   return new Promise(async resolve => {
     if (!iinfo || !Object.values(iinfo).find(a => a)) return resolve({});
+    if (debug) console.log('starting search for',JSON.parse(JSON.stringify(reqinfo)));
 
     for (let i = 0; i < 1; i++) {
       while (reqinfo.length) {
         // Find out which function is the most appropriate for the needed data
         const rankedFunctions = animeInfoFunctions.map(a => {
-          if ((config.requireInstant && !a.instant) || config.ignored.includes(a.id)) {
+          if ((config.requireInstant && !a.instant) || config.ignored?.includes(a.id)) {
             dontUseAgain.push(a.id);
             return {matches:0};
           }
@@ -7263,8 +7264,8 @@ async function asyncGetAnimeId(session, animeName = getAnimeName()) {
   });
 }
 
-function getAnimeSession(iinfo = {}, config = {}) {
-  if (!iinfo.name && !iinfo.session) return undefined;
+async function getAnimeSession(iinfo = {}, config = {}) {
+  if (!iinfo.name && !iinfo.session && !config.justCache) return undefined;
 
   return new Promise(async resolve => {
     if (!Object.keys(siteVars.cached.animeSession).length) {
@@ -7281,6 +7282,7 @@ function getAnimeSession(iinfo = {}, config = {}) {
         });
       });
     }
+    if (config.justCache) return resolve(undefined);
     resolve(siteVars.cached.animeSession.find(a => a.name === iinfo.name || a.session === iinfo.session));
   });
 }
@@ -7295,7 +7297,7 @@ function waitForSessionList(elem) {
   </div>`).appendTo(elem);
 
   return new Promise(resolve => {
-    getAnimeSession('').then(() => {
+    getAnimeSession({},{justCache:true}).then(() => {
       resolve();
       spinner.remove();
     });
