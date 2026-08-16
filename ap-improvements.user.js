@@ -5177,9 +5177,6 @@ function openBookmarksModal() {
     </div>
   </div>
   `).appendTo('#anitracker-modal-body');
-  if (!isMobileOrTablet()) setTimeout(() => {
-    $('.anitracker-modal-search').focus();
-  }, 0);
 
   function sortEntries(entries) {
     if (['alphabetical','status'].includes(sort)) entries.sort((a,b) => a.name < b.name ? 1 : -1);
@@ -5543,16 +5540,27 @@ function openBookmarksModal() {
 
   if (!storage.bookmarks.length) {
     $(`<span style="display: block;">No bookmarks yet!</span>`).appendTo('#anitracker-modal-body .anitracker-modal-list');
+    return open();
   }
-  else {
-    waitForSessionList($('#anitracker-modal-body .anitracker-modal-list')).then(() => {
-      layoutEntries(storage);
+
+  function open() {
+    if (!isMobileOrTablet()) setTimeout(() => {
+      $('.anitracker-modal-search').focus();
+    }, 0);
+    openModal();
+  }
+  
+  const waitBeforeOpen = siteVars.cached.animeSession.length;
+  waitForSessionList($('#anitracker-modal-body .anitracker-modal-list')).then(() => {
+    layoutEntries().then(() => {
+      if (waitBeforeOpen) open();
+
+      const storage = getStorage();
       storage.bookmarks.forEach(b => {delete b.newlyAdded;});
       saveData(storage);
     });
-  }
-
-  openModal();
+  });
+  if (!waitBeforeOpen) open();
 }
 
 function getBookmarkImage(elem, bookmark, session = undefined) {
@@ -7431,13 +7439,6 @@ function setupContinueWatchingSection() {
       });
       scrollModalToTop();
     }
-    waitForSessionList($('#anitracker-modal-body .anitracker-modal-list')).then(() => {
-      layoutEntries();
-    });
-
-    if (!isMobileOrTablet()) setTimeout(() => {
-      $('.anitracker-modal-search').focus();
-    }, 0);
 
     $('.anitracker-modal-search').on('input', (e) => {
       setTimeout(() => {
@@ -7480,7 +7481,20 @@ function setupContinueWatchingSection() {
       updateEpisodePages();
     }
 
-    openModal();
+    function open() {
+      if (!isMobileOrTablet()) setTimeout(() => {
+        $('.anitracker-modal-search').focus();
+      }, 0);
+      openModal();
+    }
+    
+    const waitBeforeOpen = siteVars.cached.animeSession.length;
+    waitForSessionList($('#anitracker-modal-body .anitracker-modal-list')).then(() => {
+      layoutEntries().then(() => {
+        if (waitBeforeOpen) open();
+      });
+    });
+    if (!waitBeforeOpen) open();
   });
 }
 
