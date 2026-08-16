@@ -3425,6 +3425,8 @@ function getAnimeData(iinfo = {}, reqinfo = [], config = {}) {
           if (!iinfo[key]) iinfo[key] = value;
           if (value) reqinfo = reqinfo.filter(a => a !== key);
         }
+        // Exceptions:
+        if (result.episode_session) oinfo.session = result.session;
       }
 
       if (!reqinfo.length || i === 1) break;
@@ -7584,17 +7586,7 @@ async function addContinueWatchingEpisodes(storage, episodeCount, clearAll = fal
       }, ["session","name","id","episode_session"], {ignored: ['storage_video']});
       if (data.id && isWatched(data.id, entry.episodeNum)) continue;
 
-      let sessionPossiblyInvalid = true;
-      if (data.session && data.episode_session) {
-        const url = `/play/${data.session}/${data.episode_session}`;
-        const sessionResponse = await getPageResponse(url);
-        if (sessionResponse.status === 200) {
-          sessionPossiblyInvalid = false;
-          // If the page is redirected, the episode session was invalid but the anime session was not
-          if (sessionResponse.responseURL !== url) delete data.episode_session;
-        }
-      }
-      if (data.session && sessionPossiblyInvalid) {
+      if (data.session) {
         const sessionResponse = await getPageResponse('/anime/' + data.session);
         if (sessionResponse.status !== 200) {
           // If the anime session is expired, try to get a new one
@@ -7605,7 +7597,12 @@ async function addContinueWatchingEpisodes(storage, episodeCount, clearAll = fal
             episode: entry.episodeNum,
           }, ["session"], {ignored: ['storage_video'], forceFresh: true});
           if (data2.session) data.session = data2.session;
+          delete data.episode_session;
         }
+      }
+      if (!data.session) {
+        addEpisode(entry, undefined, data, undefined);
+        continue;
       }
 
       const episodeData = await getEpisodeData(data.session, entry.episodeNum);
