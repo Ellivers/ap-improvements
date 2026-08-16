@@ -4862,7 +4862,8 @@ function openNotificationsModal() {
       return;
     }
 
-    waitForSessionList($('#anitracker-modal-body .anitracker-modal-list')).then(async () => {
+    const promise = siteVars.cached.animeSession.length ? waitTime(200) : getAnimeSession({},{justCache:true});
+    loadUntilPromise($('#anitracker-modal-body .anitracker-modal-list'), promise).then(async () => {
       for (const g of [...storage.notifications.anime].sort((a,b) => a.latest_episode > b.latest_episode ? 1 : -1)) {
         const latestEp = toUTCDate(g.latest_episode);
         const latestEpString = g.latest_episode !== undefined ? `${getDayName(latestEp.getDay())} ${latestEp.toLocaleTimeString([], {timeStyle:'short'})} (${timeSince(latestEp.getTime())} ago)` : "None found";
@@ -4898,6 +4899,7 @@ function openNotificationsModal() {
           time: latestEp,
           name: g.name,
           id: g.id,
+          session: data.session,
         });
       }
       makeSchedule(storage.settings.notifScheduleStart);
@@ -4953,12 +4955,8 @@ function openNotificationsModal() {
         <div>
           <div class="anitracker-feed-schedule-header">${getDayName(entry.num).slice(0,3)}</div>
           <div class="anitracker-feed-schedule-body${entry.num === today ? ' anitracker-feed-schedule-today' : ''}">
-            ${entry.list.map(async g => {
-              const data = await getAnimeData({
-                id: g.id,
-                name: g.name
-              }, ["session"], {requireInstant:true});
-              const href = data.session ? `/anime/${data.session}` : `/customlink?a=${encodeURIComponent(g.name)}`;
+            ${entry.list.map(g => {
+              const href = g.session ? `/anime/${g.session}` : `/customlink?a=${encodeURIComponent(g.name)}`;
               return `<a href="${href}" target="_blank" title="${toHtmlCodes(g.name)} (${g.time.toLocaleTimeString([], {timeStyle:'short'})})">${g.name}</a>`;
             }).join('')}
           </div>
@@ -5540,27 +5538,22 @@ function openBookmarksModal() {
 
   if (!storage.bookmarks.length) {
     $(`<span style="display: block;">No bookmarks yet!</span>`).appendTo('#anitracker-modal-body .anitracker-modal-list');
-    return open();
-  }
-
-  function open() {
-    if (!isMobileOrTablet()) setTimeout(() => {
-      $('.anitracker-modal-search').focus();
-    }, 0);
-    openModal();
+    return openModal();
   }
   
-  const waitBeforeOpen = siteVars.cached.animeSession.length;
-  waitForSessionList($('#anitracker-modal-body .anitracker-modal-list')).then(() => {
+  const promise = siteVars.cached.animeSession.length ? waitTime(200) : getAnimeSession({},{justCache:true});
+  loadUntilPromise($('#anitracker-modal-body .anitracker-modal-list'), promise).then(() => {
     layoutEntries().then(() => {
-      if (waitBeforeOpen) open();
-
       const storage = getStorage();
       storage.bookmarks.forEach(b => {delete b.newlyAdded;});
       saveData(storage);
     });
   });
-  if (!waitBeforeOpen) open();
+
+  if (!isMobileOrTablet()) setTimeout(() => {
+    $('.anitracker-modal-search').focus();
+  }, 0);
+  openModal();
 }
 
 function getBookmarkImage(elem, bookmark, session = undefined) {
@@ -7252,8 +7245,14 @@ async function getAnimeSession(iinfo = {}, config = {}) {
   });
 }
 
-// Make a spinner and wait to make sure the session list has been loaded
-function waitForSessionList(elem) {
+function waitTime(ms) {
+  return new Promise(resolve => {
+    setTimeout(() => {resolve()}, ms);
+  });
+}
+
+// Make a spinner in the modal and wait until the promise has been fulfilled
+function loadUntilPromise(elem, promise) {
   const spinner = $(`
   <div class="anitracker-spinner anitracker-center-content" style="width: 100%;min-height:5rem;align-items:center;">
     <div class="spinner-border" role="status">
@@ -7262,7 +7261,7 @@ function waitForSessionList(elem) {
   </div>`).appendTo(elem);
 
   return new Promise(resolve => {
-    getAnimeSession({},{justCache:true}).then(() => {
+    promise.then(() => {
       resolve();
       spinner.remove();
     });
@@ -7480,21 +7479,14 @@ function setupContinueWatchingSection() {
 
       updateEpisodePages();
     }
-
-    function open() {
-      if (!isMobileOrTablet()) setTimeout(() => {
-        $('.anitracker-modal-search').focus();
-      }, 0);
-      openModal();
-    }
     
-    const waitBeforeOpen = siteVars.cached.animeSession.length;
-    waitForSessionList($('#anitracker-modal-body .anitracker-modal-list')).then(() => {
-      layoutEntries().then(() => {
-        if (waitBeforeOpen) open();
-      });
-    });
-    if (!waitBeforeOpen) open();
+    const promise = siteVars.cached.animeSession.length ? waitTime(200) : getAnimeSession({},{justCache:true});
+    loadUntilPromise($('#anitracker-modal-body .anitracker-modal-list'), promise).then(layoutEntries);
+
+    if (!isMobileOrTablet()) setTimeout(() => {
+      $('.anitracker-modal-search').focus();
+    }, 0);
+    openModal();
   });
 }
 
