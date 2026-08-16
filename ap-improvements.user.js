@@ -3431,26 +3431,6 @@ function toggleTheatreMode() {
   updateSwitches();
 }
 
-async function getDataFromAnimeId(id) {
-  return new Promise(resolve => {
-    const req = new XMLHttpRequest();
-    req.open('GET', `/a/${id}`, true);
-    req.onload = () => {
-      const pathname = getPathname(req.responseURL);
-      if (!isAnime(pathname)) {
-        resolve(undefined);
-        return;
-      }
-      resolve({
-        session: pathname.split('/')[2],
-        title: $($(req.response).find('.title-wrapper h1 span')[0]).text(),
-        poster: $($(req.response).find('.anime-poster img')[0]).data('src').replace('.md','')
-      });
-    };
-    req.send();
-  });
-}
-
 function getSeasonValue(season) {
   return ({winter:0, spring:1, summer:2, fall:3})[season.toLowerCase()];
 }
@@ -4613,39 +4593,46 @@ function openNotificationsModal() {
       return;
     }
 
-    [...storage.notifications.anime].sort((a,b) => a.latest_episode > b.latest_episode ? 1 : -1).forEach(g => {
-      const latestEp = toUTCDate(g.latest_episode);
-      const latestEpString = g.latest_episode !== undefined ? `${getDayName(latestEp.getDay())} ${latestEp.toLocaleTimeString([], {timeStyle:'short'})} (${timeSince(latestEp.getTime())} ago)` : "None found";
-      $(`
-      <div class="anitracker-modal-list-entry" animeid="${g.id}" animename="${toHtmlCodes(g.name)}">
-        <a href="/a/${g.id}" target="_blank" title="${toHtmlCodes(g.name)}">
-          ${g.name}
-        </a><br>
-        <span>
-          Latest episode: ${latestEpString}
-        </span><br>
-        <div class="btn-group">
-          <button class="btn btn-secondary anitracker-delete-button anitracker-flat-button" title="Remove this anime from the episode feed">
-            <i class="fa fa-trash" aria-hidden="true"></i>
-            &nbsp;Remove
-          </button>
-        </div>
-        <div class="btn-group">
-          <button class="btn btn-secondary anitracker-get-all-button anitracker-flat-button" title="Add all episodes to the feed" ${g.hasFirstEpisode ? 'disabled=""' : ''}>
-            <i class="fa fa-rotate-right" aria-hidden="true"></i>
-            &nbsp;Get All
-          </button>
-        </div>
-      </div>`).appendTo('#anitracker-modal-body .anitracker-modal-list');
-
-      const scheduleEntry = schedule.find(a => a.num === latestEp.getDay());
-      if (scheduleEntry) scheduleEntry.list.push({
-        time: latestEp,
-        name: g.name,
-        id: g.id,
+    waitForSessionList($('#anitracker-modal-body .anitracker-modal-list')).then(() => {
+      [...storage.notifications.anime].sort((a,b) => a.latest_episode > b.latest_episode ? 1 : -1).forEach(async g => {
+        const latestEp = toUTCDate(g.latest_episode);
+        const latestEpString = g.latest_episode !== undefined ? `${getDayName(latestEp.getDay())} ${latestEp.toLocaleTimeString([], {timeStyle:'short'})} (${timeSince(latestEp.getTime())} ago)` : "None found";
+        const data = await getAnimeData({
+          id: g.id,
+          name: g.name
+        }, ["session"], {requireInstant:true});
+        const href = data.session ? `/anime/${data.session}` : `/customlink?a=${encodeURIComponent(g.name)}`;
+        $(`
+        <div class="anitracker-modal-list-entry" animeid="${g.id}" animename="${toHtmlCodes(g.name)}">
+          <a href="${href}" target="_blank" title="${toHtmlCodes(g.name)}">
+            ${g.name}
+          </a><br>
+          <span>
+            Latest episode: ${latestEpString}
+          </span><br>
+          <div class="btn-group">
+            <button class="btn btn-secondary anitracker-delete-button anitracker-flat-button" title="Remove this anime from the episode feed">
+              <i class="fa fa-trash" aria-hidden="true"></i>
+              &nbsp;Remove
+            </button>
+          </div>
+          <div class="btn-group">
+            <button class="btn btn-secondary anitracker-get-all-button anitracker-flat-button" title="Add all episodes to the feed" ${g.hasFirstEpisode ? 'disabled=""' : ''}>
+              <i class="fa fa-rotate-right" aria-hidden="true"></i>
+              &nbsp;Get All
+            </button>
+          </div>
+        </div>`).appendTo('#anitracker-modal-body .anitracker-modal-list');
+  
+        const scheduleEntry = schedule.find(a => a.num === latestEp.getDay());
+        if (scheduleEntry) scheduleEntry.list.push({
+          time: latestEp,
+          name: g.name,
+          id: g.id,
+        });
       });
+      makeSchedule(storage.settings.notifScheduleStart);
     });
-    makeSchedule(storage.settings.notifScheduleStart);
 
     $('.anitracker-modal-list-entry .anitracker-get-all-button').on('click', (e) => {
       const elem = $(e.currentTarget);
@@ -4697,7 +4684,14 @@ function openNotificationsModal() {
         <div>
           <div class="anitracker-feed-schedule-header">${getDayName(entry.num).slice(0,3)}</div>
           <div class="anitracker-feed-schedule-body${entry.num === today ? ' anitracker-feed-schedule-today' : ''}">
-            ${entry.list.map(g => `<a href="/a/${g.id}" target="_blank" title="${toHtmlCodes(g.name)} (${g.time.toLocaleTimeString([], {timeStyle:'short'})})">${g.name}</a>`).join('')}
+            ${entry.list.map(async g => {
+              const data = await getAnimeData({
+                id: g.id,
+                name: g.name
+              }, ["session"], {requireInstant:true});
+              const href = data.session ? `/anime/${data.session}` : `/customlink?a=${encodeURIComponent(g.name)}`;
+              return `<a href="${href}" target="_blank" title="${toHtmlCodes(g.name)} (${g.time.toLocaleTimeString([], {timeStyle:'short'})})">${g.name}</a>`;
+            }).join('')}
           </div>
         </div>`).appendTo($('.anitracker-feed-schedule'));
       }
@@ -7621,9 +7615,9 @@ async function addContinueWatchingEpisodes(storage, episodeCount, clearAll = fal
       const href = (() => {
         if (ep.animeSession && ep.session) return `/play/${ep.animeSession}/${ep.session}`;
         else if (ep.animeSession) return `/anime/${ep.animeSession}`;
-        else if (ep.animeId) return `/a/${ep.animeId}`;
+        else if (ep.title) return `/customlink?a=${encodeURIComponent(ep.title)}&e=${ep.episode}`;
       })();
-      const animeHref = ep.animeSession ? `/anime/${ep.animeSession}` : `/a/${ep.animeId}`;
+      const animeHref = ep.animeSession ? `/anime/${ep.animeSession}` : `/customlink?a=${encodeURIComponent(ep.title)}`;
 
       const elem = $(`
       <div class="episode-wrap col-12 col-sm-4">
@@ -8907,8 +8901,6 @@ function addTitleIcons(animeid) {
   if (notifIcon) $(`<i title="Add to episode feed" class="fa fa-bell anitracker-title-icon anitracker-notifications-toggle" tabindex="0">
     <i style="display: none;" class="fa fa-check anitracker-title-icon-check" aria-hidden="true"></i>
   </i>`).appendTo(div);
-
-  //if (isAnime()) $(`<a href="/a/${animeid}" title="Shortcut Link" class="fa fa-link btn anitracker-title-icon" data-toggle="modal" data-target="#modalBookmark"></a>`).appendTo(div);
 
   if (initialStorage.bookmarks.find(g => g.id === animeid)) {
     $('.anitracker-bookmark-toggle .anitracker-title-icon-check').show();
@@ -10464,10 +10456,12 @@ function addGeneralButtons() {
       }
       else if (dataType === 'videoTimes') {
         [...storage.videoTimes].reverse().forEach(g => {
+          const linkListObj = storage.linkList.find(a => a.animeId === g.animeId || a.animeName === g.animeName);
+          const href = linkListObj ? `/anime/${linkListObj.animeSession}` : `/customlink?a=${g.animeId ? g.animeId : encodeURIComponent(g.animeName)}`;
           $(`
           <div class="anitracker-modal-list-entry">
             <span title="${toHtmlCodes(g.animeName)}">
-              ${g.animeId ? `<a href="/a/${g.animeId}" target="_blank">${toHtmlCodes(g.animeName)}</a>` : toHtmlCodes(g.animeName)} - Episode ${g.episodeNum}
+              <a href="${href}" target="_blank">${toHtmlCodes(g.animeName)}</a> - Episode ${g.episodeNum}
             </span><br>
             <span>
               Current time: ${secondsToHMS(g.time)}
@@ -10485,10 +10479,11 @@ function addGeneralButtons() {
         decodeWatched(storage.watched).reverse().forEach(g => {
           const linkListObj = storage.linkList.find(a => a.animeId === g.animeId);
           const episodes = g.episodes;
+          const href = linkListObj ? `/anime/${linkListObj.animeSession}` : `/customlink?a=${g.animeId}`;
           $(`
           <div class="anitracker-modal-list-entry" animeid="${g.animeId}">
             <span>
-              <a class="anitracker-watched-anime-id" href="/a/${g.animeId}" target="_blank"${ linkListObj ? ` title="${toHtmlCodes(linkListObj.animeName)}"` : ''}>${linkListObj ? toHtmlCodes(linkListObj.animeName) : `ID ${g.animeId}`}</a> - ${episodes.length} episode${episodes.length === 1 ? '' : 's'}
+              <a class="anitracker-watched-anime-id" href="${href}" target="_blank"${ linkListObj ? ` title="${toHtmlCodes(linkListObj.animeName)}"` : ''}>${linkListObj ? toHtmlCodes(linkListObj.animeName) : `ID ${g.animeId}`}</a> - ${episodes.length} episode${episodes.length === 1 ? '' : 's'}
             </span><br>
             <span class="anitracker-watched-episodes-list">
               ${episodes.join()}
@@ -10515,13 +10510,12 @@ function addGeneralButtons() {
               </div>
           </div>`).insertAfter(this);
           // Get the anime name from its ID
-          getDataFromAnimeId(id).then(data => {
+          getAnimeData({id: id}, ["name","session"]).then(data => {
             spinner.remove();
-            if (!data) {
-              alert("[AnimePahe Improvements]\n\nCouldn't get anime name");
-            }
+            if (!data.name) alert("[AnimePahe Improvements]\n\nCouldn't get anime name");
             else {
-              $(this).parent().find('.anitracker-watched-anime-id').text(data.title).attr('title', data.title);
+              $(this).parent().find('.anitracker-watched-anime-id').text(data.name).attr('title', data.name);
+              if (!data.session) return;
               const storage = getStorage();
               if (isSyncEnabled(storage)) {
                 storage.sync.temp.addedData.push({type: 'linkList', animeSession: data.session});
@@ -10529,7 +10523,7 @@ function addGeneralButtons() {
               storage.linkList.push({
                 type: 'anime',
                 animeSession: data.session,
-                animeName: data.title,
+                animeName: data.name,
                 animeId: id
               });
               if (storage.linkList.length > getStorageLimits().linkList) {
@@ -10547,10 +10541,12 @@ function addGeneralButtons() {
             if (g.animeId) return `animeid="${g.animeId}"`;
             else return `animename="${toHtmlCodes(g.animeName)}"`;
           })();
+          const linkListObj = storage.linkList.find(a => a.animeId === g.animeId || a.animeName === g.animeName);
+          const href = linkListObj ? `/anime/${linkListObj.animeSession}` : `/customlink?a=${g.animeId ? g.animeId : encodeURIComponent(g.animeName)}`;
           $(`
           <div class="anitracker-modal-list-entry">
             <span title="${toHtmlCodes(g.animeName)}">
-              ${g.animeId ? `<a href="/a/${g.animeId}" target="_blank">${toHtmlCodes(g.animeName)}</a>` : toHtmlCodes(g.animeName)}
+              <a href="${href}" target="_blank">${toHtmlCodes(g.animeName)}</a>
             </span><br>
             <span>
               Playback speed: ${g.speed}x
