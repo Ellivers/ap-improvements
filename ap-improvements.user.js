@@ -3163,6 +3163,266 @@ function playAnimation(elem, anim, duration, type = '') {
   });
 }
 
+// List of info-getting functions, from fastest to slowest
+const animeInfoFunctions = [
+  {
+    "id": "current_page",
+    "outputs": ["name","session","id","anidb_id","poster"],
+    "instant": true,
+    "fn": (iinfo = {}, config = {}) => {
+      if ((!isAnime() && !isEpisode()) || is404) return undefined;
+      const data = getAnimeDataFromPage($(document), isEpisode());
+      const session = getAnimeSessionFromUrl();
+      // Require at least one part of iinfo to match
+      if (iinfo.name !== data.name && iinfo.session !== session && iinfo.id !== data.id && iinfo.anidb_id !== data.anidb_id && iinfo.poster !== data.poster) return undefined;
+      return {
+        name: data.name,
+        session: session,
+        id: data.id,
+        anidb_id: data.anidb_id,
+        poster: data.poster,
+      }
+    }
+  },
+  {
+    "id": "storage_session",
+    "outputs": ["id","session","name"],
+    "instant": true,
+    "possibly_expired": true,
+    "fn": (iinfo = {}, config = {}) => {
+      const storage = getStorage();
+      const list = [...storage.linkList].reverse(); // Reverse to prioritize newer entries
+      const found = list.find(a => a.animeName === iinfo.name || (a.animeId && a.animeId === iinfo.id) || a.animeSession === iinfo.session);
+      if (!found) return undefined;
+      return {
+        name: found.animeName,
+        id: found.animeId,
+        session: found.animeSession,
+      };
+    }
+  },
+  {
+    "id": "storage_episode_session",
+    "outputs": ["id","session","name","episode_session"],
+    "instant": true,
+    "possibly_expired": true,
+    "fn": (iinfo = {}, config = {}) => {
+      if (iinfo.episode === undefined) return undefined; // Can be falsy
+      const storage = getStorage();
+      const list = [...storage.linkList].reverse(); // Reverse to prioritize newer entries
+      const found = list.find(a => a.type === 'episode' && a.episodeNum === iinfo.episode && (a.animeName === iinfo.name || (a.animeId && a.animeId === iinfo.id) || a.animeSession === iinfo.session || iinfo.videoUrls?.find(g => a.videoUrls?.includes(g))));
+      if (!found) return undefined;
+      return {
+        name: found.animeName,
+        id: found.animeId,
+        session: found.animeSession,
+        episode_session: found.episodeSession
+      };
+    }
+  },
+  {
+    "id": "storage_bookmark",
+    "outputs": ["id","name","poster"],
+    "instant": true,
+    "fn": (iinfo = {}, config = {}) => {
+      const storage = getStorage();
+      const found = storage.bookmarks.find(a => a.name === iinfo.name || a.id === iinfo.id || (a.posterUrl && a.posterUrl === iinfo.poster));
+      if (!found) return undefined;
+      return {
+        inacurrate_name: found.animeName,
+        id: found.animeId,
+        poster: found.posterUrl,
+      };
+    }
+  },
+  {
+    "id": "storage_video",
+    "outputs": ["id"],
+    "instant": true,
+    "fn": (iinfo = {}, config = {}) => {
+      const storage = getStorage();
+      const found = storage.videoTimes.find(a => a.animeName === iinfo.name || (a.animeId && a.animeId === iinfo.id) || iinfo.videoUrls?.find(g => a.videoUrls.includes(g)));
+      if (!found) return undefined;
+      return {
+        id: found.animeId // Don't return the name, due to it likely being incorrect
+      };
+    }
+  },
+  {
+    "id": "index",
+    "outputs": ["session","name"],
+    "instant": true,
+    "fn": getAnimeSession,
+  },
+  {
+    "id": "anime_page",
+    "outputs": ["session","name","id","anidb_id","poster"],
+    "fn": async (iinfo = {}, config = {}) => {
+      if (!iinfo.session) return undefined;
+      const page = await asyncGetPage(`/anime/${iinfo.session}`);
+      if (!page) return undefined;
+      const data = getAnimeDataFromPage(page, false);
+      return {
+        session: iinfo.session,
+        name: data.name,
+        id: data.id,
+        anidb_id: data.anidb_id,
+        poster: data.poster,
+      }
+    }
+  },
+  {
+    "id": "search_query",
+    "outputs": ["name","id","session","poster"],
+    "fn": getAnimeDataFromSearch
+  },
+  {
+    "id": "episode_list",
+    "outputs": ["id"],
+    "fn": async (iinfo = {}, config = {}) => {
+      if (!iinfo.session) return undefined;
+      const cached = siteVars.cached.animeId[iinfo.session];
+      if (cached) return cached;
+      
+      return new Promise(async resolve => {
+        const response = await asyncGetResponseData(`/api?m=release&id=${iinfo.session}`);
+        if (!response) return resolve(undefined);
+        siteVars.cached.animeId[iinfo.session] = response[0].anime_id;
+        resolve({
+          id: response[0].anime_id
+        });
+      });
+    }
+  },
+  {
+    "id": "relation_tree", // Very slow
+    "outputs": ["session","name","poster"],
+    "fn": async (iinfo = {}, config = {}) => {
+      if (!iinfo.startSession && !iinfo.name) return undefined;
+      const searchedSessions = [];
+      return new Promise(async resolve => {
+        async function searchBranches(session) {
+          return new Promise(async resolve => {
+            if (searchedSessions.includes(session)) return resolve(undefined);
+            const page = await asyncGetPage(`/anime/${session}`);
+            if (page) {
+              const pageData = getAnimeDataFromPage(page, false);
+              if (pageData.name === iinfo.name || pageData.id === iinfo.id || pageData.anidb_id === iinfo.anidb_id || pageData.poster === iinfo.poster) {
+                return resolve({
+                  name: pageData.name,
+                  session: session,
+                  poster: pageData.poster,
+                });
+              }
+            }
+            searchedSessions.push(session);
+            const relations = await getBranches(session);
+            for (const rel of relations) {
+              if (rel.session !== iinfo.session && rel.title !== iinfo.name && trimPosterUrl(rel.poster) !== iinfo.poster) continue;
+              return resolve(rel);
+            }
+            for (const rel of relations) {
+              const result = await searchBranches(rel.session);
+              if (result) return resolve(result);
+            }
+            resolve(undefined);
+          });
+        }
+        let startSession = iinfo.startSession;
+        if (!startSession) {
+          const data = await getAnimeDataFromSearch(iinfo, {
+            allowGuessing: true
+          });
+          if (!data) return resolve(undefined);
+          startSession = data.session;
+        }
+        const result = await searchBranches(startSession);
+        if (!result) return resolve(undefined);
+        const returnData = {
+          name: result.title,
+          session: result.session,
+          poster: trimPosterUrl(result.poster),
+        };
+        for (const [key, value] of Object.entries(result)) {
+          if (!['title','session','poster'].includes(key)) returnData[key] = value;
+        }
+        resolve(returnData);
+      });
+      async function getBranches(session) {
+        const relations = await getRelationList(session);
+        if (!relations) return [];
+        return relations.filter(a => a.relation_type !== 'Character');
+      }
+    }
+  }
+]
+// Gets any anime info except for video player stuff
+// Available inputs & outputs: name, id, session, poster
+// TODO:
+// - add bookmark source function
+// - something with anidb_id?
+function getAnimeData(iinfo = {}, reqinfo = [], config = {}) {
+  /* - have a list of each info-getting function, ordered in speed with fastest first. each entry has a list of output keys
+  - do a while loop while reqdata length is > 0.
+  find out which function encompasses the most of reqdata by making a .map and sort the map by amount of reqdata support, then use the function.
+  at the end of each loop, if the function was successful, remove all data from reqdata that the function outputs.
+  make sure that function isn't run again, no matter the outcome
+  */
+  const oinfo = {};
+  const used = [];
+  const dontUseAgain = [];
+  const debug = initialStorage.debug?.animeInfo;
+  return new Promise(async resolve => {
+    if (!iinfo || !Object.values(iinfo).find(a => a)) return resolve({});
+    if (debug) console.log('starting search for',JSON.parse(JSON.stringify(reqinfo)));
+
+    for (let i = 0; i < 1; i++) {
+      while (reqinfo.length) {
+        // Find out which function is the most appropriate for the needed data
+        const rankedFunctions = animeInfoFunctions.map(a => {
+          if ((config.requireInstant && !a.instant) || (config.forceFresh && a.possibly_expired) || config.ignored?.includes(a.id)) {
+            dontUseAgain.push(a.id);
+            return {matches:0};
+          }
+          let matches = 0;
+          if (!used.includes(a.id)) a.outputs.forEach(g => {
+            if (reqinfo.includes(g)) matches++;
+          });
+          return {
+            fn: a.fn,
+            matches: matches,
+            id: a.id,
+          };
+        }).sort((a,b) => b.matches - a.matches);
+        if (!rankedFunctions[0].matches) {
+          console.warn(`[AnimePahe Improvements] After ${used.length} functions, no remaining function matched ${reqinfo}`);
+          break;
+        }
+        if (debug) console.log('chose',rankedFunctions[0].id,'for #',used.length);
+  
+        used.push(rankedFunctions[0].id);
+        const result = await rankedFunctions[0].fn(iinfo, config);
+        if (debug) console.log('got result',result,'with iinfo',JSON.parse(JSON.stringify(iinfo)));
+        if (!result) continue;
+        dontUseAgain.push(rankedFunctions[0].id)
+        for (const [key, value] of Object.entries(result)) {
+          if (!oinfo[key]) oinfo[key] = value;
+          if (!iinfo[key]) iinfo[key] = value;
+          if (value) reqinfo = reqinfo.filter(a => a !== key);
+        }
+      }
+
+      if (!reqinfo.length || i === 1) break;
+      if (debug) console.log('round two with left:',reqinfo);
+      used.length = 0;
+      used.push(...dontUseAgain);
+    }
+
+    if (debug) console.log('result',oinfo);
+    resolve(oinfo);
+  });
+}
+
 // MARKER:MODAL
 let modalBackFunction;
 // Add AnimePahe Improvements modal and message container
@@ -6904,266 +7164,6 @@ function getAnimeDataFromPage(page = $(document), isEpisode) {
     anidb_id: ids.anidb_id,
     poster: trimPosterUrl(poster),
   }
-}
-
-// List of info-getting functions, from fastest to slowest
-const animeInfoFunctions = [
-  {
-    "id": "current_page",
-    "outputs": ["name","session","id","anidb_id","poster"],
-    "instant": true,
-    "fn": (iinfo = {}, config = {}) => {
-      if ((!isAnime() && !isEpisode()) || is404) return undefined;
-      const data = getAnimeDataFromPage($(document), isEpisode());
-      const session = getAnimeSessionFromUrl();
-      // Require at least one part of iinfo to match
-      if (iinfo.name !== data.name && iinfo.session !== session && iinfo.id !== data.id && iinfo.anidb_id !== data.anidb_id && iinfo.poster !== data.poster) return undefined;
-      return {
-        name: data.name,
-        session: session,
-        id: data.id,
-        anidb_id: data.anidb_id,
-        poster: data.poster,
-      }
-    }
-  },
-  {
-    "id": "storage_session",
-    "outputs": ["id","session","name"],
-    "instant": true,
-    "possibly_expired": true,
-    "fn": (iinfo = {}, config = {}) => {
-      const storage = getStorage();
-      const list = [...storage.linkList].reverse(); // Reverse to prioritize newer entries
-      const found = list.find(a => a.animeName === iinfo.name || (a.animeId && a.animeId === iinfo.id) || a.animeSession === iinfo.session);
-      if (!found) return undefined;
-      return {
-        name: found.animeName,
-        id: found.animeId,
-        session: found.animeSession,
-      };
-    }
-  },
-  {
-    "id": "storage_episode_session",
-    "outputs": ["id","session","name","episode_session"],
-    "instant": true,
-    "possibly_expired": true,
-    "fn": (iinfo = {}, config = {}) => {
-      if (iinfo.episode === undefined) return undefined; // Can be falsy
-      const storage = getStorage();
-      const list = [...storage.linkList].reverse(); // Reverse to prioritize newer entries
-      const found = list.find(a => a.type === 'episode' && a.episodeNum === iinfo.episode && (a.animeName === iinfo.name || (a.animeId && a.animeId === iinfo.id) || a.animeSession === iinfo.session || iinfo.videoUrls?.find(g => a.videoUrls?.includes(g))));
-      if (!found) return undefined;
-      return {
-        name: found.animeName,
-        id: found.animeId,
-        session: found.animeSession,
-        episode_session: found.episodeSession
-      };
-    }
-  },
-  {
-    "id": "storage_bookmark",
-    "outputs": ["id","name","poster"],
-    "instant": true,
-    "fn": (iinfo = {}, config = {}) => {
-      const storage = getStorage();
-      const found = storage.bookmarks.find(a => a.name === iinfo.name || a.id === iinfo.id || (a.posterUrl && a.posterUrl === iinfo.poster));
-      if (!found) return undefined;
-      return {
-        inacurrate_name: found.animeName,
-        id: found.animeId,
-        poster: found.posterUrl,
-      };
-    }
-  },
-  {
-    "id": "storage_video",
-    "outputs": ["id"],
-    "instant": true,
-    "fn": (iinfo = {}, config = {}) => {
-      const storage = getStorage();
-      const found = storage.videoTimes.find(a => a.animeName === iinfo.name || (a.animeId && a.animeId === iinfo.id) || iinfo.videoUrls?.find(g => a.videoUrls.includes(g)));
-      if (!found) return undefined;
-      return {
-        id: found.animeId // Don't return the name, due to it likely being incorrect
-      };
-    }
-  },
-  {
-    "id": "index",
-    "outputs": ["session","name"],
-    "instant": true,
-    "fn": getAnimeSession,
-  },
-  {
-    "id": "anime_page",
-    "outputs": ["session","name","id","anidb_id","poster"],
-    "fn": async (iinfo = {}, config = {}) => {
-      if (!iinfo.session) return undefined;
-      const page = await asyncGetPage(`/anime/${iinfo.session}`);
-      if (!page) return undefined;
-      const data = getAnimeDataFromPage(page, false);
-      return {
-        session: iinfo.session,
-        name: data.name,
-        id: data.id,
-        anidb_id: data.anidb_id,
-        poster: data.poster,
-      }
-    }
-  },
-  {
-    "id": "search_query",
-    "outputs": ["name","id","session","poster"],
-    "fn": getAnimeDataFromSearch
-  },
-  {
-    "id": "episode_list",
-    "outputs": ["id"],
-    "fn": async (iinfo = {}, config = {}) => {
-      if (!iinfo.session) return undefined;
-      const cached = siteVars.cached.animeId[iinfo.session];
-      if (cached) return cached;
-      
-      return new Promise(async resolve => {
-        const response = await asyncGetResponseData(`/api?m=release&id=${iinfo.session}`);
-        if (!response) return resolve(undefined);
-        siteVars.cached.animeId[iinfo.session] = response[0].anime_id;
-        resolve({
-          id: response[0].anime_id
-        });
-      });
-    }
-  },
-  {
-    "id": "relation_tree", // Very slow
-    "outputs": ["session","name","poster"],
-    "fn": async (iinfo = {}, config = {}) => {
-      if (!iinfo.startSession && !iinfo.name) return undefined;
-      const searchedSessions = [];
-      return new Promise(async resolve => {
-        async function searchBranches(session) {
-          return new Promise(async resolve => {
-            if (searchedSessions.includes(session)) return resolve(undefined);
-            const page = await asyncGetPage(`/anime/${session}`);
-            if (page) {
-              const pageData = getAnimeDataFromPage(page, false);
-              if (pageData.name === iinfo.name || pageData.id === iinfo.id || pageData.anidb_id === iinfo.anidb_id || pageData.poster === iinfo.poster) {
-                return resolve({
-                  name: pageData.name,
-                  session: session,
-                  poster: pageData.poster,
-                });
-              }
-            }
-            searchedSessions.push(session);
-            const relations = await getBranches(session);
-            for (const rel of relations) {
-              if (rel.session !== iinfo.session && rel.title !== iinfo.name && trimPosterUrl(rel.poster) !== iinfo.poster) continue;
-              return resolve(rel);
-            }
-            for (const rel of relations) {
-              const result = await searchBranches(rel.session);
-              if (result) return resolve(result);
-            }
-            resolve(undefined);
-          });
-        }
-        let startSession = iinfo.startSession;
-        if (!startSession) {
-          const data = await getAnimeDataFromSearch(iinfo, {
-            allowGuessing: true
-          });
-          if (!data) return resolve(undefined);
-          startSession = data.session;
-        }
-        const result = await searchBranches(startSession);
-        if (!result) return resolve(undefined);
-        const returnData = {
-          name: result.title,
-          session: result.session,
-          poster: trimPosterUrl(result.poster),
-        };
-        for (const [key, value] of Object.entries(result)) {
-          if (!['title','session','poster'].includes(key)) returnData[key] = value;
-        }
-        resolve(returnData);
-      });
-      async function getBranches(session) {
-        const relations = await getRelationList(session);
-        if (!relations) return [];
-        return relations.filter(a => a.relation_type !== 'Character');
-      }
-    }
-  }
-]
-// Gets any anime info except for video player stuff
-// Available inputs & outputs: name, id, session, poster
-// TODO:
-// - add bookmark source function
-// - something with anidb_id?
-function getAnimeData(iinfo = {}, reqinfo = [], config = {}) {
-  /* - have a list of each info-getting function, ordered in speed with fastest first. each entry has a list of output keys
-  - do a while loop while reqdata length is > 0.
-  find out which function encompasses the most of reqdata by making a .map and sort the map by amount of reqdata support, then use the function.
-  at the end of each loop, if the function was successful, remove all data from reqdata that the function outputs.
-  make sure that function isn't run again, no matter the outcome
-  */
-  const oinfo = {};
-  const used = [];
-  const dontUseAgain = [];
-  const debug = initialStorage.debug?.animeInfo;
-  return new Promise(async resolve => {
-    if (!iinfo || !Object.values(iinfo).find(a => a)) return resolve({});
-    if (debug) console.log('starting search for',JSON.parse(JSON.stringify(reqinfo)));
-
-    for (let i = 0; i < 1; i++) {
-      while (reqinfo.length) {
-        // Find out which function is the most appropriate for the needed data
-        const rankedFunctions = animeInfoFunctions.map(a => {
-          if ((config.requireInstant && !a.instant) || (config.forceFresh && a.possibly_expired) || config.ignored?.includes(a.id)) {
-            dontUseAgain.push(a.id);
-            return {matches:0};
-          }
-          let matches = 0;
-          if (!used.includes(a.id)) a.outputs.forEach(g => {
-            if (reqinfo.includes(g)) matches++;
-          });
-          return {
-            fn: a.fn,
-            matches: matches,
-            id: a.id,
-          };
-        }).sort((a,b) => b.matches - a.matches);
-        if (!rankedFunctions[0].matches) {
-          console.warn(`[AnimePahe Improvements] After ${used.length} functions, no remaining function matched ${reqinfo}`);
-          break;
-        }
-        if (debug) console.log('chose',rankedFunctions[0].id,'for #',used.length);
-  
-        used.push(rankedFunctions[0].id);
-        const result = await rankedFunctions[0].fn(iinfo, config);
-        if (debug) console.log('got result',result,'with iinfo',JSON.parse(JSON.stringify(iinfo)));
-        if (!result) continue;
-        dontUseAgain.push(rankedFunctions[0].id)
-        for (const [key, value] of Object.entries(result)) {
-          if (!oinfo[key]) oinfo[key] = value;
-          if (!iinfo[key]) iinfo[key] = value;
-          if (value) reqinfo = reqinfo.filter(a => a !== key);
-        }
-      }
-
-      if (!reqinfo.length || i === 1) break;
-      if (debug) console.log('round two with left:',reqinfo);
-      used.length = 0;
-      used.push(...dontUseAgain);
-    }
-
-    if (debug) console.log('result',oinfo);
-    resolve(oinfo);
-  });
 }
 
 async function getAnimeDataFromSearch(iinfo = {}, config = {}) {
