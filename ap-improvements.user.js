@@ -6782,8 +6782,9 @@ function getStoredLinkData(storage) {
   return storage.linkList.find(a => a.type == 'anime' && a.animeSession == animeSession);
 }
 
-function getAnimeName() {
-  return isEpisode() ? /Watch (.*) - ([\d\.]+)(?:\-[\d\.]+)? Online/.exec($('.theatre-info h1').text())[1] : $($('.title-wrapper h1 span')[0]).text();
+function getAnimeName(page = $(document), episode = undefined) {
+  if (episode === undefined) episode = isEpisode();
+  return episode ? /Watch (.*) - ([\d\.]+)(?:\-[\d\.]+)? Online/.exec(page.find('.theatre-info h1').text())[1] : $(page.find('.title-wrapper h1 span')[0]).text();
 }
 
 function sortAnimesChronologically(animeList) {
@@ -6893,9 +6894,9 @@ function makePosterUrl(poster, format = '') {
   return `https://i.${window.location.host}/${poster}`;
 }
 
-function getAnimeDataFromPage(page = $(document)) {
+function getAnimeDataFromPage(page = $(document), isEpisode) {
   const poster = trimPosterUrl($(page.find('.anime-poster img')[0])?.data('src'));
-  const name = $(page.find('.title-wrapper h1 span')[0]).text();
+  const name = getAnimeName(page, isEpisode);
   const ids = {};
   for (const meta of page.find('head meta')) {
     if (meta.name === 'id') ids.id = +meta.content;
@@ -6916,17 +6917,17 @@ const animeInfoFunctions = [
     "outputs": ["name","session","id","anidb_id","poster"],
     "instant": true,
     "fn": (iinfo = {}, config = {}) => {
-      if ((!isAnime() && !isEpisode())) return undefined;
-      const data = getAnimeDataFromPage();
+      if ((!isAnime() && !isEpisode()) || is404) return undefined;
+      const data = getAnimeDataFromPage($(document), isEpisode());
       const session = getAnimeSessionFromUrl();
       // Require at least one part of iinfo to match
       if (iinfo.name !== data.name && iinfo.session !== session && iinfo.id !== data.id && iinfo.anidb_id !== data.anidb_id && iinfo.poster !== data.poster) return undefined;
       return {
         name: data.name,
         session: session,
-        id: ids.id,
-        anidb_id: ids.anidb_id,
-        poster: poster,
+        id: data.id,
+        anidb_id: data.anidb_id,
+        poster: data.poster,
       }
     }
   },
@@ -7007,7 +7008,7 @@ const animeInfoFunctions = [
       if (!iinfo.session) return undefined;
       const page = await asyncGetPage(`/anime/${iinfo.session}`);
       if (!page) return undefined;
-      const data = getAnimeDataFromPage(page);
+      const data = getAnimeDataFromPage(page, false);
       return {
         session: iinfo.session,
         name: data.name,
@@ -7052,7 +7053,7 @@ const animeInfoFunctions = [
             if (searchedSessions.includes(session)) return resolve(undefined);
             const page = await asyncGetPage(`/anime/${session}`);
             if (page) {
-              const pageData = getAnimeDataFromPage(page);
+              const pageData = getAnimeDataFromPage(page, false);
               if (pageData.name === iinfo.name || pageData.id === iinfo.id || pageData.anidb_id === iinfo.anidb_id || pageData.poster === iinfo.poster) {
                 return resolve({
                   name: pageData.name,
@@ -7818,87 +7819,60 @@ async function getEpisodeData(aSession, episodeNum) {
 async function refreshSession(from404 = false) {
   return new Promise(async (resolve) => {
     const storage = getStorage();
-    const bobj = getStoredLinkData(storage);
+    const storedSession = getStoredLinkData(storage);
 
     let name = '';
     let episodeNum = 0;
 
-    if (!bobj && from404) {
+    if (!storedSession && from404) {
       resolve(1);
       return;
     }
 
-    if (bobj) {
-      name = bobj.animeName;
-      episodeNum = bobj.episodeNum;
+    if (storedSession) {
+      name = storedSession.animeName;
+      episodeNum = storedSession.episodeNum;
     }
     else {
       name = getAnimeName();
       episodeNum = getEpisodeNum();
     }
 
+    const animeData = await getAnimeInfo({
+      name: name,
+      id: storedSession?.animeId,
+    }, ["name","session"], {allowGuessing:true,forceFresh:true});
+    if (!animeData.session || (animeData.name !== name && !refreshGuessWarning(name, animeData.name))) {
+      return resolve(2);
+    }
+
     if (isEpisode()) {
-      const animeData = await asyncGetAnimeData(name, bobj?.animeId, true);
-      let aSession;
-
-      if (animeData && (animeData.title === name || (!bobj?.animeId && refreshGuessWarning(name, animeData.title)))) aSession = animeData.session;
-      else if (bobj?.animeId) {
-        const data = await getDataFromAnimeId(bobj.animeId);
-        if (data) aSession = data.session;
-      }
-
-      if (!aSession) {
-        resolve(2);
-        return;
-      }
-
-      const episodeData = await getEpisodeData(aSession, episodeNum);
-      const episodeSession = episodeData?.session;
-      if (!episodeSession) {
-        resolve(3);
-        return;
-      }
-
-      if (bobj) {
+      if (storedSession) {
         if (isSyncEnabled(storage)) {
-          storage.sync.temp.removedData.push(...storage.linkList.filter(g => g.type === 'episode' && g.animeSession === bobj.animeSession && g.episodeSession === bobj.episodeSession).map(g => {return {type: 'linkList', episodeSession: g.episodeSession}}));
+          storage.sync.temp.removedData.push(...storage.linkList.filter(g => g.type === 'episode' && g.animeSession === storedSession.animeSession && g.episodeSession === storedSession.episodeSession).map(g => {return {type: 'linkList', episodeSession: g.episodeSession}}));
         }
-        storage.linkList = storage.linkList.filter(g => !(g.type === 'episode' && g.animeSession === bobj.animeSession && g.episodeSession === bobj.episodeSession));
+        storage.linkList = storage.linkList.filter(g => !(g.type === 'episode' && g.animeSession === storedSession.animeSession && g.episodeSession === storedSession.episodeSession));
         saveData(storage);
       }
 
-      window.location.replace('/play/' + aSession + '/' + episodeSession + window.location.search);
+      const episodeData = await getEpisodeData(animeData.session, episodeNum);
+      const episodeSession = episodeData?.session;
+      if (!episodeSession) return resolve(3);
 
-      resolve(0);
-      return;
-    }
-    else if (bobj && bobj.animeId) {
-      if (isSyncEnabled(storage)) {
-        storage.sync.temp.removedData.push(...storage.linkList.filter(g => g.type === 'anime' && g.animeSession === bobj.animeSession).map(g => {return {type: 'linkList', animeSession: g.animeSession}}));
-      }
-      storage.linkList = storage.linkList.filter(g => !(g.type === 'anime' && g.animeSession === bobj.animeSession));
-      saveData(storage);
-
-      window.location.replace('/a/' + bobj.animeId);
+      window.location.replace('/play/' + animeData.session + '/' + episodeSession + window.location.search);
       resolve(0);
       return;
     }
     else {
-      if (bobj) {
+      if (storedSession) {
         if (isSyncEnabled(storage)) {
-          storage.sync.temp.removedData.push(...storage.linkList.filter(g => g.type === 'anime' && g.animeSession === bobj.animeSession).map(g => {return {type: 'linkList', animeSession: g.animeSession}}));
+          storage.sync.temp.removedData.push(...storage.linkList.filter(g => g.type === 'anime' && g.animeSession === storedSession.animeSession).map(g => {return {type: 'linkList', animeSession: g.animeSession}}));
         }
-        storage.linkList = storage.linkList.filter(g => !(g.type === 'anime' && g.animeSession === bobj.animeSession));
+        storage.linkList = storage.linkList.filter(g => !(g.type === 'anime' && g.animeSession === storedSession.animeSession));
         saveData(storage);
       }
-      const animeData = await asyncGetAnimeData(name, undefined, true);
 
-      if (!animeData || (animeData.title !== name && !refreshGuessWarning(name, animeData.title))) {
-        resolve(2);
-        return;
-      }
-
-      window.location.replace('/a/' + animeData.id);
+      window.location.replace('/anime/' + animeData.session);
       resolve(0);
       return;
     }
@@ -7931,8 +7905,11 @@ console.log('[AnimePahe Improvements]', obj, animeSession, episodeSession);
 function setSessionData() {
   const animeName = getAnimeName();
   return new Promise(resolve => {
-    asyncGetAnimeId(animeSession, animeName).then(animeId => {
-      if (!animeId) console.error("[AnimePahe Improvements] Couldn't find anime ID");
+    getAnimeInfo({
+      session: animeSession,
+      name: animeName,
+    }, ["id"]).then(data => {
+      if (!data.id) console.error("[AnimePahe Improvements] Couldn't find anime ID");
       const storage = getStorage();
       if (isEpisode()) {
         if (isSyncEnabled(storage)) {
@@ -7940,7 +7917,7 @@ function setSessionData() {
         }
 
         storage.linkList.push({
-          animeId: animeId,
+          animeId: data.id,
           animeSession: animeSession,
           episodeSession: episodeSession,
           type: 'episode',
@@ -7954,7 +7931,7 @@ function setSessionData() {
         }
 
         storage.linkList.push({
-          animeId: animeId,
+          animeId: data.id,
           animeSession: animeSession,
           type: 'anime',
           animeName: animeName
