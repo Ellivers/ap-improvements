@@ -7066,7 +7066,9 @@ async function asyncGetPage(qurl) {
   return new Promise(resolve => {
     req.onload = () => {
       if (req.status === 200) {
-        resolve($(req.response));
+        const wrappedPage = $('<html></html>');
+        $(req.response).appendTo(wrappedPage);
+        resolve(wrappedPage);
         return;
       }
 
@@ -7148,7 +7150,7 @@ function getAnimeDataFromPage(page = $(document), isEpisode) {
   const poster = trimPosterUrl($(page.find('.anime-poster img')[0])?.data('src'));
   const name = getAnimeName(page, isEpisode);
   const ids = {};
-  for (const meta of page.find('head meta')) {
+  for (const meta of page.find('meta')) {
     if (meta.name === 'id') ids.id = +meta.content;
     if (meta.name === 'anidb') ids.anidb_id = +meta.content;
   }
