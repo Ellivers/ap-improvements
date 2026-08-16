@@ -6878,7 +6878,7 @@ function makeSearchable(string) {
   return encodeURIComponent(string.replace(' -',' '));
 }
 
-const posterRegex = /(?:https:\/\/)?(?:i\.\w+\.\w+)?\/(.*)\.?(?:\.md|\.th)(.*)?/;
+const posterRegex = /^(?:https:\/\/)?(?:i\.\w+\.\w+\/)?([^\.]*)(?:\.md|\.th)?(\..*)?$/;
 function trimPosterUrl(posterUrl) {
   const parts = posterRegex.exec(posterUrl);
   if (!parts) return undefined;
@@ -6956,7 +6956,7 @@ const animeInfoFunctions = [
       if (iinfo.episode === undefined) return undefined; // Can be falsy
       const storage = getStorage();
       const list = [...storage.linkList].reverse(); // Reverse to prioritize newer entries
-      const found = list.find(a => a.type === 'episode' && a.episodeNum === iinfo.episode && (a.animeName === iinfo.name || (a.animeId && a.animeId === iinfo.id) || a.animeSession === iinfo.session || iinfo.videoUrls?.find(g => a.videoUrls.includes(g))));
+      const found = list.find(a => a.type === 'episode' && a.episodeNum === iinfo.episode && (a.animeName === iinfo.name || (a.animeId && a.animeId === iinfo.id) || a.animeSession === iinfo.session || iinfo.videoUrls?.find(g => a.videoUrls?.includes(g))));
       if (!found) return undefined;
       return {
         name: found.animeName,
