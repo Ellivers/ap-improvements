@@ -4121,12 +4121,6 @@ function getTextContent(elem) {
   return text;
 }
 
-function getSmallPosterUrl(src) {
-  const parts = src.split('.');
-  parts.splice(parts.length - 1, 0, 'th');
-  return parts.join('.');
-}
-
 async function searchForCollections() {
   if (!$('.search-results a').length) return;
 
@@ -4181,10 +4175,10 @@ function displayCollection(seriesList, elem) {
     <a title="${toHtmlCodes(seriesList[0].title + " - Collection")}" href="javascript:;">
       <div class="result-thumbnail">
         <div class="anitracker-collection-image-wrapper">
-          <img src="${getSmallPosterUrl(seriesList[0].poster)}" referrerpolicy="no-referrer" style="pointer-events: all !important;max-width: 30px;">
+          <img src="${makePosterUrl(seriesList[0].poster,'th')}" referrerpolicy="no-referrer" style="pointer-events: all !important;max-width: 30px;">
         </div>
         <div class="anitracker-collection-image-wrapper">
-          <img src="${getSmallPosterUrl(seriesList[1].poster)}" referrerpolicy="no-referrer" style="pointer-events: all !important;max-width: 30px;left:30px;">
+          <img src="${makePosterUrl(seriesList[1].poster,'th')}" referrerpolicy="no-referrer" style="pointer-events: all !important;max-width: 30px;left:30px;">
         </div>
       </div>
       <div class="result-metadata">
@@ -4207,7 +4201,7 @@ function displayCollection(seriesList, elem) {
       <div class="anitracker-big-list-item">
         <a href="/anime/${anime.session}" title="${toHtmlCodes(anime.title)}" style="display: flex; gap: 16px;">
           <div class="anitracker-image-wrapper" style="height: 60px; width: 60px; min-width: 60px;">
-            <img src="${getSmallPosterUrl(anime.poster)}" referrerpolicy="no-referrer" alt="[Thumbnail of ${toHtmlCodes(anime.title)}]">
+            <img src="${makePosterUrl(anime.poster,'th')}" referrerpolicy="no-referrer" alt="[Thumbnail of ${toHtmlCodes(anime.title)}]">
           </div>
           <div>
             <div class="anitracker-main-text">${anime.title}</div>
