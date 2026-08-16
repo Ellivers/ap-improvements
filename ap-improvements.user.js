@@ -6900,19 +6900,21 @@ const animeInfoFunctions = [
     "outputs": ["name","session","id","anidb_id","poster"],
     "instant": true,
     "fn": (iinfo = {}, config = {}) => {
-      if ((!isAnime() && !isEpisode()) || iinfo.session !== getAnimeSessionFromUrl()) return undefined;
-      const poster = $($('.anime-poster img')[0])?.data('src');
+      if ((!isAnime() && !isEpisode())) return undefined;
+      const poster = trimPosterUrl($($('.anime-poster img')[0])?.data('src'));
       const ids = {};
       for (const meta of $('head meta')) {
         if (meta.name === 'id') ids.id = +meta.content;
         if (meta.name === 'anidb') ids.anidb_id = +meta.content;
       }
+      // Require at least one part of iinfo to match
+      if (iinfo.name !== getAnimeName() && iinfo.session !== getAnimeSessionFromUrl() && iinfo.id !== ids.id && iinfo.anidb_id !== ids.anidb_id && iinfo.poster !== poster) return undefined;
       return {
-        session: getAnimeSessionFromUrl(),
         name: getAnimeName(),
+        session: getAnimeSessionFromUrl(),
         id: ids.id,
         anidb_id: ids.anidb_id,
-        poster: trimPosterUrl(poster),
+        poster: poster,
       }
     }
   },
