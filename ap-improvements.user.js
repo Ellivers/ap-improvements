@@ -5781,7 +5781,7 @@ function toggleNotifications(name, id = undefined) {
 }
 
 async function updateNotifications(animeName, storage = getStorage()) {
-  const nobj = storage.notifications.anime.find(g => g.name === animeName);
+  let nobj = storage.notifications.anime.find(g => g.name === animeName);
   if (nobj === undefined) {
     toggleNotifications(animeName);
     return;
@@ -5795,6 +5795,7 @@ async function updateNotifications(animeName, storage = getStorage()) {
   if (episodes === undefined) return 0;
 
   storage = getStorage();
+  nobj = storage.notifications.anime.find(g => g.name === animeName); // Refresh the reference
   return new Promise((resolve, reject) => {
     if (!episodes.length) resolve(undefined);
 
