@@ -3280,7 +3280,7 @@ if (isEpisode()) {
       });
     }
     else if (action === 'anidb_id_request') {
-      const pageData = getAnimeDataFromPage($(document),true);
+      const pageData = getAnimeDataFromPage();
       getFirstEpisode(animeSession).then(epResponse => {
         sendMessage({action:"anidb_id_response",id:pageData.anidb_id,animeName:pageData.name,firstEpisode:epResponse});
       });
@@ -4841,7 +4841,12 @@ function openNotificationsModal() {
         removeWatched(animeId, episode, storage);
       }
 
-      if (isAnime() && getAnimeId(getAnimeSessionFromUrl()) === animeId) updateEpisodePages();
+      if (isAnime()) getAnimeInfo({
+        session: getAnimeSessionFromUrl()
+      }, ["id"]).then(data => {
+        if (data.id !== animeId) return;
+        updateEpisodePages();
+      });
     });
 
     $('.anitracker-notification-item.anitracker-temp').removeClass('anitracker-temp'); // Temporary class for adding event listeners
@@ -5432,10 +5437,12 @@ function addBookmark(id, name, additionalData = {}) {
   storage.bookmarks.push(obj);
   saveData(storage);
 
-  if (!isAnime() && !isEpisode()) return;
-  if (getAnimeId(getAnimeSessionFromUrl()) === +id) {
+  if (isAnime() || isEpisode()) getAnimeInfo({
+    session: getAnimeSessionFromUrl()
+  }, ["id"]).then(data => {
+    if (data.id !== +id) return;
     $('.anitracker-bookmark-toggle .anitracker-title-icon-check').show();
-  }
+  });
 }
 
 function removeBookmark(id) {
@@ -5449,10 +5456,12 @@ function removeBookmark(id) {
   storage.bookmarks = storage.bookmarks.filter(g => g.id !== +id);
   saveData(storage);
 
-  if (!isAnime() && !isEpisode()) return;
-  if (getAnimeId(getAnimeSessionFromUrl()) === +id) {
+  if (isAnime() || isEpisode()) getAnimeInfo({
+    session: getAnimeSessionFromUrl()
+  }, ["id"]).then(data => {
+    if (data.id !== +id) return;
     $('.anitracker-bookmark-toggle .anitracker-title-icon-check').hide();
-  }
+  });
 }
 
 function setBookmarkStatus(id, status) {
@@ -7163,34 +7172,6 @@ function getAnimeInfo(iinfo = {}, reqinfo = [], config = {}) {
   });
 }
 
-function getAnimeData(name = getAnimeName(), id = undefined, guess = false) {
-  const cached = (() => {
-    if (id) return siteVars.cached.animeData.find(a => a?.id === id);
-    else return siteVars.cached.animeData.find(a => a?.title === name);
-  })();
-  if (cached) {
-    return cached;
-  }
-
-  const data = (() => {
-    if (!name.length) return undefined;
-    const response = getResponseData('/api?m=search&q=' + makeSearchable(name));
-
-    if (response === undefined) return response;
-
-    for (const anime of response) {
-      if (id === undefined && anime.title === name) return anime;
-      if (id && anime.id === id) return anime;
-    }
-    if (guess && response.length > 0) return response[0];
-
-    return undefined;
-  })();
-
-  siteVars.cached.animeData.push(data);
-  return data;
-}
-
 async function getAnimeInfoFromSearch(iinfo = {}, config = {}) {
   const cached = siteVars.cached.animeSearch.find(a => a.id === iinfo.id || a.title === iinfo.name || a.session === iinfo.session || a.poster === iinfo.poster);
   if (cached) return cached;
@@ -7248,23 +7229,6 @@ async function getAnimeInfoFromSearch(iinfo = {}, config = {}) {
     siteVars.cached.animeSearch.push(rValue);
     resolve(rValue);
   });
-}
-
-function getAnimeId(session, animeName = getAnimeName()) {
-  const cached = siteVars.cached.animeId[session];
-  if (cached) return cached;
-
-  const id = (() => {
-    const data = getAnimeData(animeName);
-    if (data) return data.id;
-
-    if (!session) return undefined;
-    const response = getResponseData(`/api?m=release&id=${session}`);
-    if (!response) return undefined;
-    return response[0].anime_id;
-  })();
-  if (id) siteVars.cached.animeId[session] = id;
-  return id;
 }
 
 async function getAnimeSession(iinfo = {}, config = {}) {
@@ -9113,8 +9077,12 @@ if (isAnime()) {
   }).observe($('.episode-list-wrapper')[0], { childList: true, subtree: false });
 
   // Title icons
-  const animeid = getAnimeId(animeSession, getAnimeName()); // Pre-cache anime data
-  addTitleIcons(animeid);
+  getAnimeInfo({
+    session: getAnimeSessionFromUrl()
+  }, ["id"]).then(data => {
+    if (!data.id) return;
+    addTitleIcons(data.id);
+  });
 
   if (initialStorage.settings.relativeEpNums) setRelativeEpNums(true);
 }
