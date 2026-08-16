@@ -4971,7 +4971,7 @@ function openBookmarksModal() {
           <a ${href} target="_blank" title="${toHtmlCodes(g.name)}" tabindex="0">
             ${g.newlyAdded ? '<i class="anitracker-bookmark-new"></i>' : ''}
             <div class="anitracker-big-poster-icon">
-              <img src="${g.posterUrl ? `https://i.${window.location.host}/${g.posterUrl}` : 'data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw=='}" loading="lazy">
+              <img src="${g.posterUrl ? makePosterUrl(g.posterUrl,'md') : 'data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw=='}" loading="lazy">
             </div>
             <span>${g.name}</span>
           </a>
@@ -5006,7 +5006,7 @@ function openBookmarksModal() {
           name: g.name,
           id: g.id,
           poster: g.poster,
-        }, ["name","session"]).then(data => {
+        }, ["name","session"], {ignored: ['storage_bookmark']}).then(data => {
           spinner.remove();
           if (!data.session) return;
           const storage2 = getStorage();
@@ -5307,27 +5307,20 @@ function getBookmarkImage(elem, g, session = undefined) {
   </div></div>`).prependTo(elem);
 
   setTimeout(async () => {
-    let poster;
-    const animeData = await asyncGetAnimeData(g.name, g.id);
+    const data = await getAnimeInfo({
+      name: g.name,
+      id: g.id,
+      session: session,
+    }, ['poster'], {ignored:['storage_bookmark']});
     elem.find('.anitracker-spinner-parent').remove();
-    if (animeData) poster = animeData.poster;
-    else {
-      if (!session) session = await getAnimeSession(g.name);
-      const page = await asyncGetPage(`/anime/${session}`);
-      poster = $(page?.find('.anime-poster img')[0])?.data('src').replace('.md','');
-    }
-
-    if (!poster) return;
-    poster = poster.split('/').slice(3).join('/').split('.');
-    poster.splice(poster.length - 1, 0, 'md');
-    poster = poster.join('.');
-
-    elem.find('img').attr('src', `https://i.${window.location.host}/${poster}`);
+    
+    if (!data.poster) return;
+    elem.find('img').attr('src', makePosterUrl(poster,'md'));
 
     const currentStorage = getStorage();
     const found = currentStorage.bookmarks.find(b => b.name === g.name && b.id === g.id);
     if (!found) return;
-    found.posterUrl = poster;
+    found.posterUrl = trimPosterUrl(poster);
     saveData(currentStorage);
   }, 0);
 }
@@ -5354,7 +5347,7 @@ function openBookmarkStatusEditModal(id, adding=false) {
       <div class="dropdown-menu anitracker-dropdown-content anitracker-status-dropdown" style="width:12em;"></div>
     </div>
     <div class="anitracker-image-wrapper anitracker-big-poster-icon" style="width:9em;height:9em;">
-      <img src="${entry.posterUrl ? `https://i.${window.location.host}/${entry.posterUrl}` : 'data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw=='}" loading="lazy">
+      <img src="${entry.posterUrl ? makePosterUrl(entry.posteUrl, 'md') : 'data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw=='}" loading="lazy">
     </div>
   </div>
   `).appendTo('#anitracker-modal-body');
@@ -6885,18 +6878,44 @@ function makeSearchable(string) {
   return encodeURIComponent(string.replace(' -',' '));
 }
 
+const posterRegex = /(?:https:\/\/)?(?:i\.\w+\.\w+)?\/(.*)\.?(?:\.md|\.th)(.*)?/;
 function trimPosterUrl(posterUrl) {
-  const parts = /(?:https:\/\/)(?:i\.\w+\.\w+)\/(.*)/.exec(posterUrl);
+  const parts = posterRegex.exec(posterUrl);
   if (!parts) return undefined;
-  return parts[1];
+  return parts[1]+parts[2];
 }
 
-function makePosterUrl(poster) {
+function makePosterUrl(poster, format = '') {
+  if (format) {
+    const parts = posterRegex.exec(poster);
+    if (parts) poster = `${parts[1]}.${format}${parts[2]}`;
+  }
   return `https://i.${window.location.host}/${poster}`;
 }
 
 // List of info-getting functions, from fastest to slowest
 const animeInfoFunctions = [
+  {
+    "id": "current_page",
+    "outputs": ["name","session","id","anidb_id","poster"],
+    "instant": true,
+    "fn": (iinfo = {}, config = {}) => {
+      if ((!isAnime() && !isEpisode()) || iinfo.session !== getAnimeSessionFromUrl()) return undefined;
+      const poster = $($('.anime-poster img')[0])?.data('src');
+      const ids = {};
+      for (const meta of $('head meta')) {
+        if (meta.name === 'id') ids.id = +meta.content;
+        if (meta.name === 'anidb') ids.anidb_id = +meta.content;
+      }
+      return {
+        session: getAnimeSessionFromUrl(),
+        name: getAnimeName(),
+        id: ids.id,
+        anidb_id: ids.anidb_id,
+        poster: trimPosterUrl(poster),
+      }
+    }
+  },
   {
     "id": "storage_session",
     "outputs": ["id","session","name"],
@@ -6930,6 +6949,21 @@ const animeInfoFunctions = [
     }
   },
   {
+    "id": "storage_bookmark",
+    "outputs": ["id","name","poster"],
+    "instant": true,
+    "fn": (iinfo = {}, config = {}) => {
+      const storage = getStorage();
+      const found = storage.bookmarks.find(a => a.name === iinfo.name || a.id === iinfo.id || a.posteUrl === iinfo.poster);
+      if (!found) return undefined;
+      return {
+        inacurrate_name: found.animeName,
+        id: found.animeId,
+        poster: found.posterUrl,
+      };
+    }
+  },
+  {
     "id": "storage_video",
     "outputs": ["id"],
     "instant": true,
@@ -6947,6 +6981,29 @@ const animeInfoFunctions = [
     "outputs": ["session","name"],
     "instant": true,
     "fn": getAnimeSession,
+  },
+  {
+    "id": "anime_page",
+    "outputs": ["session","name","id","anidb_id","poster"],
+    "fn": async (iinfo = {}, config = {}) => {
+      if (!iinfo.session) return undefined;
+      const page = await asyncGetPage(`/anime/${iinfo.session}`);
+      if (!page) return undefined;
+      const poster = $(page.find('.anime-poster img')[0])?.data('src');
+      const name = $(page.find('.title-wrapper h1 span')[0]).text();
+      const ids = {};
+      for (const meta of page.find('head meta')) {
+        if (meta.name === 'id') ids.id = +meta.content;
+        if (meta.name === 'anidb') ids.anidb_id = +meta.content;
+      }
+      return {
+        session: iinfo.session,
+        name: name,
+        id: ids.id,
+        anidb_id: ids.anidb_id,
+        poster: trimPosterUrl(poster),
+      }
+    }
   },
   {
     "id": "search_query",
@@ -6975,14 +7032,14 @@ const animeInfoFunctions = [
     "id": "relation_tree", // Very slow
     "outputs": ["session","name","poster"],
     "fn": async (iinfo = {}, config = {}) => {
-      if (!iinfo.startSession) return undefined;
+      if (!iinfo.startSession && !iinfo.name) return undefined;
       const searchedSessions = [];
       return new Promise(async resolve => {
         async function searchBranches(session) {
           return new Promise(async resolve => {
             if (searchedSessions.includes(session)) return resolve(undefined);
             searchedSessions.push(session);
-            const relations = await getBranches(iinfo.startSession);
+            const relations = await getBranches(session);
             for (const rel of relations) {
               if (rel.session !== iinfo.session && rel.title !== iinfo.name && trimPosterUrl(rel.poster) !== iinfo.poster) continue;
               return resolve(rel);
@@ -6994,7 +7051,15 @@ const animeInfoFunctions = [
             resolve(undefined);
           });
         }
-        const result = await searchBranches(iinfo.startSession);
+        let startSession = iinfo.startSession;
+        if (!startSession) {
+          const data = await getAnimeInfoFromSearch(iinfo, {
+            allowGuessing: true
+          });
+          if (!data) return resolve(undefined);
+          startSession = data.session;
+        }
+        const result = await searchBranches(startSession);
         if (!result) resolve(undefined);
         else resolve({
           name: result.title,
