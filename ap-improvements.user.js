@@ -10170,6 +10170,12 @@ function addGeneralButtons() {
             Dev changelog
           </label>
         </div>
+        <div class="form-check">
+          <input class="form-check-input" type="checkbox" value="" id="anitracker-debug-anime-info" ${options.animeInfo ? "checked" : ""}>
+          <label class="form-check-label" for="anitracker-debug-anime-info">
+            Anime info getting debugging
+          </label>
+        </div>
         <input id="anitracker-decode-watched-input" placeholder="Decode watched format"><button class="btn btn-secondary anitracker-decode-watched-button">Decode</button><br>
         <input id="anitracker-encode-base64-input" placeholder="Encode to base64"><button class="btn btn-secondary anitracker-encode-base64-button">Encode</button>
         <div>Override function response: <input placeholder="Function" id="anitracker-funcresover-fn" style="width:50px;">
@@ -10190,6 +10196,7 @@ function addGeneralButtons() {
           storage.debug.notifs = $('#anitracker-debug-notifs').prop('checked');
           storage.debug.seekThumbnails = $('#anitracker-debug-seek-thumbnails').prop('checked');
           storage.debug.devChangelog = $('#anitracker-debug-dev-changelog').prop('checked');
+          storage.debug.animeInfo = $('#anitracker-debug-anime-info').prop('checked');
           saveData(storage);
 
           openShowDataModal();
