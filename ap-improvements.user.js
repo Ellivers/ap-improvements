@@ -3112,7 +3112,7 @@ function updatePage() {
   updateEpisodePages();
   const storage = getStorage();
 
-  if (isAnime() || isEpisode()) getAnimeInfo({session: getAnimeSessionFromUrl()},["id"]).then(data => {
+  if (isAnime() || isEpisode()) getAnimeData({session: getAnimeSessionFromUrl()},["id"]).then(data => {
     if (!data.id) return;
     const isBookmarked = storage.bookmarks.find(a => a.id === data.id) !== undefined;
     if (isBookmarked) $('.anitracker-bookmark-toggle .anitracker-title-icon-check').show();
@@ -3274,7 +3274,7 @@ if (isEpisode()) {
 
     const action = data?.action;
     if (action === 'id_request') {
-      getAnimeInfo({session: getAnimeSessionFromUrl()},["id"]).then(data => {
+      getAnimeData({session: getAnimeSessionFromUrl()},["id"]).then(data => {
         if (!data.id) return console.error("[AnimePahe Improvements] Couldn't get anime ID to send to iframe");
         sendMessage({action:"id_response",id:data.id});
       });
@@ -4415,7 +4415,7 @@ if (window.location.pathname.startsWith('/customlink')) {
           const iinfo = {};
           if (+value) iinfo.id = +value;
           else iinfo.name = decodeURIComponent(value);
-          const data = await getAnimeInfo(iinfo,["session","name"],{allowGuessing:true});
+          const data = await getAnimeData(iinfo,["session","name"],{allowGuessing:true});
           if (!data.session) return;
           if (iinfo.name && iinfo.name !== data.name && !confirm(`[AnimePahe Improvements]\n\nCouldn't find any anime with name "${name}".\nGo to "${animeData.title}" instead?`)) {
             return;
@@ -4841,7 +4841,7 @@ function openNotificationsModal() {
         removeWatched(animeId, episode, storage);
       }
 
-      if (isAnime()) getAnimeInfo({
+      if (isAnime()) getAnimeData({
         session: getAnimeSessionFromUrl()
       }, ["id"]).then(data => {
         if (data.id !== animeId) return;
@@ -4936,7 +4936,7 @@ function openBookmarksModal() {
 
     for (const g of entries) {
       const statusAttrs = getStatusAttributes(g.status);
-      const foundData = await getAnimeInfo({
+      const foundData = await getAnimeData({
         name: g.name,
         id: g.id,
         poster: g.posterUrl
@@ -4997,7 +4997,7 @@ function openBookmarksModal() {
             <span class="sr-only">Loading...</span>
           </div>
         </div>`).insertBefore(elem.find('a>span'));
-        getAnimeInfo({
+        getAnimeData({
           name: g.name,
           id: g.id,
           poster: g.poster,
@@ -5302,7 +5302,7 @@ function getBookmarkImage(elem, bookmark, session = undefined) {
   </div></div>`).prependTo(elem);
 
   setTimeout(async () => {
-    const data = await getAnimeInfo({
+    const data = await getAnimeData({
       name: bookmark.name,
       id: bookmark.id,
       session: session,
@@ -5437,7 +5437,7 @@ function addBookmark(id, name, additionalData = {}) {
   storage.bookmarks.push(obj);
   saveData(storage);
 
-  if (isAnime() || isEpisode()) getAnimeInfo({
+  if (isAnime() || isEpisode()) getAnimeData({
     session: getAnimeSessionFromUrl()
   }, ["id"]).then(data => {
     if (data.id !== +id) return;
@@ -5456,7 +5456,7 @@ function removeBookmark(id) {
   storage.bookmarks = storage.bookmarks.filter(g => g.id !== +id);
   saveData(storage);
 
-  if (isAnime() || isEpisode()) getAnimeInfo({
+  if (isAnime() || isEpisode()) getAnimeData({
     session: getAnimeSessionFromUrl()
   }, ["id"]).then(data => {
     if (data.id !== +id) return;
@@ -5522,7 +5522,7 @@ async function updateNotifications(animeName, storage = getStorage()) {
     toggleNotifications(animeName);
     return;
   }
-  const data = await getAnimeInfo({
+  const data = await getAnimeData({
     name: animeName,
     id: nobj.id
   },['session','poster','name']);
@@ -7023,7 +7023,7 @@ const animeInfoFunctions = [
   {
     "id": "search_query",
     "outputs": ["name","id","session","poster"],
-    "fn": getAnimeInfoFromSearch
+    "fn": getAnimeDataFromSearch
   },
   {
     "id": "episode_list",
@@ -7079,7 +7079,7 @@ const animeInfoFunctions = [
         }
         let startSession = iinfo.startSession;
         if (!startSession) {
-          const data = await getAnimeInfoFromSearch(iinfo, {
+          const data = await getAnimeDataFromSearch(iinfo, {
             allowGuessing: true
           });
           if (!data) return resolve(undefined);
@@ -7110,7 +7110,7 @@ const animeInfoFunctions = [
 // TODO:
 // - add bookmark source function
 // - something with anidb_id?
-function getAnimeInfo(iinfo = {}, reqinfo = [], config = {}) {
+function getAnimeData(iinfo = {}, reqinfo = [], config = {}) {
   /* - have a list of each info-getting function, ordered in speed with fastest first. each entry has a list of output keys
   - do a while loop while reqdata length is > 0.
   find out which function encompasses the most of reqdata by making a .map and sort the map by amount of reqdata support, then use the function.
@@ -7172,7 +7172,7 @@ function getAnimeInfo(iinfo = {}, reqinfo = [], config = {}) {
   });
 }
 
-async function getAnimeInfoFromSearch(iinfo = {}, config = {}) {
+async function getAnimeDataFromSearch(iinfo = {}, config = {}) {
   const cached = siteVars.cached.animeSearch.find(a => a.id === iinfo.id || a.title === iinfo.name || a.session === iinfo.session || a.poster === iinfo.poster);
   if (cached) return cached;
   if (!iinfo.name) return undefined;
@@ -7372,7 +7372,7 @@ function setupContinueWatchingSection() {
         let img = `<div class="anitracker-video-progress-image-placeholder">
                      <i class="fa fa-play" aria-hidden="true" style="font-size: 2.5em;margin-left: 5px;"></i>
                    </div>`;
-        const data = await getAnimeInfo({
+        const data = await getAnimeData({
           name: entry.animeName,
           id: entry.animeId,
           episode: entry.episodeNum,
@@ -7574,7 +7574,7 @@ async function addContinueWatchingEpisodes(storage, episodeCount, clearAll = fal
       }
       if (entry.animeId && isWatched(entry.animeId, entry.episodeNum)) continue;
 
-      const data = await getAnimeInfo({
+      const data = await getAnimeData({
         name: entry.animeName,
         id: entry.animeId,
         videoUrls: entry.videoUrls,
@@ -7596,7 +7596,7 @@ async function addContinueWatchingEpisodes(storage, episodeCount, clearAll = fal
         const sessionResponse = await getPageResponse('/anime/' + data.session);
         if (sessionResponse.status !== 200) {
           // If the anime session is expired, try to get a new one
-          const data2 = await getAnimeInfo({
+          const data2 = await getAnimeData({
             name: data.name || entry.animeName,
             id: entry.animeId,
             videoUrls: entry.videoUrls,
@@ -7781,7 +7781,7 @@ async function refreshSession(from404 = false) {
       episodeNum = getEpisodeNum();
     }
 
-    const animeData = await getAnimeInfo({
+    const animeData = await getAnimeData({
       name: name,
       id: storedSession?.animeId,
     }, ["name","session"], {allowGuessing:true,forceFresh:true});
@@ -7848,7 +7848,7 @@ console.log('[AnimePahe Improvements]', obj, animeSession, episodeSession);
 function setSessionData() {
   const animeName = getAnimeName();
   return new Promise(resolve => {
-    getAnimeInfo({
+    getAnimeData({
       session: animeSession,
       name: animeName,
     }, ["id"]).then(data => {
@@ -8481,7 +8481,7 @@ $('#anitracker-clear-from-tracker').on('click', function() {
 
   if (isEpisode()) {
     showButtonSpinner(this);
-    getAnimeInfo({
+    getAnimeData({
       session: animeSession,
       name: animeName,
     }, ["id"]).then(data => {
@@ -8964,7 +8964,7 @@ if (isAnime()) {
   $('#anitracker-clear-episodes-from-tracker').on('click', function() {
     showButtonSpinner(this);
     const animeName = getAnimeName();
-    getAnimeInfo({
+    getAnimeData({
       session: animeSession,
       name: animeName
     }, ["id"]).then(data => {
@@ -9077,7 +9077,7 @@ if (isAnime()) {
   }).observe($('.episode-list-wrapper')[0], { childList: true, subtree: false });
 
   // Title icons
-  getAnimeInfo({
+  getAnimeData({
     session: getAnimeSessionFromUrl()
   }, ["id"]).then(data => {
     if (!data.id) return;
@@ -9434,7 +9434,7 @@ function addGeneralButtons() {
         </button>
       </div>`).appendTo('#anitracker-player-options');
 
-      getAnimeInfo({
+      getAnimeData({
         session: animeSession
       }, ["id"]).then(data => {
         if (!data.id) return;
@@ -9535,7 +9535,7 @@ function addGeneralButtons() {
 
       $('#anitracker-unmark-watched').on('click', function() {
         showButtonSpinner(this);
-        getAnimeInfo({
+        getAnimeData({
           session: animeSession
         }, ["id"]).then(data => {
           if (!data.id) {
@@ -12007,7 +12007,7 @@ if (isEpisode()) {
     }, 1000);
   });
 
-  getAnimeInfo({
+  getAnimeData({
     session: animeSession
   }, ["id"]).then(data => {
     if (!data.id) return;
@@ -12016,7 +12016,7 @@ if (isEpisode()) {
 }
 
 if (initialStorage.settings.autoDelete === true && isEpisode() && paramArray.find(a => a[0] === 'ref' && a[1] === 'customlink') === undefined) {
-  getAnimeInfo({
+  getAnimeData({
     session: animeSession
   }, ["id"]).then(data => {
     if (!data.id) return console.error("[AnimePahe Improvements] Couldn't get anime ID for session clearing");
