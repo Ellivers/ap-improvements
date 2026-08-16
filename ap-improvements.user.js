@@ -4901,43 +4901,43 @@ function openNotificationsModal() {
         });
       });
       makeSchedule(storage.settings.notifScheduleStart);
-    });
 
-    $('.anitracker-modal-list-entry .anitracker-get-all-button').on('click', (e) => {
-      const elem = $(e.currentTarget);
-      const id = +elem.parents().eq(1).attr('animeid');
-      const storage = getStorage();
-
-      const found = storage.notifications.anime.find(a => a.id === id);
-      if (!found) {
-        console.error("[AnimePahe Improvements] Couldn't find feed for anime with ID " + id);
-        return;
-      }
-
-      found.hasFirstEpisode = true;
-      found.updateFrom = 0;
-      saveData(storage);
-
-      elem.replaceClass("btn-secondary", "btn-primary");
-      setTimeout(() => {
-        elem.replaceClass("btn-primary", "btn-secondary");
-        elem.prop('disabled', true);
-      }, 200);
-
-      showMessage('Added all episodes to feed');
-    });
-
-    $('.anitracker-modal-list-entry .anitracker-delete-button').on('click', (e) => {
-      const parent = $(e.currentTarget).parents().eq(1);
-      const name = parent.attr('animename');
-      toggleNotifications(name, +parent.attr('animeid'));
-      showMessage('Removed from feed');
-
-      const name2 = getAnimeName();
-      if (name2.length > 0 && name2 === name) $('.anitracker-notifications-toggle .anitracker-title-icon-check').hide();
-
-      parent.remove();
-      openNotifAnimesModal(false);
+      $('.anitracker-modal-list-entry .anitracker-get-all-button').on('click', (e) => {
+        const elem = $(e.currentTarget);
+        const id = +elem.parents().eq(1).attr('animeid');
+        const storage = getStorage();
+  
+        const found = storage.notifications.anime.find(a => a.id === id);
+        if (!found) {
+          console.error("[AnimePahe Improvements] Couldn't find feed for anime with ID " + id);
+          return;
+        }
+  
+        found.hasFirstEpisode = true;
+        found.updateFrom = 0;
+        saveData(storage);
+  
+        elem.replaceClass("btn-secondary", "btn-primary");
+        setTimeout(() => {
+          elem.replaceClass("btn-primary", "btn-secondary");
+          elem.prop('disabled', true);
+        }, 200);
+  
+        showMessage('Added all episodes to feed');
+      });
+  
+      $('.anitracker-modal-list-entry .anitracker-delete-button').on('click', (e) => {
+        const parent = $(e.currentTarget).parents().eq(1);
+        const name = parent.attr('animename');
+        toggleNotifications(name, +parent.attr('animeid'));
+        showMessage('Removed from feed');
+  
+        const name2 = getAnimeName();
+        if (name2.length > 0 && name2 === name) $('.anitracker-notifications-toggle .anitracker-title-icon-check').hide();
+  
+        parent.remove();
+        openNotifAnimesModal(false);
+      });
     });
 
     function makeSchedule(startDay) {
