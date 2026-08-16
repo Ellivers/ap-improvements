@@ -3264,12 +3264,6 @@ const animeInfoFunctions = [
     }
   },
   {
-    "id": "index",
-    "outputs": ["session","name"],
-    "instant": true,
-    "fn": getAnimeSession,
-  },
-  {
     "id": "anime_page",
     "outputs": ["session","name","id","anidb_id","poster"],
     "fn": async (iinfo = {}, config = {}) => {
@@ -3290,6 +3284,12 @@ const animeInfoFunctions = [
     "id": "search_query",
     "outputs": ["name","id","session","poster"],
     "fn": getAnimeDataFromSearch
+  },
+  {
+    "id": "index",
+    "outputs": ["session","name"],
+    "instant": true,
+    "fn": getAnimeSession,
   },
   {
     "id": "episode_list",
