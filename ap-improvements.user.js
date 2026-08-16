@@ -3163,6 +3163,21 @@ function playAnimation(elem, anim, duration, type = '') {
   });
 }
 
+const posterRegex = /^(?:https:\/\/)?(?:i\.\w+\.\w+\/)?([^\.]*)(?:\.md|\.th)?(\..*)?$/;
+function trimPosterUrl(posterUrl) {
+  const parts = posterRegex.exec(posterUrl);
+  if (!parts) return undefined;
+  return parts[1]+parts[2];
+}
+
+function makePosterUrl(poster, format = '') {
+  if (format) {
+    const parts = posterRegex.exec(poster);
+    if (parts) poster = `${parts[1]}.${format}${parts[2]}`;
+  }
+  return `https://i.${window.location.host}/${poster}`;
+}
+
 // List of info-getting functions, from fastest to slowest
 const animeInfoFunctions = [
   {
@@ -7133,21 +7148,6 @@ function getEpisodeSessionFromUrl(url = window.location.toString()) {
 
 function makeSearchable(string) {
   return encodeURIComponent(string.replace(' -',' '));
-}
-
-const posterRegex = /^(?:https:\/\/)?(?:i\.\w+\.\w+\/)?([^\.]*)(?:\.md|\.th)?(\..*)?$/;
-function trimPosterUrl(posterUrl) {
-  const parts = posterRegex.exec(posterUrl);
-  if (!parts) return undefined;
-  return parts[1]+parts[2];
-}
-
-function makePosterUrl(poster, format = '') {
-  if (format) {
-    const parts = posterRegex.exec(poster);
-    if (parts) poster = `${parts[1]}.${format}${parts[2]}`;
-  }
-  return `https://i.${window.location.host}/${poster}`;
 }
 
 function getAnimeDataFromPage(page = $(document), isEpisode) {
