@@ -2665,6 +2665,7 @@ header.main-header nav .main-nav li.nav-item > a:focus {
   overflow:hidden;
   text-overflow:ellipsis;
   max-height:2.8rem;
+  text-decoration:underline;
 }
 .anitracker-video-progress-item .anitracker-normal-text {
   color: #eee;
@@ -7399,31 +7400,31 @@ function setupContinueWatchingSection() {
           id: entry.animeId,
           episode: entry.episodeNum,
           videoUrls: entry.videoUrls,
-        }, ["name","id","session","episode_session","poster"], {requireInstant: true, ignored:['storage_video']});
+        }, ["name","inacurrate_name","id","session","episode_session","poster"], {requireInstant: true, ignored:['storage_video']});
         if (data.poster) img = `<img src="${makePosterUrl(data.poster,'md')}">`;
+
+        const visibleAnimeName = data.name || data.inacurrate_name || entry.animeName;
+        const titleAttr = `${toHtmlCodes(visibleAnimeName)}${data.episode_session ? ` Episode ${entry.episodeNum}` : ''}`;
 
         const href = (() => {
           if (data.session && data.episode_session) return `/play/${data.session}/${data.episode_session}`;
           else if (data.session) return `/anime/${data.session}`;
-          return '';
+          return `/customlink?a=${encodeURIComponent(visibleAnimeName)}&e=${entry.episodeNum}`;
         })();
         const animeId = data.id || entry.animeId;
 
-        const visibleAnimeName = data.name || entry.animeName;
-        const titleAttr = `${toHtmlCodes(visibleAnimeName)}${data.episode_session ? ` Episode ${entry.episodeNum}` : ''}`;
-
         const elem = $(`
         <div class="anitracker-big-list-item anitracker-video-progress-item">
-          <${href ? `a href="${href} target="_blank"` : 'div'} class="anitracker-img-section" title="${titleAttr}">
+          <a href="${href} target="_blank" class="anitracker-img-section" title="${titleAttr}">
             <div class="anitracker-image-wrapper">
               ${img}
             </div>
-          </${href ? 'a' : 'div'}>
-          <${href ? `a href="${href}" target="_blank"` : 'div'} class="anitracker-text-section" title="${titleAttr}">
-            <span class="anitracker-main-text" style="${href ? 'text-decoration:underline;' : ''}">${toHtmlCodes(visibleAnimeName)}</span>
+          </a>
+          <a href="${href}" target="_blank" class="anitracker-text-section" title="${titleAttr}">
+            <span class="anitracker-main-text">${toHtmlCodes(visibleAnimeName)}</span>
             <span class="anitracker-normal-text">Episode ${entry.episodeNum}</span>
             <span class="anitracker-secondary-info">${secondsToHMS(entry.time)}${entry.duration ? ' / ' + secondsToHMS(entry.duration) : ''}</span>
-          </${href ? 'a' : 'div'}>
+          </a>
           <div class="anitracker-button-section">
             ${animeId ? '<button class="btn btn-dark anitracker-mark-watched-button" title="Mark as watched and remove"><i class="fa fa-eye" aria-hidden="true"></i>&nbsp;Watched</button>' : ''}
             <button class="btn btn-dark anitracker-delete-button" title="Remove video progress"><i class="fa fa-trash" aria-hidden="true"></i>&nbsp;Remove</button>
