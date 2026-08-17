@@ -3206,7 +3206,7 @@ const animeInfoFunctions = [
       if (!matchDataPartial(iinfo, data, ["name","session","id","anidb_id","poster"])) return undefined;
       return {
         name: data.name,
-        session: session,
+        session: data.session,
         id: data.id,
         anidb_id: data.anidb_id,
         poster: data.poster,
