@@ -9719,7 +9719,7 @@ function addGeneralButtons() {
           <i class="fa fa-undo" aria-hidden="true"></i>
         </button>`).appendTo(g.parent).data('id', g.id);
       });
-      addOptionSwitch('numpadSeeking', 'Numpad Seeking', 'Allow seeking through videos with numpad keys', '#anitracker-modal-body>.anitracker-dark-area:nth-child(3)');
+      addOptionSwitch('numpadSeeking', 'Numpad Seeking', 'Allow seeking through videos with numpad keys.', '#anitracker-modal-body>.anitracker-dark-area:nth-child(3)');
       updateConflicts();
 
       $('.anitracker-keybind-button').on('keydown', (e) => {
@@ -12049,10 +12049,13 @@ updateSwitches();
 function addOptionSwitch(optionId, name, desc = '', parent = '#anitracker-modal-body') {
   const option = optionSwitches.find(s => s.optionId === optionId);
   $(`
-  <div class="custom-control custom-switch anitracker-switch" id="anitracker-${optionId}" title="${toHtmlCodes(desc)}">
+  <div class="custom-control custom-switch anitracker-switch" id="anitracker-${optionId}" data-toggle="tooltip" title="${toHtmlCodes(desc)}">
     <input type="checkbox" class="custom-control-input" id="anitracker-${optionId}-switch">
     <label class="custom-control-label" for="anitracker-${optionId}-switch">${name}</label>
-  </div>`).appendTo(parent);
+  </div>`).appendTo(parent).tooltip({
+    boundary:'viewport',
+    placement: $.contains($('#anitracker-modal-body')[0], $(parent)[0]) ? 'left': 'top'
+  });
   const switc = $(`#anitracker-${optionId}-switch`);
   switc.prop('checked', option.value);
 
