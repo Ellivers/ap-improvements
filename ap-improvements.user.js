@@ -3184,12 +3184,10 @@ function makePosterUrl(poster, format = '') {
 // See if any bit of data matches between data1 and data2, excluding undefined entries
 function matchDataPartial(data1, data2, keys) {
   if (Array.isArray(keys)) for (const key of keys) { // If both object have the same key names
-    if (data1[key] === undefined || data2[key] === undefined) continue;
-    if (data1[key] === data2[key]) return true;
+    if (data1[key] === data2[key] && data1[key] !== undefined && data2[key] !== undefined) return true;
   }
   else for (const [key1, key2] of Object.entries(keys)) { // If key pairs
-    if (data1[key1] === undefined || data2[key2] === undefined) continue;
-    if (data1[key1] === data2[key2]) return true;
+    if (data1[key1] === data2[key2] && data1[key1] !== undefined && data2[key2] !== undefined) return true;
   }
   return false;
 }
