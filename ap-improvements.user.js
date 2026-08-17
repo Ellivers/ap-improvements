@@ -3414,13 +3414,9 @@ function getAnimeData(iinfo = {}, reqinfo = [], config = {}) {
             dontUseAgain.push(a.id);
             return {matches:0};
           }
-          let matches = 0;
-          if (!used.includes(a.id)) a.outputs.forEach(g => {
-            if (reqinfo.includes(g)) matches++;
-          });
           return {
             fn: a.fn,
-            matches: matches,
+            matches: used.includes(a.id) ? 0 : a.outputs.filter(g => reqinfo.includes(g)).length,
             id: a.id,
           };
         }).sort((a,b) => b.matches - a.matches);
@@ -3432,7 +3428,7 @@ function getAnimeData(iinfo = {}, reqinfo = [], config = {}) {
 
         used.push(rankedFunctions[0].id);
         const result = await rankedFunctions[0].fn(iinfo, config);
-        if (debug) console.log('got result',result,'with iinfo',JSON.parse(JSON.stringify(iinfo)));
+        if (debug) console.log('got result',result,'from function',rankedFunctions[0].id,'with iinfo',JSON.parse(JSON.stringify(iinfo)));
         if (!result) continue;
         dontUseAgain.push(rankedFunctions[0].id)
         for (const [key, value] of Object.entries(result)) {
