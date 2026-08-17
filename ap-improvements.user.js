@@ -7167,7 +7167,7 @@ function getAnimeDataFromPage(page = $(document), isEpisode) {
 }
 
 async function getAnimeDataFromSearch(iinfo = {}, config = {}) {
-  const cached = siteVars.cached.animeSearch.find(a => a.id === iinfo.id || a.title === iinfo.name || a.session === iinfo.session || a.poster === iinfo.poster);
+  const cached = siteVars.cached.animeSearch.find(a => a.id === iinfo.id || a.name === iinfo.name || a.session === iinfo.session || a.poster === iinfo.poster);
   if (cached) return cached;
   if (!iinfo.name) return undefined;
 
