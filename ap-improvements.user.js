@@ -1795,7 +1795,6 @@ const _css = `
   text-align: center;
   bottom: 5rem;
   border: 5px solid var(--pahe-pink);
-  animation: 1s cubic-bezier(.3,1.12,0,1.03) 2 alternate forwards anitracker-fadeIn;
   pointer-events: none;
 }
 .anitracker-collection-image-wrapper {
@@ -2971,6 +2970,7 @@ const siteVars = {
   episodePages: [], // element, apiLink, cachedList, mode, features
   syncErrorCooldown: 0,
   modalEvents: [],
+  messageTimeout: undefined,
   cached: {
     animeSearch: [],
     firstEpisode: {},
@@ -3532,9 +3532,16 @@ function scrollModalToTop() {
   $('#anitracker-modal-body')[0].scrollTop = 0;
 }
 
-function showMessage(text) {
+function showMessage(text, time = 2000) {
+  clearTimeout(siteVars.messageTimeout);
   $('#anitracker-message-container>span').remove();
-  $(`<span></span>`).text(text).appendTo('#anitracker-message-container');
+  const elem = $(`<span></span>`).text(text).appendTo('#anitracker-message-container');
+  playAnimation(elem, 'fadeIn');
+  siteVars.messageTimeout = setTimeout(() => {
+    playAnimation(elem, 'fadeIn', animationTimes.fadeIn, 'reverse').then(() => {
+      elem.remove();
+    });
+  }, time);
 }
 
 // MARKER:MESSAGES FROM IFRAME
@@ -4933,7 +4940,7 @@ function openNotificationsModal() {
         const parent = $(e.currentTarget).parents().eq(1);
         const name = parent.attr('animename');
         toggleNotifications(name, +parent.attr('animeid'));
-        showMessage(`Removed "${name?.slice(0,20)}${name?.length > 20 ? '...' : ''}"`);
+        showMessage(`Removed "${name?.slice(0,20)}${name?.length > 20 ? '...' : ''}"`, 4000);
 
         const name2 = getAnimeName();
         if (name2.length > 0 && name2 === name) $('.anitracker-notifications-toggle .anitracker-title-icon-check').hide();
@@ -5326,7 +5333,7 @@ function openBookmarksModal() {
       removeBookmark(+$(this).parents().eq(1).attr('animeid'));
       layoutEntries(getStorage(), false);
       const name = $(this).parents().eq(1).attr('animename');
-      showMessage(`Removed "${name?.slice(0,20)}${name?.length > 20 ? '...' : ''}"`);
+      showMessage(`Removed "${name?.slice(0,20)}${name?.length > 20 ? '...' : ''}"`, 4000);
     });
 
     $('.anitracker-status-dropdown button').on('click', function() {
@@ -7425,7 +7432,7 @@ function setupContinueWatchingSection() {
         if (!id) return;
 
         addWatched(+id, episode);
-        showMessage(`Marked "${name?.slice(0,16)}${name?.length > 16 ? '...' : ''}" episode ${episode} as watched`);
+        showMessage(`Marked "${name?.slice(0,16)}${name?.length > 16 ? '...' : ''}" episode ${episode} as watched`, 4000);
       });
       $('.anitracker-video-progress-item .anitracker-delete-button').on('click', function() {
         const elem = $(this).parents(':eq(1)');
@@ -7437,7 +7444,7 @@ function setupContinueWatchingSection() {
         deleteEpisodeFromTracker(name, episode, id);
 
         removeVideoProgressElem(elem);
-        showMessage(`Removed "${name?.slice(0,16)}${name?.length > 16 ? '...' : ''}" episode ${episode}`);
+        showMessage(`Removed "${name?.slice(0,16)}${name?.length > 16 ? '...' : ''}" episode ${episode}`, 4000);
       });
       scrollModalToTop();
     }
@@ -10343,7 +10350,7 @@ function addGeneralButtons() {
           updatedStorage.videoTimes = updatedStorage.videoTimes.filter(a => !removed.includes(a));
         }
 
-        showMessage(`Cleaned up ${removed.length} ${removed.length === 1 ? "entry" : "entries"}.`);
+        showMessage(`Cleaned up ${removed.length} ${removed.length === 1 ? "entry" : "entries"}.`, 3000);
         saveData(updatedStorage);
         dataEntries.remove();
         expandData(elem);
