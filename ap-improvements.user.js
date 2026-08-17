@@ -8481,9 +8481,9 @@ function temporaryHtmlChange(elem, delay, html, timeout = undefined) {
   if ($(elem).attr('og-html') === undefined) {
     $(elem).attr('og-html', $(elem).html());
   }
-  elem.html(html);
+  elem.css('min-width',$(elem).outerWidth()).html(html);
   return setTimeout(() => {
-    $(elem).html($(elem).attr('og-html'));
+    $(elem).html($(elem).attr('og-html')).css('min-width','');
   }, delay);
 }
 
