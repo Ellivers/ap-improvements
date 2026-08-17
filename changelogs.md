@@ -10,6 +10,9 @@
 - Moved the Refresh Session button towards the bottom of the Options menu
 - Pressing the Theater Mode keybind while having the video player in fullscreen now exits fullscreen
 - Pressing Ctrl+F in a modal menu with a search bar now focuses the first search bar in the menu
+- Buttons that change text when clicked on no longer become smaller while the text is changed
+- Made the loading bar for the Continue Watching section a bit thinner
+- Updated the styling for when hovering over the filter logic buttons on the index page
 - Fixed bookmark links not working due to site changes
 - Fixed various other issues caused by site changes
 - Fixed errors in the Manage Feed menu when having anime with no episodes added to the feed
