@@ -2034,7 +2034,8 @@ const _css = `
 .anitracker-filter-rules:hover, .anitracker-filter-rules:focus-visible {
   background: white;
   color: black;
-  border-color: white;
+  border: 2px solid black;
+  outline: 1px solid white;
 }
 .anitracker-filter-input-search {
   position: absolute;
