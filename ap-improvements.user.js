@@ -3267,14 +3267,15 @@ const animeInfoFunctions = [
   },
   {
     "id": "storage_video",
-    "outputs": ["id"],
+    "outputs": ["id","name"],
     "instant": true,
     "fn": (iinfo = {}, config = {}) => {
       const storage = getStorage();
       const found = storage.videoTimes.find(a => matchDataPartial(a,iinfo,{"animeName":"name","animeId":"id"}) || iinfo.videoUrls?.find(g => a.videoUrls?.includes(g)));
       if (!found) return undefined;
       return {
-        id: found.animeId // Don't return the name, due to it likely being incorrect
+        inacurrate_name: found.animeName,
+        id: found.animeId,
       };
     }
   },
