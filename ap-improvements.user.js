@@ -3180,6 +3180,19 @@ function makePosterUrl(poster, format = '') {
   return `https://i.${window.location.host}/${poster}`;
 }
 
+// See if any bit of data matches between data1 and data2, excluding undefined entries
+function matchDataPartial(data1, data2, keys) {
+  if (Array.isArray(keys)) for (const key of keys) { // If both object have the same key names
+    if (data1[key] === undefined || data2[key] === undefined) continue;
+    if (data1[key] === data2[key]) return true;
+  }
+  else for (const [key1, key2] of Object.entries(keys)) { // If key pairs
+    if (data1[key1] === undefined || data2[key2] === undefined) continue;
+    if (data1[key1] === data2[key2]) return true;
+  }
+  return false;
+}
+
 // List of info-getting functions, from fastest to slowest
 const animeInfoFunctions = [
   {
@@ -3189,9 +3202,9 @@ const animeInfoFunctions = [
     "fn": (iinfo = {}, config = {}) => {
       if ((!isAnime() && !isEpisode()) || is404) return undefined;
       const data = getAnimeDataFromPage($(document), isEpisode());
-      const session = getAnimeSessionFromUrl();
+      data.session = getAnimeSessionFromUrl();
       // Require at least one part of iinfo to match
-      if (iinfo.name !== data.name && iinfo.session !== session && iinfo.id !== data.id && iinfo.anidb_id !== data.anidb_id && iinfo.poster !== data.poster) return undefined;
+      if (!matchDataPartial(iinfo, data, ["name","session","id","anidb_id","poster"])) return undefined;
       return {
         name: data.name,
         session: session,
@@ -3209,7 +3222,7 @@ const animeInfoFunctions = [
     "fn": (iinfo = {}, config = {}) => {
       const storage = getStorage();
       const list = [...storage.linkList].reverse(); // Reverse to prioritize newer entries
-      const found = list.find(a => a.animeName === iinfo.name || (a.animeId && a.animeId === iinfo.id) || a.animeSession === iinfo.session);
+      const found = list.find(a => matchDataPartial(a,iinfo,{"animeName":"name","animeId":"id","animeSession":"session"}));
       if (!found) return undefined;
       return {
         name: found.animeName,
@@ -3227,7 +3240,7 @@ const animeInfoFunctions = [
       if (iinfo.episode === undefined) return undefined; // Can be falsy
       const storage = getStorage();
       const list = [...storage.linkList].reverse(); // Reverse to prioritize newer entries
-      const found = list.find(a => a.type === 'episode' && a.episodeNum === iinfo.episode && (a.animeName === iinfo.name || (a.animeId && a.animeId === iinfo.id) || a.animeSession === iinfo.session || iinfo.videoUrls?.find(g => a.videoUrls?.includes(g))));
+      const found = list.find(a => a.type === 'episode' && a.episodeNum === iinfo.episode && (matchDataPartial(a,iinfo,{"animeName":"name","animeId":"id","animeSession":"session"}) || iinfo.videoUrls?.find(g => a.videoUrls?.includes(g))));
       if (!found) return undefined;
       return {
         name: found.animeName,
@@ -3243,7 +3256,7 @@ const animeInfoFunctions = [
     "instant": true,
     "fn": (iinfo = {}, config = {}) => {
       const storage = getStorage();
-      const found = storage.bookmarks.find(a => a.name === iinfo.name || a.id === iinfo.id || (a.posterUrl && a.posterUrl === iinfo.poster));
+      const found = storage.bookmarks.find(a => matchDataPartial(a,iinfo,{"name":"name","id":"id","posterUrl":"poster"}));
       if (!found) return undefined;
       return {
         inacurrate_name: found.animeName,
@@ -3258,7 +3271,7 @@ const animeInfoFunctions = [
     "instant": true,
     "fn": (iinfo = {}, config = {}) => {
       const storage = getStorage();
-      const found = storage.videoTimes.find(a => a.animeName === iinfo.name || (a.animeId && a.animeId === iinfo.id) || iinfo.videoUrls?.find(g => a.videoUrls.includes(g)));
+      const found = storage.videoTimes.find(a => matchDataPartial(a,iinfo,{"animeName":"name","animeId":"id"}) || iinfo.videoUrls?.find(g => a.videoUrls?.includes(g)));
       if (!found) return undefined;
       return {
         id: found.animeId // Don't return the name, due to it likely being incorrect
@@ -3324,7 +3337,7 @@ const animeInfoFunctions = [
             const page = await asyncGetPage(`/anime/${session}`);
             if (page) {
               const pageData = getAnimeDataFromPage(page, false);
-              if (pageData.name === iinfo.name || pageData.id === iinfo.id || pageData.anidb_id === iinfo.anidb_id || pageData.poster === iinfo.poster) {
+              if (matchDataPartial(pageData,iinfo,["name","id","anidb_id","poster"])) {
                 return resolve({
                   name: pageData.name,
                   session: session,
@@ -7175,7 +7188,7 @@ function getAnimeDataFromPage(page = $(document), isEpisode) {
 }
 
 async function getAnimeDataFromSearch(iinfo = {}, config = {}) {
-  const cached = siteVars.cached.animeSearch.find(a => a.id === iinfo.id || a.name === iinfo.name || a.session === iinfo.session || a.poster === iinfo.poster);
+  const cached = siteVars.cached.animeSearch.find(a => matchDataPartial(a,iinfo,["id","name","session","poster"]));
   if (cached) return cached;
   if (!iinfo.name) return undefined;
 
@@ -7213,7 +7226,7 @@ async function getAnimeDataFromSearch(iinfo = {}, config = {}) {
     }
     const data = (() => {
       for (const anime of response) {
-        if (anime.id === iinfo.id || anime.title === iinfo.name || anime.session === iinfo.session || trimPosterUrl(anime.poster) === iinfo.poster) return anime;
+        if (matchDataPartial(anime,iinfo,{"id":"id","title":"name","session":"session"}) || (anime.poster && trimPosterUrl(anime.poster) === iinfo.poster)) return anime;
       }
       if (config.allowGuessing && response.length) return response[0];
     })();
@@ -7252,7 +7265,7 @@ async function getAnimeSession(iinfo = {}, config = {}) {
       });
     }
     if (config.justCache) return resolve(undefined);
-    resolve(siteVars.cached.animeSession.find(a => a.name === iinfo.name || a.session === iinfo.session));
+    resolve(siteVars.cached.animeSession.find(a => matchDataPartial(a,iinfo,["name","session"])));
   });
 }
 
