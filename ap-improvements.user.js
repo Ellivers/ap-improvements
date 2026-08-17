@@ -1233,6 +1233,9 @@ const _css = `
 
   // MARKER:VIDEO LOADED EVENT
   player.addEventListener('progress', function loadVideoData() {
+    if (player.readyState < 2) return;
+    player.removeEventListener('progress', loadVideoData);
+
     // Events
     let lastTimeUpdate = 0;
     player.addEventListener('timeupdate', function() {
@@ -1301,8 +1304,6 @@ const _css = `
       }
       window.history.replaceState({}, document.title, url);
     }
-
-    player.removeEventListener('progress', loadVideoData);
 
     // Screenshot changes
     $('button[data-plyr="capture"]').replaceWith($('button[data-plyr="capture"]').clone()); // Just to remove existing event listeners
@@ -3298,7 +3299,7 @@ const animeInfoFunctions = [
       if (!iinfo.session) return undefined;
       const cached = siteVars.cached.animeId[iinfo.session];
       if (cached) return cached;
-      
+
       return new Promise(async resolve => {
         const response = await asyncGetResponseData(`/api?m=release&id=${iinfo.session}`);
         if (!response) return resolve(undefined);
@@ -3414,7 +3415,7 @@ function getAnimeData(iinfo = {}, reqinfo = [], config = {}) {
           break;
         }
         if (debug) console.log('chose',rankedFunctions[0].id,'for #',used.length);
-  
+
         used.push(rankedFunctions[0].id);
         const result = await rankedFunctions[0].fn(iinfo, config);
         if (debug) console.log('got result',result,'with iinfo',JSON.parse(JSON.stringify(iinfo)));
@@ -4893,7 +4894,7 @@ function openNotificationsModal() {
             </button>
           </div>
         </div>`).appendTo('#anitracker-modal-body .anitracker-modal-list');
-  
+
         const scheduleEntry = schedule.find(a => a.num === latestEp.getDay());
         if (scheduleEntry) scheduleEntry.list.push({
           time: latestEp,
@@ -4908,35 +4909,35 @@ function openNotificationsModal() {
         const elem = $(e.currentTarget);
         const id = +elem.parents().eq(1).attr('animeid');
         const storage = getStorage();
-  
+
         const found = storage.notifications.anime.find(a => a.id === id);
         if (!found) {
           console.error("[AnimePahe Improvements] Couldn't find feed for anime with ID " + id);
           return;
         }
-  
+
         found.hasFirstEpisode = true;
         found.updateFrom = 0;
         saveData(storage);
-  
+
         elem.replaceClass("btn-secondary", "btn-primary");
         setTimeout(() => {
           elem.replaceClass("btn-primary", "btn-secondary");
           elem.prop('disabled', true);
         }, 200);
-  
+
         showMessage('Added all episodes to feed');
       });
-  
+
       $('.anitracker-modal-list-entry .anitracker-delete-button').on('click', (e) => {
         const parent = $(e.currentTarget).parents().eq(1);
         const name = parent.attr('animename');
         toggleNotifications(name, +parent.attr('animeid'));
         showMessage('Removed from feed');
-  
+
         const name2 = getAnimeName();
         if (name2.length > 0 && name2 === name) $('.anitracker-notifications-toggle .anitracker-title-icon-check').hide();
-  
+
         parent.remove();
         openNotifAnimesModal(false);
       });
@@ -5540,7 +5541,7 @@ function openBookmarksModal() {
     $(`<span style="display: block;">No bookmarks yet!</span>`).appendTo('#anitracker-modal-body .anitracker-modal-list');
     return openModal();
   }
-  
+
   const promise = siteVars.cached.animeSession.length ? waitTime(200) : getAnimeSession({},{justCache:true});
   loadUntilPromise($('#anitracker-modal-body .anitracker-modal-list'), promise).then(() => {
     layoutEntries().then(() => {
@@ -5572,7 +5573,7 @@ function getBookmarkImage(elem, bookmark, session = undefined) {
       session: session,
     }, ['poster'], {ignored:['storage_bookmark']});
     elem.find('.anitracker-spinner-parent').remove();
-    
+
     if (!data.poster) return;
     elem.find('img').attr('src', makePosterUrl(data.poster,'md'));
 
@@ -7480,7 +7481,7 @@ function setupContinueWatchingSection() {
 
       updateEpisodePages();
     }
-    
+
     const promise = siteVars.cached.animeSession.length ? waitTime(200) : getAnimeSession({},{justCache:true});
     loadUntilPromise($('#anitracker-modal-body .anitracker-modal-list'), promise).then(layoutEntries);
 
