@@ -5159,6 +5159,7 @@ function openBookmarksModal() {
 
   let layout = storage.settings.bookmarkLayout;
   let sort = storage.settings.bookmarkSort;
+  const sessionCache = {}; // {id:session}
   $(`
   <h4>Bookmarks</h4>
   <div style="display: flex;gap: 8px;flex-wrap: wrap;">
@@ -5209,12 +5210,17 @@ function openBookmarksModal() {
 
     for (const g of entries) {
       const statusAttrs = getStatusAttributes(g.status);
-      const foundData = await getAnimeData({
-        name: g.name,
-        id: g.id,
-        poster: g.posterUrl
-      }, ["session"], {requireInstant: true});
-      const href = foundData.session ? `href="/anime/${foundData.session}"` : '';
+      let session = sessionCache[g.id];
+      if (!session) {
+        const foundData = await getAnimeData({
+          name: g.name,
+          id: g.id,
+          poster: g.posterUrl
+        }, ["session"], {requireInstant: true});
+        session = foundData.session;
+        if (session) sessionCache[g.id] = session;
+      }
+      const href = session ? `href="/anime/${session}"` : '';
       let elem;
 
       if (layout === 'list') {
@@ -5254,16 +5260,16 @@ function openBookmarksModal() {
 
         elem.find('img').on('load', function() {$(this).css('opacity', '1')});
         if (g.posterUrl === undefined) {
-          getBookmarkImage(elem, g, foundData.session);
+          getBookmarkImage(elem, g, session);
           return;
         }
         elem.find('img').on('error', function() {
-          getBookmarkImage(elem, g, foundData.session);
+          getBookmarkImage(elem, g, session);
           $(this).off('error');
         });
       }
       if (!g.name.toLowerCase().includes(searchInput)) elem.hide();
-      if (!foundData.session) {
+      if (!session) {
         const spinner = $(`
         <div class="anitracker-spinner" style="display: inline;">
           <div class="spinner-border" role="status" style="width: 1em;height: 1em;">
@@ -5277,6 +5283,7 @@ function openBookmarksModal() {
         }, ["name","session"], {ignored: ['storage_bookmark']}).then(data => {
           spinner.remove();
           if (!data.session) return;
+          sessionCache[g.id] = data.session;
           const storage2 = getStorage();
           const obj = storage2.bookmarks.find(a => a.id === g.id);
           if (!obj) return;
