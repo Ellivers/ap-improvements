@@ -1,8 +1,10 @@
 ### 4.11.0 (in development)
 - Added bookmark and episode feed buttons to episode pages
 - Added a Delete button in the sync menu, for deleting the sync code entirely
-  - It will still be automatically deleted if all users disconnect from it
+  - Sync codes will still be automatically deleted if all users disconnect from them
 - Added a Version History menu through a button at the bottom of the Options menu
+- Added tooltips to switches in the Options menu (and some other places)
+- Toast messages for removing various entries/data now show the anime's name and episode
 - Added toast messages for marking all episodes as watched/unwatched
 - Lessened performance impact from loading a page
 - Moved the Refresh Session button towards the bottom of the Options menu
@@ -17,6 +19,7 @@
 - Fixed the search query not being kept when changing sorting direction in various menus
 - Fixed the search query not being kept when changing sorting type in the Bookmarks menu
 - Fixed certain keybinds being able to be activated while having the video player in fullscreen
+- Fixed descriptions for switches in the Options menu not being read by screen readers
 - Fixed the modal open animation for the Manage Feed menu playing after removing the last feed entry
 - Fixed the Continue Watching section not being added after importing data
 - Fixed changing filter rules on the index page not always updating the Apply button
