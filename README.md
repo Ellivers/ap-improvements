@@ -1,7 +1,7 @@
 # ap-improvements
 Improvements and additions for AnimePahe.
 
-The [dev](https://github.com/Ellivers/ap-improvements/tree/dev) branch is for the in-development version of the script.
+The [dev](https://github.com/Ellivers/ap-improvements/tree/dev) branch is for the in-development version of the script. See [using the development version](#using-the-development-version).
 
 If you find a bug or have a suggestion, feel free to [open an issue](https://github.com/Ellivers/ap-improvements/issues/new/choose)!
 
@@ -63,3 +63,10 @@ If you find a bug or have a suggestion, feel free to [open an issue](https://git
  * Adds a button (in the options menu) to reset the video player.
  * Shows the dates of when episodes were added.
  * And more!
+
+## Using the development version
+The development version of the script may contain major bugs or issues from code that is currently being reworked, so use it at your own risk. (That being said, it is stable most of the time).
+
+You can take a look at [the latest changelog](https://github.com/Ellivers/ap-improvements/blob/dev/changelogs.md) to see what is currently being worked on.
+
+[Click here](https://raw.githubusercontent.com/Ellivers/ap-improvements/refs/heads/dev/ap-improvements.user.js) to install from the latest dev branch commit, but be aware that depending on your userscript manager, it **might not be automatically updated**, unlike the stable version.
