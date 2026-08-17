@@ -3565,7 +3565,7 @@ if (isEpisode()) {
       });
     }
     else if (action === 'anidb_id_request') {
-      const pageData = getAnimeDataFromPage();
+      const pageData = getAnimeDataFromPage($(document), true);
       getFirstEpisode(animeSession).then(epResponse => {
         sendMessage({action:"anidb_id_response",id:pageData.anidb_id,animeName:pageData.name,firstEpisode:epResponse});
       });
@@ -7158,7 +7158,7 @@ function makeSearchable(string) {
 }
 
 function getAnimeDataFromPage(page = $(document), isEpisode) {
-  const poster = trimPosterUrl($(page.find('.anime-poster img')[0])?.data('src'));
+  const poster = isEpisode ? undefined : trimPosterUrl($(page.find('.anime-poster img')[0])?.data('src'));
   const name = getAnimeName(page, isEpisode);
   const ids = {};
   for (const meta of page.find('meta')) {
@@ -7169,7 +7169,7 @@ function getAnimeDataFromPage(page = $(document), isEpisode) {
     name: name,
     id: ids.id,
     anidb_id: ids.anidb_id,
-    poster: trimPosterUrl(poster),
+    poster: poster,
   }
 }
 
