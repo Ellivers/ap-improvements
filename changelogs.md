@@ -8,12 +8,16 @@
 - Moved the Refresh Session button towards the bottom of the Options menu
 - Pressing the Theater Mode keybind while having the video player in fullscreen now exits fullscreen
 - Pressing Ctrl+F in a modal menu with a search bar now focuses the first search bar in the menu
+- Fixed bookmark links not working due to site changes
+- Fixed various other issues caused by site changes
 - Fixed errors in the Manage Feed menu when having anime with no episodes added to the feed
 - Fixed the video player being incorrectly focused when pressing Enter on an episode page
 - Fixed keyboard navigation for the expandable menus below the video player
+- Fixed certain modal menus taking a long time to open on some devices
 - Fixed the search query not being kept when changing sorting direction in various menus
 - Fixed the search query not being kept when changing sorting type in the Bookmarks menu
 - Fixed certain keybinds being able to be activated while having the video player in fullscreen
+- Fixed the modal open animation for the Manage Feed menu playing after removing the last feed entry
 - Fixed the Continue Watching section not being added after importing data
 - Fixed changing filter rules on the index page not always updating the Apply button
 - Fixed errors from entering an invalid season range filter in the index page's URL
