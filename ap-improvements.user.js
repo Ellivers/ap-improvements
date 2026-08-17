@@ -12049,12 +12049,12 @@ updateSwitches();
 function addOptionSwitch(optionId, name, desc = '', parent = '#anitracker-modal-body') {
   const option = optionSwitches.find(s => s.optionId === optionId);
   $(`
-  <div class="custom-control custom-switch anitracker-switch" id="anitracker-${optionId}" data-toggle="tooltip" title="${toHtmlCodes(desc)}">
-    <input type="checkbox" class="custom-control-input" id="anitracker-${optionId}-switch">
+  <div class="custom-control custom-switch anitracker-switch" id="anitracker-${optionId}" title="${toHtmlCodes(desc)}">
+    <input type="checkbox" class="custom-control-input" id="anitracker-${optionId}-switch" title="${toHtmlCodes(desc)}">
     <label class="custom-control-label" for="anitracker-${optionId}-switch">${name}</label>
   </div>`).appendTo(parent).tooltip({
     boundary:'viewport',
-    placement: $.contains($('#anitracker-modal-body')[0], $(parent)[0]) ? 'left': 'top'
+    placement: (window.innerWidth > 700 && $.contains($('#anitracker-modal-body')[0], $(parent)[0])) ? 'left': 'top'
   });
   const switc = $(`#anitracker-${optionId}-switch`);
   switc.prop('checked', option.value);
