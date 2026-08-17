@@ -4899,7 +4899,7 @@ function openNotificationsModal() {
         const data = await getAnimeData({
           id: g.id,
           name: g.name
-        }, ["session"], {requireInstant:true});
+        }, ["session"], {requireInstant:true,ignored:['storage_notification_anime']});
         const href = data.session ? `/anime/${data.session}` : `/customlink?a=${encodeURIComponent(g.name)}`;
         $(`
         <div class="anitracker-modal-list-entry" animeid="${g.id}" animename="${toHtmlCodes(g.name)}">
@@ -5230,7 +5230,7 @@ function openBookmarksModal() {
           name: g.name,
           id: g.id,
           poster: g.posterUrl
-        }, ["session"], {requireInstant: true});
+        }, ["session"], {requireInstant: true, ignored:['storage_bookmark']});
         session = foundData.session;
         if (session) sessionCache[g.id] = session;
       }
@@ -5826,7 +5826,7 @@ async function updateNotifications(animeName, storage = getStorage()) {
   const data = await getAnimeData({
     name: animeName,
     id: nobj.id
-  },['session','poster','name']);
+  },['session','poster','name'],{ignored:['storage_notification_anime']});
   if (!data.session || !data.name) return -1;
   const episodes = await getAllEpisodes(data.session, 'desc');
   if (episodes === undefined) return 0;
