@@ -1231,6 +1231,7 @@ const _css = `
     if (time === 0) seeked();
   }
 
+  let setTimeElapsed = false;
   // MARKER:VIDEO LOADED EVENT
   player.addEventListener('progress', function loadVideoData() {
     if (player.readyState < 2) return;
@@ -1244,6 +1245,10 @@ const _css = `
       if (Math.trunc(currentTime) % 10 === 0 && player.currentTime - lastTimeUpdate > 9) {
         updateStoredTime();
         lastTimeUpdate = player.currentTime;
+      }
+      if (!setTimeElapsed && currentTime !== 0) {
+        setTimeElapsed = true;
+        $('.plyr__time').click(); // Toggle to show time elapsed instead of time remaining
       }
     });
     player.addEventListener('pause', () => {
