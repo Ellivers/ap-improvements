@@ -3398,10 +3398,11 @@ function getAnimeData(iinfo = {}, reqinfo = [], config = {}) {
   at the end of each loop, if the function was successful, remove all data from reqdata that the function outputs.
   make sure that function isn't run again, no matter the outcome
   */
+  const debug = initialStorage.debug?.animeInfo;
   const oinfo = {};
   const used = [];
   const dontUseAgain = [];
-  const debug = initialStorage.debug?.animeInfo;
+  const candidateFunctions = animeInfoFunctions.filter(a => !(config.requireInstant && !a.instant) && !(config.forceFresh && a.possibly_expired) && !config.ignored?.includes(a.id));
   return new Promise(async resolve => {
     if (!iinfo || !Object.values(iinfo).find(a => a)) return resolve({});
     if (debug) console.log('starting search for',JSON.parse(JSON.stringify(reqinfo)));
@@ -3409,28 +3410,24 @@ function getAnimeData(iinfo = {}, reqinfo = [], config = {}) {
     for (let i = 0; i < 1; i++) {
       while (reqinfo.length) {
         // Find out which function is the most appropriate for the needed data
-        const rankedFunctions = animeInfoFunctions.map(a => {
-          if ((config.requireInstant && !a.instant) || (config.forceFresh && a.possibly_expired) || config.ignored?.includes(a.id)) {
-            dontUseAgain.push(a.id);
-            return {matches:0};
-          }
+        const chosenFunction = candidateFunctions.map(a => {
           return {
             fn: a.fn,
             matches: used.includes(a.id) ? 0 : a.outputs.filter(g => reqinfo.includes(g)).length,
             id: a.id,
           };
-        }).sort((a,b) => b.matches - a.matches);
-        if (!rankedFunctions[0].matches) {
+        }).sort((a,b) => b.matches - a.matches)[0];
+        if (!chosenFunction.matches) {
           console.warn(`[AnimePahe Improvements] After ${used.length} functions, no remaining function matched ${reqinfo}`);
           break;
         }
-        if (debug) console.log('chose',rankedFunctions[0].id,'for #',used.length);
+        if (debug) console.log('chose',chosenFunction.id,'for #',used.length);
 
-        used.push(rankedFunctions[0].id);
-        const result = await rankedFunctions[0].fn(iinfo, config);
-        if (debug) console.log('got result',result,'from function',rankedFunctions[0].id,'with iinfo',JSON.parse(JSON.stringify(iinfo)));
+        used.push(chosenFunction.id);
+        const result = await chosenFunction.fn(iinfo, config);
+        if (debug) console.log('got result',result,'from function',chosenFunction.id,'with iinfo',JSON.parse(JSON.stringify(iinfo)));
         if (!result) continue;
-        dontUseAgain.push(rankedFunctions[0].id)
+        dontUseAgain.push(chosenFunction.id)
         for (const [key, value] of Object.entries(result)) {
           if (!oinfo[key]) oinfo[key] = value;
           if (!iinfo[key]) iinfo[key] = value;
