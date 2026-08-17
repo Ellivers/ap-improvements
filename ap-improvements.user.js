@@ -2818,7 +2818,8 @@ header.main-header nav .main-nav li.nav-item > a:focus {
 }
 .anitracker-progress-bar {
   background-color: gray;
-  border-radius: 5px;
+  border-radius: 4px;
+  height: 8px;
   overflow: hidden;
 }
 .anitracker-progress-bar>div {
@@ -7549,7 +7550,7 @@ async function addContinueWatchingEpisodes(storage, episodeCount, clearAll = fal
           <div class="spinner-border" role="status">
             <span class="sr-only">Loading...</span>
           </div>
-        </div><div class="anitracker-progress-bar" style="width:12rem;height:10px;margin: auto;"><div></div></div>
+        </div><div class="anitracker-progress-bar" style="width:12rem;margin: auto;"><div></div></div>
       </div>`).appendTo('.anitracker-episode-list-wrapper .episode-list.row');
     }
 
