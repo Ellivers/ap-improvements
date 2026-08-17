@@ -4933,7 +4933,7 @@ function openNotificationsModal() {
         const parent = $(e.currentTarget).parents().eq(1);
         const name = parent.attr('animename');
         toggleNotifications(name, +parent.attr('animeid'));
-        showMessage('Removed from feed');
+        showMessage(`Removed "${name?.slice(0,20)}${name?.length > 20 ? '...' : ''}"`);
 
         const name2 = getAnimeName();
         if (name2.length > 0 && name2 === name) $('.anitracker-notifications-toggle .anitracker-title-icon-check').hide();
@@ -5205,7 +5205,7 @@ function openBookmarksModal() {
 
       if (layout === 'list') {
         elem = $(`
-        <div class="anitracker-modal-list-entry anitracker-bookmark-list-entry" animeid="${g.id}">
+        <div class="anitracker-modal-list-entry anitracker-bookmark-list-entry" animeid="${g.id}" animename="${toHtmlCodes(g.name)}">
           ${g.newlyAdded ? '<i class="anitracker-bookmark-new"></i>' : ''}
           <a ${href} target="_blank" title="${toHtmlCodes(g.name)}" tabindex="0">
             <span>${toHtmlCodes(g.name)}</span>
@@ -5221,7 +5221,7 @@ function openBookmarksModal() {
       }
       else {
         elem = $(`
-        <div class="anitracker-modal-list-entry anitracker-bookmark-grid-entry" animeid="${g.id}">
+        <div class="anitracker-modal-list-entry anitracker-bookmark-grid-entry" animeid="${g.id}" animename="${toHtmlCodes(g.name)}">
           <a ${href} target="_blank" title="${toHtmlCodes(g.name)}" tabindex="0">
             ${g.newlyAdded ? '<i class="anitracker-bookmark-new"></i>' : ''}
             <div class="anitracker-big-poster-icon">
@@ -5325,7 +5325,8 @@ function openBookmarksModal() {
     $('.anitracker-modal-list-entry .anitracker-remove-bookmark-button').on('click', function() {
       removeBookmark(+$(this).parents().eq(1).attr('animeid'));
       layoutEntries(getStorage(), false);
-      showMessage('Bookmark removed');
+      const name = $(this).parents().eq(1).attr('animename');
+      showMessage(`Removed "${name?.slice(0,20)}${name?.length > 20 ? '...' : ''}"`);
     });
 
     $('.anitracker-status-dropdown button').on('click', function() {
@@ -7424,7 +7425,7 @@ function setupContinueWatchingSection() {
         if (!id) return;
 
         addWatched(+id, episode);
-        showMessage('Marked as watched');
+        showMessage(`Marked "${name?.slice(0,16)}${name?.length > 16 ? '...' : ''}" episode ${episode} as watched`);
       });
       $('.anitracker-video-progress-item .anitracker-delete-button').on('click', function() {
         const elem = $(this).parents(':eq(1)');
@@ -7436,7 +7437,7 @@ function setupContinueWatchingSection() {
         deleteEpisodeFromTracker(name, episode, id);
 
         removeVideoProgressElem(elem);
-        showMessage('Removed');
+        showMessage(`Removed "${name?.slice(0,16)}${name?.length > 16 ? '...' : ''}" episode ${episode}`);
       });
       scrollModalToTop();
     }
