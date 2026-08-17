@@ -3265,6 +3265,20 @@ const animeInfoFunctions = [
     }
   },
   {
+    "id": "storage_notification_anime",
+    "outputs": ["id","inacurrate_name"],
+    "instant": true,
+    "fn": (iinfo = {}, config = {}) => {
+      const storage = getStorage();
+      const found = storage.notifications.anime.find(a => matchDataPartial(a,iinfo,["name","id"]));
+      if (!found) return undefined;
+      return {
+        inacurrate_name: found.animeName,
+        id: found.animeId,
+      };
+    }
+  },
+  {
     "id": "storage_video",
     "outputs": ["id","inacurrate_name"],
     "instant": true,
