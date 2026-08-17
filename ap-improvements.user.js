@@ -3252,7 +3252,7 @@ const animeInfoFunctions = [
   },
   {
     "id": "storage_bookmark",
-    "outputs": ["id","name","poster"],
+    "outputs": ["id","inacurrate_name","poster"],
     "instant": true,
     "fn": (iinfo = {}, config = {}) => {
       const storage = getStorage();
@@ -3267,7 +3267,7 @@ const animeInfoFunctions = [
   },
   {
     "id": "storage_video",
-    "outputs": ["id","name"],
+    "outputs": ["id","inacurrate_name"],
     "instant": true,
     "fn": (iinfo = {}, config = {}) => {
       const storage = getStorage();
