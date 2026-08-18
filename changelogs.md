@@ -1,5 +1,6 @@
 ### 4.11.0 (in development)
 - Added bookmark and episode feed buttons to episode pages
+- Added an icon on anime and episode pages to copy a link to the anime
 - Added a Delete button in the sync menu, for deleting the sync code entirely
   - Sync codes will still be automatically deleted if all users disconnect from them
 - Added a Version History menu through a button at the bottom of the Options menu
@@ -12,6 +13,7 @@
 - Pressing Ctrl+F in a modal menu with a search bar now focuses the first search bar in the menu
 - Re-added and fixed feature to set video player time to time elapsed
 - Buttons that change text when clicked on no longer become smaller while the text is changed
+- Share links now show a unique message when failing to redirect
 - Made the loading bar for the Continue Watching section a bit thinner
 - Updated the styling for when hovering over the filter logic buttons on the index page
 - Data format version 5
@@ -28,8 +30,9 @@
 - Fixed certain keybinds being able to be activated while having the video player in fullscreen
 - Fixed descriptions for switches in the Options menu not being read by screen readers
 - Fixed the modal open animation for the Manage Feed menu playing after removing the last feed entry
-- Fixed the Continue Watching section not being added after importing data
 - Fixed changing filter rules on the index page not always updating the Apply button
+- Fixed the Continue Watching section not being added after importing data
+- Fixed the Continue Watching section not being updated after updating episodes on the main page, and vice versa
 - Fixed errors from entering an invalid season range filter in the index page's URL
 - More small fixes
 
