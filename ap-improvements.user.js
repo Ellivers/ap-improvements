@@ -8681,6 +8681,7 @@ function applyEpisodeOptionsEvents(elems) {
 
       // epWatched is the current watched state
       if (!epWatched || videoTime) setProgressBar(dropdown.parent(), !epWatched, videoTime?.time, +dropdown.data('visualDuration'));
+      if (isHome()) updateContinueWatchingEpisodes();
 
       elem.contents().filter(function(){
         return this.nodeType === 3;
@@ -8776,12 +8777,12 @@ function applyEpisodeOptionsEvents(elems) {
       addWatched(+animeId, episode, storage);
 
       showMessage(`Marked "${animeName?.slice(0,16)}${animeName?.length > 16 ? '...' : ''}" episode ${episode} as watched`, 4000);
-      updateContinueWatchingEpisodes();
+      updateEpisodePages();
     }
     else if (action === 'remove') {
       deleteEpisodeFromTracker(animeName, episode, +animeId);
       showMessage(`Removed "${animeName?.slice(0,16)}${animeName?.length > 16 ? '...' : ''}" episode ${episode}`, 4000);
-      updateContinueWatchingEpisodes();
+      updateEpisodePages();
     }
   })
   .off('blur').on('blur', (e) => {
