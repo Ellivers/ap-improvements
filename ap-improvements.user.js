@@ -82,6 +82,7 @@
  * And more!
 */
 
+/*global $*/
 // MARKER:START
 
 const baseUrl = window.location.toString();
@@ -9299,7 +9300,7 @@ async function getAnimeCoverUrl() {
 
         const badCovers = getBadCovers();
         const candidates = [];
-        let results = [];
+        let results;
         try {
           results = JSON.parse(request.response).items;
         }
@@ -9308,7 +9309,7 @@ async function getAnimeCoverUrl() {
           resolve(undefined);
           return;
         }
-        if (!results) {
+        if (!results?.length) {
           resolve(undefined);
           return;
         }
