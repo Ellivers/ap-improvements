@@ -8947,13 +8947,13 @@ function addTitleIcons(animeid) {
   const notifIcon = (() => {
     if (initialStorage.debug?.notifs) return true;
     if (initialStorage.notifications.anime.find(a => a.name === animename)) return true;
-    if (isAnime) {
+    if (isAnime()) {
       for (const info of $('.anime-info p>strong')) {
         if (!$(info).text().startsWith('Status:')) continue;
         return $(info).text().includes("Not yet aired") || $(info).find('a').text().includes("Currently Airing");
       }
     }
-    else if (isEpisode) return $('.anime-status').text().includes("Currently Airing");
+    else if (isEpisode()) return $('.anime-status').text().includes("Currently Airing");
     return false;
   })();
 
