@@ -9007,8 +9007,6 @@ function addTitleIcons(animeid) {
     tooltipElem.tooltip('show');
     setTimeout(() => {
       $(this).replaceClass('fa-check','fa-link');
-    }, 500);
-    setTimeout(() => {
       tooltipElem.tooltip('hide');
     }, 1000);
   });
