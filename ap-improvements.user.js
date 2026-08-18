@@ -4700,7 +4700,6 @@ function timeSince(date) {
 
 if (window.location.pathname.startsWith('/customlink')) {
   (async () => {
-    const notFoundText = $('h1').text();
     document.title = "Redirecting... :: animepahe";
     $('h1').text('Redirecting...');
 
@@ -4754,8 +4753,8 @@ if (window.location.pathname.startsWith('/customlink')) {
 
     if (destination) window.location.replace(destination);
     else {
-      document.title = notFoundText;
-      $('h1').text(notFoundText);
+      document.title = "Couldn't find anime :: animepahe";
+      $('h1').text("Failed: Couldn't find anime");
     }
   })();
   return;
