@@ -10,14 +10,18 @@
 - Moved the Refresh Session button towards the bottom of the Options menu
 - Pressing the Theater Mode keybind while having the video player in fullscreen now exits fullscreen
 - Pressing Ctrl+F in a modal menu with a search bar now focuses the first search bar in the menu
+- Re-added and fixed feature to set video player time to time elapsed
 - Buttons that change text when clicked on no longer become smaller while the text is changed
 - Made the loading bar for the Continue Watching section a bit thinner
 - Updated the styling for when hovering over the filter logic buttons on the index page
+- Data format version 5
+  - Changed the format for associated videos in video progress entries
 - Fixed bookmark links not working due to site changes
 - Fixed various other issues caused by site changes
 - Fixed errors in the Manage Feed menu when having anime with no episodes added to the feed
 - Fixed the video player being incorrectly focused when pressing Enter on an episode page
 - Fixed keyboard navigation for the expandable menus below the video player
+- Fixed the video player being able to load more than once, causing a few issues
 - Fixed certain modal menus taking a long time to open on some devices
 - Fixed the search query not being kept when changing sorting direction in various menus
 - Fixed the search query not being kept when changing sorting type in the Bookmarks menu
