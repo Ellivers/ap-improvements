@@ -8188,6 +8188,7 @@ function setRelativeEpNums(on) {
     }
     return;
   }
+  if (!isEpisode()) return;
 
   const currentEpisode = getEpisodeNum();
   const currentEpisode2 = (() => {
@@ -8389,7 +8390,7 @@ async function setRelationPoster(name, type) {
 
   // If auto-clear is on and the episode is a prequel, delete the episode from the tracker
   if (type === 'prequel' && getStorage().settings.autoDelete === true) {
-    deleteEpisodesFromTracker(undefined, relationData.title);
+    deleteEpisodesFromTracker(getEpisodeNum(), relationData.title);
   }
 }
 
@@ -12132,6 +12133,7 @@ function addOptionSwitch(optionId, name, desc = '', parent = '#anitracker-modal-
   const events = [option.onEvent, option.offEvent];
 
   switc.on('change', (e) => {
+    if (!isMobileOrTablet()) $(e.currentTarget).parent().tooltip('hide');
     const checked = $(e.currentTarget).is(':checked');
     const storage = getStorage();
     if (checked !== storage.settings[optionId]) {
