@@ -9240,6 +9240,7 @@ function getBadCovers() {
           'https://static.tvtropes.org/pmwiki/pub/images/logo_light.png',
           'https://sb-drops.s3.amazonaws.com/drop/rmopt-63058b16935f5-960364300-1661307670.png',
           'https://myanimelist.net/img/sp/icon/twitter-card.png',
+          'https://www.neogaf.com/styles/neogaf/icons/icon.png',
           ...storage.badCovers];
 }
 
