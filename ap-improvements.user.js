@@ -8961,7 +8961,10 @@ function addTitleIcons(animeid) {
   if (notifIcon) $(`<i title="Add to episode feed" class="fa fa-bell anitracker-title-icon anitracker-notifications-toggle" tabindex="0">
     <i style="display: none;" class="fa fa-check anitracker-title-icon-check" aria-hidden="true"></i>
   </i>`).appendTo(div);
-  $(`<i title="Copy link to anime" class="fa fa-link anitracker-title-icon anitracker-title-copy-link" tabindex="0"></i>`).appendTo(div);
+  $(`<div style="margin-left:1rem;display:inline-block;">
+    <div title="Copied!" data-placement="top"></div>
+    <i title="Copy link to anime" class="fa fa-link anitracker-title-icon anitracker-title-copy-link" tabindex="0" style="margin-left:0!important;"></i>
+  </div>`).appendTo(div);
 
   if (initialStorage.bookmarks.find(g => g.id === animeid)) {
     $('.anitracker-bookmark-toggle .anitracker-title-icon-check').show();
@@ -8995,14 +8998,19 @@ function addTitleIcons(animeid) {
     check.hide();
     showMessage('Removed from feed');
   });
+  $('.anitracker-title-copy-link').parent().find('>div').tooltip({trigger: "manual"});
   $('.anitracker-title-copy-link').on('click keydown', function(e) {
     if (e.type === 'keydown' && e.key !== "Enter") return;
     navigator.clipboard.writeText(window.location.origin + '/customlink?a=' + encodeURIComponent(getAnimeName()));
     $(this).replaceClass('fa-link','fa-check');
+    const tooltipElem = $(this).parent().find('>div');
+    tooltipElem.tooltip('show');
     setTimeout(() => {
       $(this).replaceClass('fa-check','fa-link');
     }, 500);
-    showMessage('Copied!');
+    setTimeout(() => {
+      tooltipElem.tooltip('hide');
+    }, 1000);
   });
 }
 
