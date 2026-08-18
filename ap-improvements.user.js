@@ -67,6 +67,7 @@
  * Allows you to also use numpad number keys to seek through videos.
  * Theatre mode for a better non-fullscreen video experience on larger screens.
  * Instantly loads the video instead of having to click a button to load it.
+ * Adds buttons to copy shortcut links to anime and episode pages.
  * Adds site-wide keyboard shortcuts:
     * B (default) to open the bookmark menu
     * N (default) to open the episode feed

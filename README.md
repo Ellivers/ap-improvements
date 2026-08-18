@@ -22,12 +22,12 @@ If you find a bug or have a suggestion, feel free to [open an issue](https://git
  * Keeps track of episodes that have been watched.
  * Adds a section on the main page where you can view episodes that you have started watching.
  * Adds a menu to episodes in the Latest Releases feed and on anime pages where you can copy a link to them, mark/unmark them as watched, or download them.
- * Adds an option to hide all episode thumbnails on the site.
- * Adds an option to have the header always stay at the top of the screen.
  * Reworked anime index page. You can now:
     * Find anime with your desired genre, theme, type, demographic, status and season.
     * Search among these filter results.
     * Open a random anime within the specified filters.
+ * Adds an option to hide all episode thumbnails on the site.
+ * Adds an option to have the header always stay at the top of the screen.
  * Saved data can be viewed and deleted in the "Manage Data" menu.
  * You can enable data syncing to sync your data between multiple devices.
     * Choose what data to sync, per device.
@@ -50,6 +50,7 @@ If you find a bug or have a suggestion, feel free to [open an issue](https://git
  * Allows you to also use numpad number keys to seek through videos.
  * Theatre mode for a better non-fullscreen video experience on larger screens.
  * Instantly loads the video instead of having to click a button to load it.
+ * Adds buttons to copy shortcut links to anime and episode pages.
  * Adds site-wide keyboard shortcuts:
     * B (default) to open the bookmark menu
     * N (default) to open the episode feed
