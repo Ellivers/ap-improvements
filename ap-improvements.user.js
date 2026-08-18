@@ -8776,12 +8776,12 @@ function applyEpisodeOptionsEvents(elems) {
 
       addWatched(+animeId, episode, storage);
 
-      showMessage('Marked as watched');
+      showMessage(`Marked "${animeName?.slice(0,16)}${animeName?.length > 16 ? '...' : ''}" episode ${episode} as watched`, 4000);
       updateContinueWatchingEpisodes();
     }
     else if (action === 'remove') {
       deleteEpisodeFromTracker(animeName, episode, +animeId);
-      showMessage('Removed');
+      showMessage(`Removed "${animeName?.slice(0,16)}${animeName?.length > 16 ? '...' : ''}" episode ${episode}`, 4000);
       updateContinueWatchingEpisodes();
     }
   })
