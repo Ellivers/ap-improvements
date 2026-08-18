@@ -7193,7 +7193,7 @@ function makeSearchable(string) {
 }
 
 function getAnimeDataFromPage(page = $(document), isEpisode) {
-  const poster = isEpisode ? undefined : trimPosterUrl($(page.find('.anime-poster img')[0])?.data('src'));
+  const poster = isEpisode ? trimPosterUrl(page.find('.anime-poster img')[0]?.src) : trimPosterUrl($(page.find('.anime-poster img')[0])?.data('src'));
   const name = getAnimeName(page, isEpisode);
   const ids = {};
   for (const meta of page.find('meta')) {
