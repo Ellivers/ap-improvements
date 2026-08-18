@@ -90,7 +90,7 @@ const initialStorage = getStorage();
 
 function getDefaultData() {
   return {
-    version: 4,
+    version: 5,
     linkList:[],
     videoTimes:[],
     bookmarks:[],
@@ -229,6 +229,13 @@ function upgradeData(data, fromver) {
       });
       if (data.notifications?.episodes?.length) data.notifications.episodes.forEach(g => {
         if (g.animeId) g.animeId = +g.animeId;
+      });
+    },
+    () => { // upgrading from V4
+      if (data.videoTimes?.length) data.videoTimes.forEach(g => {
+        if (!g.videoUrls?.length) return;
+        g.videoPaths = g.videoUrls.map(h => getVideoPath(h));
+        delete g.videoUrls;
       });
     },
   ];
@@ -461,6 +468,12 @@ function getPathname(url) {
   return new URL(url).pathname;
 }
 
+function getVideoPath(url) {
+  const parts = /(\w+)$/.exec(url);
+  if (!parts) return undefined;
+  return parts[1];
+}
+
 function isSyncEnabled(storage) {
   return storage.sync.syncCode !== '';
 }
@@ -501,7 +514,7 @@ function anitrackerKwikLoad() {
     scriptElem.onload(() => {anitrackerPlayerLoad(window.location.origin + window.location.pathname)});
   }
 
-  function anitrackerPlayerLoad(url) {
+  function anitrackerPlayerLoad(url) { // "url" does not include search params
   if (kwikDLPageRegex.test(url)) {
     if (initialStorage.settings.autoDownload === false) return;
     $(`
@@ -853,7 +866,7 @@ const _css = `
       }
 
       storage.videoTimes.push({
-        videoUrls: [url],
+        videoPaths: [getVideoPath(url)],
         time: Math.floor(currentTime),
         animeName: vidInfo.animeName,
         episodeNum: vidInfo.episodeNum,
@@ -921,7 +934,7 @@ const _css = `
         }
 
         storage.videoTimes.push({
-          videoUrls: [url],
+          videoPaths: [getVideoPath(url)],
           time: player.currentTime,
           animeName: vidInfo.animeName,
           episodeNum: vidInfo.episodeNum,
@@ -1280,9 +1293,10 @@ const _css = `
           if (storage.settings.seekPoints) setSeekPoints(storedVideoTime.timestampData);
         }
       }
-      if (!storedVideoTime.videoUrls.includes(url)) {
+      const videoPath = getVideoPath(url);
+      if (!storedVideoTime.videoPaths.includes(videoPath)) {
         bumpSyncDiff(storage, 'videoTimeEntryUpdate');
-        storedVideoTime.videoUrls.push(url);
+        storedVideoTime.videoPaths.push(videoPath);
         saveData(storage);
       }
       if (storedVideoTime.duration === undefined) {
@@ -3246,7 +3260,7 @@ const animeInfoFunctions = [
       if (iinfo.episode === undefined) return undefined; // Can be falsy
       const storage = getStorage();
       const list = [...storage.linkList].reverse(); // Reverse to prioritize newer entries
-      const found = list.find(a => a.type === 'episode' && a.episodeNum === iinfo.episode && (matchDataPartial(a,iinfo,{"animeName":"name","animeId":"id","animeSession":"session"}) || iinfo.videoUrls?.find(g => a.videoUrls?.includes(g))));
+      const found = list.find(a => a.type === 'episode' && a.episodeNum === iinfo.episode && (matchDataPartial(a,iinfo,{"animeName":"name","animeId":"id","animeSession":"session"}) || iinfo.videoPaths?.find(g => a.videoPaths?.includes(g))));
       if (!found) return undefined;
       return {
         name: found.animeName,
@@ -3291,7 +3305,7 @@ const animeInfoFunctions = [
     "instant": true,
     "fn": (iinfo = {}, config = {}) => {
       const storage = getStorage();
-      const found = storage.videoTimes.find(a => matchDataPartial(a,iinfo,{"animeName":"name","animeId":"id"}) || iinfo.videoUrls?.find(g => a.videoUrls?.includes(g)));
+      const found = storage.videoTimes.find(a => matchDataPartial(a,iinfo,{"animeName":"name","animeId":"id"}) || iinfo.videoPaths?.find(g => a.videoPaths?.includes(g)));
       if (!found) return undefined;
       return {
         inacurrate_name: found.animeName,
@@ -3758,7 +3772,10 @@ function updateFromImport(diff, force = {}) {
   if (force.page || (diff.bookmarksAdded + diff.notificationsAdded + diff.settingsUpdated)) updatePage();
   if (force.epPage || diff.watchedEpisodesAdded || diff.videoTimesUpdated || diff.videoTimeEntryUpdated) updateEpisodePages();
   if (diff.videoTimesUpdated || diff.videoTimesAdded) {
-    if (isEpisode()) sendMessage({action:"newer_time", time:getStorage().videoTimes.find(a => a.videoUrls.includes($('.embed-responsive-item')[0].src))?.time});
+    if (isEpisode()) {
+      const videoPath = getVideoPath(stripUrl($('.embed-responsive-item')[0].src));
+      sendMessage({action:"newer_time", time:getStorage().videoTimes.find(a => a.videoPaths.includes(videoPath))?.time});
+    }
     if (isHome() && !$('#anitracker-continue-watching-section').length) setupContinueWatchingSection();
   }
 }
@@ -3815,7 +3832,7 @@ function importData(data, importedData, save = true, ignored = {settings:{}}, fr
         continue;
       }
       value.forEach(g => {
-        const foundTime = data.videoTimes.find(h => h.videoUrls.includes(g.videoUrls[0]));
+        const foundTime = data.videoTimes.find(h => h.videoPaths.find(a => g.videoPaths.includes(a)));
         if (foundTime === undefined) {
           data.videoTimes.push(g);
           changed.videoTimesAdded++;
@@ -7418,7 +7435,7 @@ function setupContinueWatchingSection() {
           name: entry.animeName,
           id: entry.animeId,
           episode: entry.episodeNum,
-          videoUrls: entry.videoUrls,
+          videoPaths: entry.videoPaths,
         }, ["name","inacurrate_name","id","session","episode_session","poster"], {requireInstant: true, ignored:['storage_video']});
         if (data.poster) img = `<img src="${makePosterUrl(data.poster,'md')}">`;
 
@@ -7618,7 +7635,7 @@ async function addContinueWatchingEpisodes(storage, episodeCount, clearAll = fal
       const data = await getAnimeData({
         name: entry.animeName,
         id: entry.animeId,
-        videoUrls: entry.videoUrls,
+        videoPaths: entry.videoPaths,
         episode: entry.episodeNum,
       }, ["session","name","id","episode_session"], {ignored: ['storage_video']});
       if (data.id && isWatched(data.id, entry.episodeNum)) continue;
@@ -7630,7 +7647,7 @@ async function addContinueWatchingEpisodes(storage, episodeCount, clearAll = fal
           const data2 = await getAnimeData({
             name: data.name || entry.animeName,
             id: entry.animeId,
-            videoUrls: entry.videoUrls,
+            videoPaths: entry.videoPaths,
             episode: entry.episodeNum,
           }, ["session"], {ignored: ['storage_video'], forceFresh: true});
           if (data2.session) data.session = data2.session;
@@ -8525,9 +8542,9 @@ $('#anitracker-clear-from-tracker').on('click', function() {
 
       if ($('.embed-responsive-item').length) {
         const storage = getStorage();
-        const videoUrl = stripUrl($('.embed-responsive-item').attr('src'));
+        const videoPath = getVideoPath(stripUrl($('.embed-responsive-item').attr('src')));
         for (const videoData of storage.videoTimes) {
-          if (!videoData.videoUrls.includes(videoUrl)) continue;
+          if (!videoData.videoPaths.includes(videoPath)) continue;
           if (isSyncEnabled(storage)) {
             storage.sync.temp.removedData.push({type: 'videoTimes', animeName: videoData.animeName, episodeNum: videoData.episodeNum});
           }
@@ -10443,10 +10460,10 @@ function addGeneralButtons() {
           $(this).parent().remove();
         });
         $('.anitracker-modal-list-entry .anitracker-delete-progress-button').on('click', function() {
-          const lookForUrl = $(this).attr('lookForUrl');
+          const lookForPath = $(this).attr('lookForPath');
 
           const storage = getStorage();
-          const found = storage.videoTimes.find(g => g.videoUrls.includes(lookForUrl));
+          const found = storage.videoTimes.find(g => g.videoPaths.includes(lookForPath));
           if (!found) {
             $(this).parent().remove();
             return;
@@ -10455,7 +10472,7 @@ function addGeneralButtons() {
             storage.sync.temp.removedData.push({type: 'videoTimes', animeName: found.animeName, episodeNum: found.episodeNum});
           }
 
-          storage.videoTimes = storage.videoTimes.filter(g => !g.videoUrls.includes(lookForUrl));
+          storage.videoTimes = storage.videoTimes.filter(g => !g.videoPaths.includes(lookForPath));
           saveData(storage);
           updateEpisodePages();
 
@@ -10508,7 +10525,7 @@ function addGeneralButtons() {
             <span>
               Current time: ${secondsToHMS(g.time)}
             </span><br>
-            <button class="btn btn-danger anitracker-delete-progress-button anitracker-flat-button" lookForUrl="${g.videoUrls[0]}" title="Delete this video progress">
+            <button class="btn btn-danger anitracker-delete-progress-button anitracker-flat-button" lookForPath="${g.videoPaths[0]}" title="Delete this video progress">
               <i class="fa fa-trash" aria-hidden="true"></i>
               &nbsp;Delete
             </button>
