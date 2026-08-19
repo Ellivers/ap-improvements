@@ -13,7 +13,7 @@
 // @grant       GM_setValue
 // @grant       GM_xmlhttpRequest
 // @grant       GM_info
-// @version     4.11.0
+// @version     4.12.0
 // @author      Ellivers
 // @license     MIT
 // @description Improvements and additions for the AnimePahe site
@@ -474,6 +474,10 @@ function getVideoPath(url) {
   const parts = /(\w+)$/.exec(url);
   if (!parts) return undefined;
   return parts[1];
+}
+
+function copyObj(obj) {
+  return JSON.parse(JSON.stringify(obj));
 }
 
 function isSyncEnabled(storage) {
@@ -3229,11 +3233,14 @@ const animeInfoFunctions = [
       // Require at least one part of iinfo to match
       if (!matchDataPartial(iinfo, data, ["name","session","id","anidb_id","poster"])) return undefined;
       return {
-        name: data.name,
-        session: data.session,
-        id: data.id,
-        anidb_id: data.anidb_id,
-        poster: data.poster,
+        old: {},
+        new: {
+          name: data.name,
+          session: data.session,
+          id: data.id,
+          anidb_id: data.anidb_id,
+          poster: data.poster,
+        }
       }
     }
   },
@@ -3241,16 +3248,19 @@ const animeInfoFunctions = [
     "id": "storage_session",
     "outputs": ["id","session","name"],
     "instant": true,
-    "possibly_expired": true,
     "fn": (iinfo = {}, config = {}) => {
       const storage = getStorage();
       const list = [...storage.linkList].reverse(); // Reverse to prioritize newer entries
       const found = list.find(a => matchDataPartial(a,iinfo,{"animeName":"name","animeId":"id","animeSession":"session"}));
       if (!found) return undefined;
       return {
-        name: found.animeName,
-        id: found.animeId,
-        session: found.animeSession,
+        old: {
+          name: found.animeName,
+          session: found.animeSession,
+        },
+        new: {
+          id: found.animeId,
+        }
       };
     }
   },
@@ -3258,7 +3268,6 @@ const animeInfoFunctions = [
     "id": "storage_episode_session",
     "outputs": ["id","session","name","episode_session"],
     "instant": true,
-    "possibly_expired": true,
     "fn": (iinfo = {}, config = {}) => {
       if (iinfo.episode === undefined) return undefined; // Can be falsy
       const storage = getStorage();
@@ -3266,53 +3275,69 @@ const animeInfoFunctions = [
       const found = list.find(a => a.type === 'episode' && a.episodeNum === iinfo.episode && (matchDataPartial(a,iinfo,{"animeName":"name","animeId":"id","animeSession":"session"}) || iinfo.videoPaths?.find(g => a.videoPaths?.includes(g))));
       if (!found) return undefined;
       return {
-        name: found.animeName,
-        id: found.animeId,
-        session: found.animeSession,
-        episode_session: found.episodeSession
+        old: {
+          name: found.animeName,
+          session: found.animeSession,
+          episode_session: found.episodeSession,
+        },
+        new: {
+          id: found.animeId,
+        }
       };
     }
   },
   {
     "id": "storage_bookmark",
-    "outputs": ["id","inacurrate_name","poster"],
+    "outputs": ["id","name","poster"],
     "instant": true,
     "fn": (iinfo = {}, config = {}) => {
       const storage = getStorage();
       const found = storage.bookmarks.find(a => matchDataPartial(a,iinfo,{"name":"name","id":"id","posterUrl":"poster"}));
       if (!found) return undefined;
       return {
-        inacurrate_name: found.name,
-        id: found.id,
-        poster: found.posterUrl,
+        old: {
+          name: found.name,
+          poster: found.posterUrl,
+        },
+        new: {
+          id: found.id,
+        }
       };
     }
   },
   {
     "id": "storage_notification_anime",
-    "outputs": ["id","inacurrate_name"],
+    "outputs": ["id","name"],
     "instant": true,
     "fn": (iinfo = {}, config = {}) => {
       const storage = getStorage();
       const found = storage.notifications.anime.find(a => matchDataPartial(a,iinfo,["name","id"]));
       if (!found) return undefined;
       return {
-        inacurrate_name: found.name,
-        id: found.id,
+        old: {
+          name: found.name,
+        },
+        new: {
+          id: found.id,
+        }
       };
     }
   },
   {
     "id": "storage_video",
-    "outputs": ["id","inacurrate_name"],
+    "outputs": ["id","name"],
     "instant": true,
     "fn": (iinfo = {}, config = {}) => {
       const storage = getStorage();
       const found = storage.videoTimes.find(a => matchDataPartial(a,iinfo,{"animeName":"name","animeId":"id"}) || iinfo.videoPaths?.find(g => a.videoPaths?.includes(g)));
       if (!found) return undefined;
       return {
-        inacurrate_name: found.animeName,
-        id: found.animeId,
+        old: {
+          name: found.animeName,
+        },
+        new: {
+          id: found.animeId,
+        }
       };
     }
   },
@@ -3325,11 +3350,14 @@ const animeInfoFunctions = [
       if (!page) return undefined;
       const data = getAnimeDataFromPage(page, false);
       return {
-        session: iinfo.session,
-        name: data.name,
-        id: data.id,
-        anidb_id: data.anidb_id,
-        poster: data.poster,
+        old: {},
+        new: {
+          session: iinfo.session,
+          name: data.name,
+          id: data.id,
+          anidb_id: data.anidb_id,
+          poster: data.poster,
+        }
       }
     }
   },
@@ -3357,7 +3385,10 @@ const animeInfoFunctions = [
         if (!response) return resolve(undefined);
         siteVars.cached.animeId[iinfo.session] = response[0].anime_id;
         resolve({
-          id: response[0].anime_id
+          old: {},
+          new: {
+            id: response[0].anime_id,
+          }
         });
       });
     }
@@ -3410,7 +3441,7 @@ const animeInfoFunctions = [
         }
         const result = await searchBranches(startSession);
         if (!result) return resolve(undefined);
-        resolve(result);
+        resolve({old:{},new:{...result}});
       });
       async function getBranches(session) {
         const relations = await getRelationList(session);
@@ -3438,10 +3469,10 @@ function getAnimeData(iinfo = {}, reqinfo = [], config = {}) {
   make sure that function isn't run again, no matter the outcome
   */
   const debug = initialStorage.debug?.animeInfo;
-  const oinfo = {};
+  const oinfo = {old:{},new:{}};
   const used = [];
   const dontUseAgain = [];
-  const candidateFunctions = animeInfoFunctions.filter(a => !(config.requireInstant && !a.instant) && !(config.forceFresh && a.possibly_expired) && !config.ignored?.includes(a.id));
+  const candidateFunctions = animeInfoFunctions.filter(a => !(config.requireInstant && !a.instant) && !config.ignored?.includes(a.id));
   return new Promise(async resolve => {
     if (!iinfo || !Object.values(iinfo).find(a => a)) return resolve({});
     if (debug) console.log('starting search for',JSON.parse(JSON.stringify(reqinfo)));
@@ -3468,13 +3499,20 @@ function getAnimeData(iinfo = {}, reqinfo = [], config = {}) {
         if (debug) console.log('got result',result,'from function',chosenFunction.id,'with iinfo',JSON.parse(JSON.stringify(iinfo)));
         if (!result) continue;
         dontUseAgain.push(chosenFunction.id)
-        for (const [key, value] of Object.entries(result)) {
-          if (!oinfo[key]) oinfo[key] = value;
+        for (const [key, value] of Object.entries(result.new)) {
+          if (!oinfo.new[key]) oinfo.new[key] = value;
+          iinfo[key] = value;
+          if (value) reqinfo = reqinfo.filter(a => a !== key);
+        }
+        if (result.new.episode_session) oinfo.new.session = result.new.session;
+        
+        if (config.requireNew) continue;
+        for (const [key, value] of Object.entries(result.old)) {
+          if (!oinfo.old[key]) oinfo.old[key] = value;
           if (!iinfo[key]) iinfo[key] = value;
           if (value) reqinfo = reqinfo.filter(a => a !== key);
         }
-        // Exceptions:
-        if (result.episode_session) oinfo.session = result.session;
+        if (result.old.episode_session) oinfo.old.session = result.old.session;
       }
 
       if (!reqinfo.length || i === 1) break;
@@ -3483,8 +3521,12 @@ function getAnimeData(iinfo = {}, reqinfo = [], config = {}) {
       used.push(...dontUseAgain);
     }
 
-    if (debug) console.log('result',oinfo);
-    resolve(oinfo);
+    const output = oinfo.new;
+    for (const [key,value] of Object.entries(oinfo.old)) {
+      if (!output[key]) output[key] = value;
+    }
+    if (debug) console.log('result',output);
+    resolve(output);
   });
 }
 
@@ -7240,10 +7282,10 @@ function getAnimeDataFromPage(page = $(document), isEpisode) {
 
 async function getAnimeDataFromSearch(iinfo = {}, config = {}) {
   const cached = siteVars.cached.animeSearch.find(a => matchDataPartial(a,iinfo,["id","name","session","poster"]));
-  if (cached) return cached;
+  if (cached) return {old:{},new:{...cached}};
   if (!iinfo.name) return undefined;
 
-  return new Promise(async (resolve, reject) => {
+  return new Promise(async resolve => {
     // API pages for search don't work............
     /*let lastPage = 2;
     let page = 1;
@@ -7281,10 +7323,7 @@ async function getAnimeDataFromSearch(iinfo = {}, config = {}) {
       }
       if (config.allowGuessing && response.length) return response[0];
     })();
-    if (!data) {
-      console.error(`[AnimePahe Improvements] Search for anime "${iinfo.name}" not found`);
-      return resolve(undefined);
-    }
+    if (!data) return resolve(undefined);
 
     const rValue = {
       name: data.title,
@@ -7293,7 +7332,7 @@ async function getAnimeDataFromSearch(iinfo = {}, config = {}) {
       poster: trimPosterUrl(data.poster),
     }
     siteVars.cached.animeSearch.push(rValue);
-    resolve(rValue);
+    resolve({old:{},new:{...rValue}});
   });
 }
 
@@ -7316,7 +7355,9 @@ async function getAnimeSession(iinfo = {}, config = {}) {
       });
     }
     if (config.justCache) return resolve(undefined);
-    resolve(siteVars.cached.animeSession.find(a => matchDataPartial(a,iinfo,["name","session"])));
+    const cached = siteVars.cached.animeSession.find(a => matchDataPartial(a,iinfo,["name","session"]));
+    if (!cached) return resolve(undefined);
+    resolve({old:{},new:{...cached}});
   });
 }
 
@@ -7449,10 +7490,10 @@ function setupContinueWatchingSection() {
           id: entry.animeId,
           episode: entry.episodeNum,
           videoPaths: entry.videoPaths,
-        }, ["name","inacurrate_name","id","session","episode_session","poster"], {requireInstant: true, ignored:['storage_video']});
+        }, ["name","id","session","episode_session","poster"], {requireInstant: true, ignored:['storage_video']});
         if (data.poster) img = `<img src="${makePosterUrl(data.poster,'md')}">`;
 
-        const visibleAnimeName = data.name || data.inacurrate_name || entry.animeName;
+        const visibleAnimeName = data.name || entry.animeName;
         const titleAttr = `${toHtmlCodes(visibleAnimeName)}${data.episode_session ? ` Episode ${entry.episodeNum}` : ''}`;
 
         const href = (() => {
@@ -7662,7 +7703,7 @@ async function addContinueWatchingEpisodes(storage, episodeCount, clearAll = fal
             id: entry.animeId,
             videoPaths: entry.videoPaths,
             episode: entry.episodeNum,
-          }, ["session"], {ignored: ['storage_video'], forceFresh: true});
+          }, ["session"], {ignored: ['storage_video'], requireNew: true});
           if (data2.session) data.session = data2.session;
           delete data.episode_session;
         }
@@ -7850,7 +7891,7 @@ async function refreshSession(from404 = false) {
     const animeData = await getAnimeData({
       name: name,
       id: storedSession?.animeId,
-    }, ["name","session"], {allowGuessing:true,forceFresh:true});
+    }, ["name","session"], {allowGuessing:true,requireNew:true});
     if (!animeData.session || (animeData.name !== name && !refreshGuessWarning(name, animeData.name))) {
       return resolve(2);
     }
