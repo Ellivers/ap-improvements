@@ -1053,7 +1053,7 @@ const _css = `
       showMessage('Error: no data object');
       return;
     }
-    let newTimestamps = JSON.parse(JSON.stringify(storedVideoTime.timestampData || []));
+    let newTimestamps = copyObj(storedVideoTime.timestampData || []);
 
     const types = ['recap','opening','ending','preview'];
     let currentType = 'opening';
@@ -3475,7 +3475,7 @@ function getAnimeData(iinfo = {}, reqinfo = [], config = {}) {
   const candidateFunctions = animeInfoFunctions.filter(a => !(config.requireInstant && !a.instant) && !config.ignored?.includes(a.id));
   return new Promise(async resolve => {
     if (!iinfo || !Object.values(iinfo).find(a => a)) return resolve({});
-    if (debug) console.log('starting search for',JSON.parse(JSON.stringify(reqinfo)));
+    if (debug) console.log('starting search for',copyObj(reqinfo));
 
     for (let i = 0; i < 1; i++) {
       while (reqinfo.length) {
@@ -3496,7 +3496,7 @@ function getAnimeData(iinfo = {}, reqinfo = [], config = {}) {
 
         used.push(chosenFunction.id);
         const result = await chosenFunction.fn(iinfo, config);
-        if (debug) console.log('got result',result,'from function',chosenFunction.id,'with iinfo',JSON.parse(JSON.stringify(iinfo)));
+        if (debug) console.log('got result',result,'from function',chosenFunction.id,'with iinfo',copyObj(iinfo));
         if (!result) continue;
         dontUseAgain.push(chosenFunction.id)
         for (const [key, value] of Object.entries(result.new)) {
@@ -4408,7 +4408,7 @@ const filterDefaultRules = {
 };
 
 // MARKER:SEARCH FILTER LOGIC
-const filterRules = JSON.parse(JSON.stringify(filterDefaultRules));
+const filterRules = copyObj(filterDefaultRules);
 
 function buildFilterString(type, value) {
   if (type === 'status') return value;
@@ -4599,7 +4599,7 @@ function getFilteredList(filtersInput) {
   }
 
   return new Promise((resolve, reject) => {
-    const filters = JSON.parse(JSON.stringify(filtersInput));
+    const filters = copyObj(filtersInput);
 
     if (filters.length === 0) {
       getPage('/anime').then((response) => {
@@ -4618,7 +4618,7 @@ function getFilteredList(filtersInput) {
 
 
     getLists(filters).then((listsInput) => {
-      const lists = JSON.parse(JSON.stringify(listsInput));
+      const lists = copyObj(listsInput);
 
       // groupedLists entries have the following format:
       /* {
@@ -4763,10 +4763,10 @@ if (window.location.pathname.startsWith('/customlink')) {
           const iinfo = {};
           if (+value) iinfo.id = +value;
           else iinfo.name = decodeURIComponent(value);
-          const data = await getAnimeData(JSON.parse(JSON.stringify(iinfo)),["session","name"],{allowGuessing:true});
+          const data = await getAnimeData(copyObj(iinfo),["session","name"],{allowGuessing:true});
           if (!data.session) return;
           if (iinfo.name && iinfo.name !== data.name) {
-            const data2 = await getAnimeData(JSON.parse(JSON.stringify(iinfo)),["session","name"]);
+            const data2 = await getAnimeData(copyObj(iinfo),["session","name"]);
             if (!data2.session && !confirm(`[AnimePahe Improvements]\n\nCouldn't find any anime with name "${iinfo.name}".\nGo to "${data.name}" instead?`)) return;
             parts.animeSession = data2.session;
           }
@@ -6050,7 +6050,7 @@ function getSearchParamsString(params) {
 // MARKER:ANIME INDEX PAGE
 function loadIndexPage() {
   const animeList = getAnimeList();
-  filterSearchCache['/anime'] = JSON.parse(JSON.stringify(animeList));
+  filterSearchCache['/anime'] = copyObj(animeList);
 
   $(`
   <div class="anitracker-index">
@@ -6547,7 +6547,7 @@ function loadIndexPage() {
     if ($('.anitracker-filter-spinner').length) return; // If already searching
     setSpinner(screenSpinner);
 
-    appliedFilters.splice(0,appliedFilters.length,...JSON.parse(JSON.stringify(filters)));
+    appliedFilters.splice(0,appliedFilters.length,...copyObj(filters));
     appliedRuleChanges.splice(0,appliedRuleChanges.length,...getChangedRulesList(filterRules));
 
     setChangesToApply(false);
@@ -6805,7 +6805,7 @@ function loadIndexPage() {
     });
 
     $('#anitracker-reset-filter-rules').on('click', () => {
-      filterRules[filterType] = JSON.parse(JSON.stringify(filterDefaultRules[filterType]));
+      filterRules[filterType] = copyObj(filterDefaultRules[filterType]);
       refreshBtnStates();
       updateRuleButtons();
       updateApplyButton();
@@ -6983,7 +6983,7 @@ function loadIndexPage() {
     function animeListSearch() {
       const value = elem.val();
       if (value === '') {
-        layoutAnime(JSON.parse(JSON.stringify(animeList)));
+        layoutAnime(copyObj(animeList));
         searchParams.delete('search');
       }
       else {
@@ -11220,7 +11220,7 @@ function addGeneralButtons() {
         const storage = getStorage();
         storage.sync.settings.entered = true;
 
-        const previousSettings = JSON.parse(JSON.stringify(storage.sync.settings));
+        const previousSettings = copyObj(storage.sync.settings);
 
         storage.sync.settings.linkList = $('#anitracker-link-list-check').prop('checked');
         storage.sync.settings.videoTimes = $('#anitracker-video-times-check').prop('checked');
@@ -11710,7 +11710,7 @@ async function syncData() {
 
   broadcastTabMessage('anitracker_auto_sync_started', 1);
 
-  const storageBefore = JSON.parse(JSON.stringify(storage));
+  const storageBefore = copyObj(storage);
   const syncDiffs = {};
 
   return new Promise(resolve => {
@@ -11881,7 +11881,7 @@ async function syncData() {
         syncDiffs.imported = importData(storage, dbData, true, {settings:true}, true); // Imports synced data and saves storage data
         storage = getStorage();
 
-        const toPut = JSON.parse(JSON.stringify(storage));
+        const toPut = copyObj(storage);
         if (!settings.linkList) delete toPut.linkList;
         if (!settings.videoTimes) delete toPut.videoTimes;
         if (!settings.bookmarks) delete toPut.bookmarks;
@@ -11962,7 +11962,7 @@ async function syncData() {
   }
 
   function fixDataDiff(storage) {
-    const removedDataCopy = JSON.parse(JSON.stringify(storage.sync.temp.removedData));
+    const removedDataCopy = copyObj(storage.sync.temp.removedData);
     for (const entry of removedDataCopy) {
       if (!entry) storage.sync.temp.removedData = storage.sync.temp.removedData.filter(a => a);
       else if (entry.type === 'watched') {
@@ -12046,7 +12046,7 @@ async function syncData() {
     const prevSettings = storage.sync.previousSettings;
     const syncSettings = storage.sync.settings;
 
-    const storageCopy = JSON.parse(JSON.stringify(storage));
+    const storageCopy = copyObj(storage);
 
     let decodedLocalWatched = decodeWatched(storage.watched);
     const decodedDBWatched = dbData.watched ? decodeWatched(dbData.watched) : [];
@@ -12088,7 +12088,7 @@ async function syncData() {
         return;
       }
       const deletedEpisodes = [];
-      const episodesCopy = JSON.parse(JSON.stringify(anime.episodes));
+      const episodesCopy = copyObj(anime.episodes);
       episodesCopy.forEach(g => {
         if (found.episodes.find(a => a === g) !== undefined) return; // Important to do !== undefined here since episode numbers can be falsy
         if (addedList.find(a => a.type === 'watched' && a.animeId === anime.animeId && a.episodes.includes(g))) return;
