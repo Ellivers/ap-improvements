@@ -5297,24 +5297,26 @@ function openBookmarksModal() {
     for (const g of entries) {
       const statusAttrs = getStatusAttributes(g.status);
       let session = sessionCache[g.id];
+      let name = g.name;
       if (!session) {
         const foundData = await getAnimeData({
           name: g.name,
           id: g.id,
           poster: g.posterUrl
-        }, ["session"], {requireInstant: true, ignored:['storage_bookmark']});
+        }, ["session","name"], {requireInstant: true, ignored:['storage_bookmark']});
         session = foundData.session;
         if (session) sessionCache[g.id] = session;
+        name = foundData.name;
       }
       const href = session ? `href="/anime/${session}"` : '';
       let elem;
 
       if (layout === 'list') {
         elem = $(`
-        <div class="anitracker-modal-list-entry anitracker-bookmark-list-entry" animeid="${g.id}" animename="${toHtmlCodes(g.name)}">
+        <div class="anitracker-modal-list-entry anitracker-bookmark-list-entry" animeid="${g.id}" animename="${toHtmlCodes(name)}">
           ${g.newlyAdded ? '<i class="anitracker-bookmark-new"></i>' : ''}
-          <a ${href} target="_blank" title="${toHtmlCodes(g.name)}" tabindex="0">
-            <span>${toHtmlCodes(g.name)}</span>
+          <a ${href} target="_blank" title="${toHtmlCodes(name)}" tabindex="0">
+            <span>${toHtmlCodes(name)}</span>
           </a><br>
           <div>
             <button class="anitracker-bookmark-list-status anitracker-change-status-button" style="color:${statusAttrs[2]};" title="Change bookmark watching status">${statusAttrs[0]}</button>
@@ -5327,13 +5329,13 @@ function openBookmarksModal() {
       }
       else {
         elem = $(`
-        <div class="anitracker-modal-list-entry anitracker-bookmark-grid-entry" animeid="${g.id}" animename="${toHtmlCodes(g.name)}">
-          <a ${href} target="_blank" title="${toHtmlCodes(g.name)}" tabindex="0">
+        <div class="anitracker-modal-list-entry anitracker-bookmark-grid-entry" animeid="${g.id}" animename="${toHtmlCodes(name)}">
+          <a ${href} target="_blank" title="${toHtmlCodes(name)}" tabindex="0">
             ${g.newlyAdded ? '<i class="anitracker-bookmark-new"></i>' : ''}
             <div class="anitracker-big-poster-icon">
               <img src="${g.posterUrl ? makePosterUrl(g.posterUrl,'md') : 'data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw=='}" loading="lazy">
             </div>
-            <span>${toHtmlCodes(g.name)}</span>
+            <span>${toHtmlCodes(name)}</span>
           </a>
           <div style="display: flex;flex-direction: column;gap: 2px;">
             <button class="anitracker-bookmark-grid-status anitracker-change-status-button" style="color:${statusAttrs[2]};" title="Change bookmark watching status">${statusAttrs[0]}</button>
@@ -5354,8 +5356,8 @@ function openBookmarksModal() {
           $(this).off('error');
         });
       }
-      if (!g.name.toLowerCase().includes(searchInput)) elem.hide();
-      if (!session) {
+      if (!name.toLowerCase().includes(searchInput)) elem.hide();
+      if (!session || name !== g.name) {
         const spinner = $(`
         <div class="anitracker-spinner" style="display: inline;">
           <div class="spinner-border" role="status" style="width: 1em;height: 1em;">
@@ -5363,7 +5365,7 @@ function openBookmarksModal() {
           </div>
         </div>`).insertBefore(elem.find('a>span'));
         getAnimeData({
-          name: g.name,
+          name: name,
           id: g.id,
           poster: g.poster,
         }, ["name","session"], {ignored: ['storage_bookmark']}).then(data => {
@@ -5375,11 +5377,11 @@ function openBookmarksModal() {
           if (!obj) return;
           if (data.name) {
             obj.name = data.name;
-            elem.find('a>span').text(data.name);
+            elem.attr('animename',data.name).find('a').attr('title',data.name).find('span').text(data.name);
+            console.log(`[AnimePahe Improvements] Replaced old bookmark name "${g.name}" with new "${data.name}"`);
           }
           saveData(storage2);
           elem.find('a').attr('href', '/anime/' + data.session);
-          if (data.name) console.log(`[AnimePahe Improvements] Replaced old bookmark name "${g.name}" with new "${data.name}"`);
         });
       }
     }
