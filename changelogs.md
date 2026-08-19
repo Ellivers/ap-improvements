@@ -1,4 +1,4 @@
-### 4.11.0 (in development)
+### 4.11.0 (2026-08-19)
 - Added bookmark and episode feed buttons to episode pages
 - Added an icon on anime and episode pages to copy a link to the anime
 - Added a Delete button in the sync menu, for deleting the sync code entirely
@@ -18,11 +18,13 @@
 - Updated the styling for when hovering over the filter logic buttons on the index page
 - Data format version 5
   - Changed the format for associated videos in video progress entries
+- This version is now required for the data sync feature, due to data format changes
 - Fixed bookmark links not working due to site changes
 - Fixed various other issues caused by site changes
 - Fixed errors in the Manage Feed menu when having anime with no episodes added to the feed
 - Fixed the video player being incorrectly focused when pressing Enter on an episode page
 - Fixed keyboard navigation for the expandable menus below the video player
+- Fixed video progress being deleted on the first episode of certain anime
 - Fixed the video player being able to load more than once, causing a few issues
 - Fixed certain modal menus taking a long time to open on some devices
 - Fixed the search query not being kept when changing sorting direction in various menus

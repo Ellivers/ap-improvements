@@ -50,6 +50,7 @@ If you find a bug or have a suggestion, feel free to [open an issue](https://git
  * Allows you to also use numpad number keys to seek through videos.
  * Theatre mode for a better non-fullscreen video experience on larger screens.
  * Instantly loads the video instead of having to click a button to load it.
+ * Sets the default video time to show time elapsed instead of time remaining.
  * Adds buttons to copy shortcut links to anime and episode pages.
  * Adds site-wide keyboard shortcuts:
     * B (default) to open the bookmark menu
@@ -70,4 +71,4 @@ The development version of the script may contain major bugs or issues from code
 
 You can take a look at [the latest changelog](https://github.com/Ellivers/ap-improvements/blob/dev/changelogs.md) to see what is currently being worked on.
 
-[Click here](https://raw.githubusercontent.com/Ellivers/ap-improvements/refs/heads/dev/ap-improvements.user.js) to install from the latest dev branch commit, but be aware that depending on your userscript manager, it **might not be automatically updated**, unlike the stable version.
+[Click here](https://raw.githubusercontent.com/Ellivers/ap-improvements/refs/heads/dev/ap-improvements.user.js) to install from the latest dev branch commit, but be aware that, depending on your userscript manager, it **might not be automatically updated**, unlike the stable version.
