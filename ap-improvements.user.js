@@ -84,7 +84,7 @@
  * And more!
 */
 
-/*global $*/
+/*global $,GM_getValue,GM_setValue,sendMessage,Hls,hls,jQuery,Fuse,GM_xmlhttpRequest,GM_info,Base64,html2canvas,Cookies*/
 // MARKER:START
 
 const baseUrl = window.location.toString();
@@ -696,7 +696,7 @@ const _css = `
     }
     return {
       animeName: name.slice(0, -1),
-      episodeNum: +/^AnimePahe_.+_-_([\d\.]{2,})/.exec(fileName)[1]
+      episodeNum: +/^AnimePahe_.+_-_([\d.]{2,})/.exec(fileName)[1]
     };
   }
 
@@ -788,7 +788,6 @@ const _css = `
           return;
         }
 
-        const duration = player.duration;
         const timestampData = [
           {
             type: "recap",
@@ -895,7 +894,7 @@ const _css = `
       if (player.duration - currentTime <= 20) {
         const videoInfo = getVideoInfo();
         if (isSyncEnabled(storage)) {
-          storage.sync.temp.removedData.push(...storage.videoTimes.filter(g => g.animeName === videoInfo.animeName && g.episodeNum === videoInfo.episodeNum).map(g => {return {type: 'videoTimes', animeName: videoInfo.animeName, episodeNum: vidInfo.episodeNum}}));
+          storage.sync.temp.removedData.push(...storage.videoTimes.filter(g => g.animeName === videoInfo.animeName && g.episodeNum === videoInfo.episodeNum).map(() => {return {type: 'videoTimes', animeName: videoInfo.animeName, episodeNum: vidInfo.episodeNum}}));
         }
 
         storage.videoTimes = storage.videoTimes.filter(a => !(a.animeName === videoInfo.animeName && a.episodeNum === videoInfo.episodeNum));
@@ -1333,13 +1332,12 @@ const _css = `
 
     // Screenshot changes
     $('button[data-plyr="capture"]').replaceWith($('button[data-plyr="capture"]').clone()); // Just to remove existing event listeners
-    $('button[data-plyr="capture"]').on('click', (e) => {
+    $('button[data-plyr="capture"]').on('click', () => {
       const canvas = document.createElement('canvas');
       canvas.height = player.videoHeight;
       canvas.width = player.videoWidth;
       const ctx = canvas.getContext('2d');
       ctx.drawImage(player, 0, 0, canvas.width, canvas.height);
-      const mode = $(e.currentTarget).data('mode');
       if (anitrackerSettings.copyScreenshots) {
         canvas.toBlob((blob) => {
           try {
@@ -1389,7 +1387,7 @@ const _css = `
 
   const settingsContainerId = (() => {
     for (const elem of $('.plyr__menu__container')) {
-      const regex = /plyr\-settings\-(\d+)/.exec(elem.id);
+      const regex = /plyr-settings-(\d+)/.exec(elem.id);
       if (regex === null) continue;
       return regex[1];
     }
@@ -1674,7 +1672,7 @@ const _css = `
     }
   }
 
-  $(`#plyr-settings-${settingsContainerId}-speed>div>button`).on('click', (e) => {
+  $(`#plyr-settings-${settingsContainerId}-speed>div>button`).on('click', () => {
     $('.anitracker-custom-speed-btn').remove();
   });
 
@@ -1690,12 +1688,16 @@ if (/^https:\/\/kwik\.\w+/.test(baseUrl)) {
   return;
 }
 
-if ($() !== null) anitrackerLoad(window.location.origin + window.location.pathname + window.location.search);
+if ($() !== null) anitrackerLoad();
 else {
-  document.querySelector('head > link:nth-child(10)').onload(() => {anitrackerLoad(window.location.origin + window.location.pathname + window.location.search)});
+  for (const elem of document.querySelectorAll('head > link')) {
+    if (!elem.href.includes('jquery')) continue;
+    elem.onload = anitrackerLoad;
+    break;
+  }
 }
 
-function anitrackerLoad(url) {
+function anitrackerLoad() {
 
 if ($('#anitracker-modal').length) {
   console.log("[AnimePahe Improvements] Script was reloaded.");
@@ -3107,7 +3109,7 @@ const optionSwitches = [
   }];
 
 const originalEpisodeValue = (() => {
-  if (isEpisode()) return /Watch (?:.*) - ([\d\.]+)\-?([\d\.]+)? Online/.exec($('.theatre-info h1').text());
+  if (isEpisode()) return /Watch (?:.*) - ([\d.]+)-?([\d.]+)? Online/.exec($('.theatre-info h1').text());
   else return undefined;
 })();
 function getEpisodeNum() {
@@ -3194,7 +3196,7 @@ function playAnimation(elem, anim, duration, type = '') {
   });
 }
 
-const posterRegex = /^(?:https:\/\/)?(?:i\.\w+\.\w+\/)?([^\.]*)(?:\.md|\.th)?(\..*)?$/;
+const posterRegex = /^(?:https:\/\/)?(?:i\.\w+\.\w+\/)?([^.]*)(?:\.md|\.th)?(\..*)?$/;
 function trimPosterUrl(posterUrl) {
   const parts = posterRegex.exec(posterUrl);
   if (!parts) return undefined;
@@ -3380,17 +3382,15 @@ const animeInfoFunctions = [
       const cached = siteVars.cached.animeId[iinfo.session];
       if (cached) return cached;
 
-      return new Promise(async resolve => {
-        const response = await asyncGetResponseData(`/api?m=release&id=${iinfo.session}`);
-        if (!response) return resolve(undefined);
-        siteVars.cached.animeId[iinfo.session] = response[0].anime_id;
-        resolve({
-          old: {},
-          new: {
-            id: response[0].anime_id,
-          }
-        });
-      });
+      const response = await asyncGetResponseData(`/api?m=release&id=${iinfo.session}`);
+      if (!response) return undefined;
+      siteVars.cached.animeId[iinfo.session] = response[0].anime_id;
+      return {
+        old: {},
+        new: {
+          id: response[0].anime_id,
+        }
+      };
     }
   },
   {
@@ -3400,49 +3400,45 @@ const animeInfoFunctions = [
     "fn": async (iinfo = {}, config = {}) => {
       if (!iinfo.startSession && !iinfo.name) return undefined;
       const searchedSessions = [];
-      return new Promise(async resolve => {
-        async function searchBranches(session) {
-          return new Promise(async resolve => {
-            if (searchedSessions.includes(session)) return resolve(undefined);
-            const pageData = await getPageData(session);
-            if (pageData && matchDataPartial(pageData,iinfo,["name","id","anidb_id","poster"])) {
-              pageData.session = session;
-              return resolve(pageData);
-            }
-            searchedSessions.push(session);
-            const relations = await getBranches(session);
-            for (const rel of relations) {
-              if (!matchDataPartial(rel,iinfo,{"session":"session","title":"name"}) && (!rel.poster || trimPosterUrl(rel.poster) !== iinfo.poster)) continue;
-              const pageData2 = await getPageData(rel.session);
-              if (pageData2) {
-                pageData2.session = rel.session;
-                return resolve(pageData2);
-              }
-              return resolve({
-                name: rel.title,
-                session: rel.session,
-                poster: trimPosterUrl(rel.poster),
-              });
-            }
-            for (const rel of relations) {
-              const result = await searchBranches(rel.session);
-              if (result) return resolve(result);
-            }
-            resolve(undefined);
-          });
+      async function searchBranches(session) {
+        if (searchedSessions.includes(session)) return undefined;
+        const pageData = await getPageData(session);
+        if (pageData && matchDataPartial(pageData,iinfo,["name","id","anidb_id","poster"])) {
+          pageData.session = session;
+          return pageData;
         }
-        let startSession = iinfo.startSession;
-        if (!startSession) {
-          const data = await getAnimeDataFromSearch(iinfo, {
-            allowGuessing: true
-          });
-          if (!data) return resolve(undefined);
-          startSession = data.session;
+        searchedSessions.push(session);
+        const relations = await getBranches(session);
+        for (const rel of relations) {
+          if (!matchDataPartial(rel,iinfo,{"session":"session","title":"name"}) && (!rel.poster || trimPosterUrl(rel.poster) !== iinfo.poster)) continue;
+          const pageData2 = await getPageData(rel.session);
+          if (pageData2) {
+            pageData2.session = rel.session;
+            return pageData2;
+          }
+          return {
+            name: rel.title,
+            session: rel.session,
+            poster: trimPosterUrl(rel.poster),
+          };
         }
-        const result = await searchBranches(startSession);
-        if (!result) return resolve(undefined);
-        resolve({old:{},new:{...result}});
-      });
+        for (const rel of relations) {
+          const result = await searchBranches(rel.session);
+          if (result) return result;
+        }
+        return undefined;
+      }
+      let startSession = iinfo.startSession;
+      if (!startSession) {
+        const data = await getAnimeDataFromSearch(iinfo, {
+          allowGuessing: true
+        });
+        if (!data) return undefined;
+        startSession = data.session;
+      }
+      const result = await searchBranches(startSession);
+      if (!result) return undefined;
+      return {old:{},new:{...result}};
       async function getBranches(session) {
         const relations = await getRelationList(session);
         if (!relations) return [];
@@ -3461,7 +3457,7 @@ const animeInfoFunctions = [
 // TODO:
 // - add bookmark source function
 // - something with anidb_id?
-function getAnimeData(iinfo = {}, reqinfo = [], config = {}) {
+async function getAnimeData(iinfo = {}, reqinfo = [], config = {}) {
   /* - have a list of each info-getting function, ordered in speed with fastest first. each entry has a list of output keys
   - do a while loop while reqdata length is > 0.
   find out which function encompasses the most of reqdata by making a .map and sort the map by amount of reqdata support, then use the function.
@@ -3473,61 +3469,59 @@ function getAnimeData(iinfo = {}, reqinfo = [], config = {}) {
   const used = [];
   const dontUseAgain = [];
   const candidateFunctions = animeInfoFunctions.filter(a => !(config.requireInstant && !a.instant) && !config.ignored?.includes(a.id));
-  return new Promise(async resolve => {
-    if (!iinfo || !Object.values(iinfo).find(a => a)) return resolve({});
-    if (debug) console.log('starting search for',copyObj(reqinfo));
+  if (!iinfo || !Object.values(iinfo).find(a => a)) return {};
+  if (debug) console.log('starting search for',copyObj(reqinfo));
 
-    for (let i = 0; i < 1; i++) {
-      while (reqinfo.length) {
-        // Find out which function is the most appropriate for the needed data
-        const chosenFunction = candidateFunctions.map(a => {
-          const matches = used.includes(a.id) ? 0 : a.outputs.filter(g => reqinfo.includes(g)).length;
-          return {
-            fn: a.fn,
-            matches: matches ? Math.max(1, matches - (a.cost ?? 0)) : 0,
-            id: a.id,
-          };
-        }).sort((a,b) => b.matches - a.matches)[0];
-        if (!chosenFunction.matches) {
-          console.warn(`[AnimePahe Improvements] After ${used.length} functions, no remaining function matched ${reqinfo}`);
-          break;
-        }
-        if (debug) console.log('chose',chosenFunction.id,'for #',used.length);
-
-        used.push(chosenFunction.id);
-        const result = await chosenFunction.fn(iinfo, config);
-        if (debug) console.log('got result',result,'from function',chosenFunction.id,'with iinfo',copyObj(iinfo));
-        if (!result) continue;
-        dontUseAgain.push(chosenFunction.id)
-        for (const [key, value] of Object.entries(result.new)) {
-          if (!oinfo.new[key]) oinfo.new[key] = value;
-          iinfo[key] = value;
-          if (value) reqinfo = reqinfo.filter(a => a !== key);
-        }
-        if (result.new.episode_session) oinfo.new.session = result.new.session;
-        
-        if (config.requireNew) continue;
-        for (const [key, value] of Object.entries(result.old)) {
-          if (!oinfo.old[key]) oinfo.old[key] = value;
-          if (!iinfo[key]) iinfo[key] = value;
-          if (value) reqinfo = reqinfo.filter(a => a !== key);
-        }
-        if (result.old.episode_session) oinfo.old.session = result.old.session;
+  for (let i = 0; i < 1; i++) {
+    while (reqinfo.length) {
+      // Find out which function is the most appropriate for the needed data
+      const chosenFunction = candidateFunctions.map(a => {
+        const matches = used.includes(a.id) ? 0 : a.outputs.filter(g => reqinfo.includes(g)).length;
+        return {
+          fn: a.fn,
+          matches: matches ? Math.max(1, matches - (a.cost ?? 0)) : 0,
+          id: a.id,
+        };
+      }).sort((a,b) => b.matches - a.matches)[0];
+      if (!chosenFunction.matches) {
+        console.warn(`[AnimePahe Improvements] After ${used.length} functions, no remaining function matched ${reqinfo}`);
+        break;
       }
+      if (debug) console.log('chose',chosenFunction.id,'for #',used.length);
 
-      if (!reqinfo.length || i === 1) break;
-      if (debug) console.log('round two with left:',reqinfo);
-      used.length = 0;
-      used.push(...dontUseAgain);
+      used.push(chosenFunction.id);
+      const result = await chosenFunction.fn(iinfo, config);
+      if (debug) console.log('got result',result,'from function',chosenFunction.id,'with iinfo',copyObj(iinfo));
+      if (!result) continue;
+      dontUseAgain.push(chosenFunction.id)
+      for (const [key, value] of Object.entries(result.new)) {
+        if (!oinfo.new[key]) oinfo.new[key] = value;
+        iinfo[key] = value;
+        if (value) reqinfo = reqinfo.filter(a => a !== key);
+      }
+      if (result.new.episode_session) oinfo.new.session = result.new.session;
+      
+      if (config.requireNew) continue;
+      for (const [key, value] of Object.entries(result.old)) {
+        if (!oinfo.old[key]) oinfo.old[key] = value;
+        if (!iinfo[key]) iinfo[key] = value;
+        if (value) reqinfo = reqinfo.filter(a => a !== key);
+      }
+      if (result.old.episode_session) oinfo.old.session = result.old.session;
     }
 
-    const output = oinfo.new;
-    for (const [key,value] of Object.entries(oinfo.old)) {
-      if (!output[key]) output[key] = value;
-    }
-    if (debug) console.log('result',output);
-    resolve(output);
-  });
+    if (!reqinfo.length || i === 1) break;
+    if (debug) console.log('round two with left:',reqinfo);
+    used.length = 0;
+    used.push(...dontUseAgain);
+  }
+
+  const output = oinfo.new;
+  for (const [key,value] of Object.entries(oinfo.old)) {
+    if (!output[key]) output[key] = value;
+  }
+  if (debug) console.log('result',output);
+  return output;
 }
 
 // MARKER:MODAL
@@ -3699,7 +3693,6 @@ if (isEpisode()) {
               vaultId: result[1],
               hostName: result[2]
             };
-            break;
           }
         })();
 
@@ -3710,7 +3703,7 @@ if (isEpisode()) {
             let extraNumber;
             result[2].split('|').forEach(a => {if (/\d{2}/.test(a)) extraNumber = a;}); // Some number that's needed for the url (doesn't always exist here)
             if (extraNumber === undefined) {
-              const result2 = /q=\\'\w+:\/{2}\w+\-\w+\.\w+\.\w+\/((?:\w+\/)+)/.exec($(script).text());
+              const result2 = /q=\\'\w+:\/{2}\w+-\w+\.\w+\.\w+\/((?:\w+\/)+)/.exec($(script).text());
               result2[1].split('/').forEach(a => {if (/\d{2}/.test(a) && a !== hostInfo.vaultId) extraNumber = a;});
             }
             if (extraNumber === undefined) {
@@ -3721,7 +3714,6 @@ if (isEpisode()) {
               part1: extraNumber ?? hostInfo.vaultId,
               part2: result[1]
             };
-            break;
           }
         })();
 
@@ -4259,7 +4251,7 @@ async function searchForCollections() {
   displayCollection(seriesList, elem);
 }
 
-new MutationObserver(function(mutationList, observer) {
+new MutationObserver(function() {
   if (!searchComplete()) return;
   searchForCollections();
   for (const elem of $('.search-results a')) {
@@ -4459,7 +4451,7 @@ function getFilteredList(filtersInput) {
   function getLists(filters) {
     const lists = [];
 
-    return new Promise((resolve, reject) => {
+    return new Promise(resolve => {
       function check() {
         if (filters.length > 0) {
           repeat(filters.shift());
@@ -4861,10 +4853,10 @@ if (window.location.pathname.startsWith('/queue')) {
 }
 
 // Redirect filter pages
-if (/^\/anime\/\w+(\/[\w\-\.]+)?$/.test(window.location.pathname)) {
+if (/^\/anime\/\w+(\/[\w\-.]+)?$/.test(window.location.pathname)) {
   if (is404) return;
 
-  const filter = /\/anime\/([^\/]+)\/?([^\/]+)?/.exec(window.location.pathname);
+  const filter = /\/anime\/([^/]+)\/?([^/]+)?/.exec(window.location.pathname);
 
   if (filter[2] !== undefined) {
     if (filterRules[filter[1]] === undefined) return;
@@ -5748,7 +5740,7 @@ function openBookmarkStatusEditModal(id, adding=false) {
       <i class="fa fa-bookmark" aria-hidden="true"></i>
       &nbsp;Add Bookmark
     </button>`).appendTo('.anitracker-bookmark-edit-side');
-    $('#anitracker-modal-body .anitracker-confirm-button').on('click', (e) => {
+    $('#anitracker-modal-body .anitracker-confirm-button').on('click', () => {
       if (limitReached) return;
       const obj = {
         status: entry.status
@@ -5767,7 +5759,7 @@ function openBookmarkStatusEditModal(id, adding=false) {
       <i class="fa fa-trash" aria-hidden="true"></i>
       &nbsp;Remove
     </button>`).appendTo('.anitracker-bookmark-edit-side');
-    $('#anitracker-modal-body .anitracker-delete-button').on('click', (e) => {
+    $('#anitracker-modal-body .anitracker-delete-button').on('click', () => {
       removeBookmark(id);
       showMessage('Bookmark removed');
       closeModal();
@@ -5907,7 +5899,7 @@ async function updateNotifications(animeName, storage = getStorage()) {
 
   storage = getStorage();
   nobj = storage.notifications.anime.find(g => g.name === animeName); // Refresh the reference
-  return new Promise((resolve, reject) => {
+  return new Promise(resolve => {
     if (!episodes.length) resolve(undefined);
 
     if (storage.settings.relativeEpNums) {
@@ -6419,11 +6411,6 @@ function loadIndexPage() {
 
   const searchParams = new URLSearchParams(window.location.search);
 
-  function setSearchParam(name, value) {
-    if (value === undefined) searchParams.delete(name);
-    else searchParams.set(name,value);
-  }
-
   function updateSearchParams() {
     window.history.replaceState({}, document.title, "/anime" + getSearchParamsString(searchParams));
   }
@@ -6561,7 +6548,7 @@ function loadIndexPage() {
     });
   }
 
-  const searchParamRuleRegex = /^rule\-(\w+)\-(include|exclude|combined)/;
+  const searchParamRuleRegex = /^rule-(\w+)-(include|exclude|combined)/;
 
   function getRulesListFromParams(params) {
     const rulesList = [];
@@ -7039,7 +7026,7 @@ function getAnimeList(page = $(document)) {
 function parseUrl(url) {
   const parsed = URL.parse(url);
   if (parsed) return parsed;
-  return new URL(url = 'https://google.com' + url);
+  return new URL('https://google.com' + url);
 }
 
 function randint(min, max) { // min and max included
@@ -7051,7 +7038,7 @@ function isEpisode(url = window.location.toString()) {
 }
 
 function isAnime(url = window.location.toString()) {
-  return /^\/anime\/[\d\w\-]+$/.test(parseUrl(url).pathname);
+  return /^\/anime\/[\d\w-]+$/.test(parseUrl(url).pathname);
 }
 
 function isHome(url = window.location.toString()) {
@@ -7162,7 +7149,7 @@ function getStoredLinkData(storage) {
 
 function getAnimeName(page = $(document), episode = undefined) {
   if (episode === undefined) episode = isEpisode();
-  return episode ? /Watch (.*) - ([\d\.]+)(?:\-[\d\.]+)? Online/.exec(page.find('.theatre-info h1').text())[1] : $(page.find('.title-wrapper h1 span')[0]).text();
+  return episode ? /Watch (.*) - ([\d.]+)(?:-[\d.]+)? Online/.exec(page.find('.theatre-info h1').text())[1] : $(page.find('.title-wrapper h1 span')[0]).text();
 }
 
 function sortAnimesChronologically(animeList) {
@@ -7255,11 +7242,11 @@ function getResponseData(qurl) {
 }
 
 function getAnimeSessionFromUrl(url = window.location.toString()) {
-  return new RegExp('^(.*animepahe\.[a-z]+)?/(play|anime)/([^/?#]+)').exec(url)[3];
+  return new RegExp('^(.*animepahe.[a-z]+)?/(play|anime)/([^/?#]+)').exec(url)[3];
 }
 
 function getEpisodeSessionFromUrl(url = window.location.toString()) {
-  return new RegExp('^(.*animepahe\.[a-z]+)?/(play|anime)/([^/]+)/([^/?#]+)').exec(url)[4];
+  return new RegExp('^(.*animepahe.[a-z]+)?/(play|anime)/([^/]+)/([^/?#]+)').exec(url)[4];
 }
 
 function makeSearchable(string) {
@@ -7287,80 +7274,45 @@ async function getAnimeDataFromSearch(iinfo = {}, config = {}) {
   if (cached) return {old:{},new:{...cached}};
   if (!iinfo.name) return undefined;
 
-  return new Promise(async resolve => {
-    // API pages for search don't work............
-    /*let lastPage = 2;
-    let page = 1;
-    while (page < lastPage) {
-      const response = await getResponse(`/api?m=search&page=${page}&q=${makeSearchable(name)}`);
-      lastPage = response.last_page;
-
-      if (!response) resolve(response);
-
-      for (const anime of response.data) {
-        if (!id && anime.title === name) {
-          siteVars.cached.animeData.push(anime);
-          resolve(anime);
-          page = lastPage;
-          break;
-        }
-        if (id && anime.id === id) {
-          siteVars.cached.animeData.push(anime);
-          resolve(anime);
-          page = lastPage;
-          break;
-        }
-      }
-
-      page++;
-    }*/
-    const response = await asyncGetResponseData(`/api?m=search&q=${makeSearchable(iinfo.name)}`);
-    if (!response) {
-      resolve(response);
-      return;
+  const response = await asyncGetResponseData(`/api?m=search&q=${makeSearchable(iinfo.name)}`);
+  if (!response) return response;
+  const data = (() => {
+    for (const anime of response) {
+      if (matchDataPartial(anime,iinfo,{"id":"id","title":"name","session":"session"}) || (anime.poster && trimPosterUrl(anime.poster) === iinfo.poster)) return anime;
     }
-    const data = (() => {
-      for (const anime of response) {
-        if (matchDataPartial(anime,iinfo,{"id":"id","title":"name","session":"session"}) || (anime.poster && trimPosterUrl(anime.poster) === iinfo.poster)) return anime;
-      }
-      if (config.allowGuessing && response.length) return response[0];
-    })();
-    if (!data) return resolve(undefined);
+    if (config.allowGuessing && response.length) return response[0];
+  })();
+  if (!data) return undefined;
 
-    const rValue = {
-      name: data.title,
-      id: data.id,
-      session: data.session,
-      poster: trimPosterUrl(data.poster),
-    }
-    siteVars.cached.animeSearch.push(rValue);
-    resolve({old:{},new:{...rValue}});
-  });
+  const rValue = {
+    name: data.title,
+    id: data.id,
+    session: data.session,
+    poster: trimPosterUrl(data.poster),
+  }
+  siteVars.cached.animeSearch.push(rValue);
+  return {old:{},new:{...rValue}};
 }
 
 async function getAnimeSession(iinfo = {}, config = {}) {
   if (!iinfo.name && !iinfo.session && !config.justCache) return undefined;
 
-  return new Promise(async resolve => {
-    if (!Object.keys(siteVars.cached.animeSession).length) {
-      const page = await asyncGetPage('/anime');
-      if (!page) {
-        resolve(undefined);
-        return;
-      }
-      const animeList = getAnimeList($(page));
-      animeList.forEach(g => {
-        siteVars.cached.animeSession.push({
-          name: g.name,
-          session: getAnimeSessionFromUrl(g.link),
-        });
+  if (!Object.keys(siteVars.cached.animeSession).length) {
+    const page = await asyncGetPage('/anime');
+    if (!page) return undefined;
+
+    const animeList = getAnimeList($(page));
+    animeList.forEach(g => {
+      siteVars.cached.animeSession.push({
+        name: g.name,
+        session: getAnimeSessionFromUrl(g.link),
       });
-    }
-    if (config.justCache) return resolve(undefined);
-    const cached = siteVars.cached.animeSession.find(a => matchDataPartial(a,iinfo,["name","session"]));
-    if (!cached) return resolve(undefined);
-    resolve({old:{},new:{...cached}});
-  });
+    });
+  }
+  if (config.justCache) return undefined;
+  const cached = siteVars.cached.animeSession.find(a => matchDataPartial(a,iinfo,["name","session"]));
+  if (!cached) return undefined;
+  return {old:{},new:{...cached}};
 }
 
 function waitTime(ms) {
@@ -7650,170 +7602,168 @@ async function addContinueWatchingEpisodes(storage, episodeCount, clearAll = fal
   }
 
   continueWatchingStatus.inProgress = true;
-  return new Promise(async (resolve) => {
-    if (clearAll) {
-      $(`
-      <div id="anitracker-continue-watching-progress" class="anitracker-center-content" style="align-self:center;width:100%;position:absolute;z-index:2;flex-direction:column;">
-        <div class="anitracker-spinner" style="margin: auto;">
+
+  if (clearAll) {
+    $(`
+    <div id="anitracker-continue-watching-progress" class="anitracker-center-content" style="align-self:center;width:100%;position:absolute;z-index:2;flex-direction:column;">
+      <div class="anitracker-spinner" style="margin: auto;">
+        <div class="spinner-border" role="status">
+          <span class="sr-only">Loading...</span>
+        </div>
+      </div><div class="anitracker-progress-bar" style="width:12rem;margin: auto;"><div></div></div>
+    </div>`).appendTo('.anitracker-episode-list-wrapper .episode-list.row');
+  }
+
+  for (let i = 0; i < episodeCount; i++) {
+    $(`
+    <div class="anitracker-continue-watching-skeleton episode-wrap col-12 col-sm-4">
+      <div class="episode">
+        ${clearAll ? '' : `
+        <div class="anitracker-spinner anitracker-episode-spinner">
           <div class="spinner-border" role="status">
             <span class="sr-only">Loading...</span>
           </div>
-        </div><div class="anitracker-progress-bar" style="width:12rem;margin: auto;"><div></div></div>
-      </div>`).appendTo('.anitracker-episode-list-wrapper .episode-list.row');
+        </div>`}
+        <div class="episode-snapshot" style="background-color:var(--dark);">
+        </div>
+      </div>
+    </div>`).appendTo('.anitracker-episode-list-wrapper .episode-list.row');
+  }
+
+  const processedAnime = [];
+  const videoTimes = [...storage.videoTimes].reverse();
+  const finalEpisodes = [];
+
+  for (const entry of videoTimes) {
+    if (finalEpisodes.length >= episodeCount) break;
+    if (processedAnime.includes(entry.animeName) || continueWatchingStatus.displayedEps.find(a => a.animeName === entry.animeName && a.episodeNum === entry.episodeNum)) {
+      continue;
+    }
+    if (entry.animeId && isWatched(entry.animeId, entry.episodeNum)) continue;
+
+    const data = await getAnimeData({
+      name: entry.animeName,
+      id: entry.animeId,
+      videoPaths: entry.videoPaths,
+      episode: entry.episodeNum,
+    }, ["session","name","id","episode_session"], {ignored: ['storage_video']});
+    if (data.id && isWatched(data.id, entry.episodeNum)) continue;
+
+    if (data.session) {
+      const sessionResponse = await getPageResponse('/anime/' + data.session);
+      if (sessionResponse.status !== 200) {
+        // If the anime session is expired, try to get a new one
+        const data2 = await getAnimeData({
+          name: data.name || entry.animeName,
+          id: entry.animeId,
+          videoPaths: entry.videoPaths,
+          episode: entry.episodeNum,
+        }, ["session"], {ignored: ['storage_video'], requireNew: true});
+        if (data2.session) data.session = data2.session;
+        delete data.episode_session;
+      }
+    }
+    if (!data.session) {
+      addEpisode(entry, undefined, data, undefined);
+      continue;
     }
 
-    for (let i = 0; i < episodeCount; i++) {
-      $(`
-      <div class="anitracker-continue-watching-skeleton episode-wrap col-12 col-sm-4">
-        <div class="episode">
-          ${clearAll ? '' : `
-          <div class="anitracker-spinner anitracker-episode-spinner">
-            <div class="spinner-border" role="status">
-              <span class="sr-only">Loading...</span>
-            </div>
-          </div>`}
-          <div class="episode-snapshot" style="background-color:var(--dark);">
+    const episodeData = await getEpisodeData(data.session, entry.episodeNum);
+    const firstEpisode = siteVars.cached.firstEpisode[data.session]; // If not cached, it will be undefined
+    addEpisode(entry, episodeData, data, {firstEpisode: firstEpisode});
+
+    if (clearAll) $('#anitracker-continue-watching-progress .anitracker-progress-bar > div').width((processedAnime.length / episodeCount)*100 + '%');
+  }
+
+  $('.anitracker-continue-watching-skeleton').remove();
+
+  for (const ep of finalEpisodes) {
+    const img = ep.snapshot ?? 'data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==';
+    const epValue = getEpisodeValue(ep.episode, ep.episode2, storage.settings.relativeEpNums ? ep.firstEpisode : undefined);
+    const href = (() => {
+      if (ep.animeSession && ep.session) return `/play/${ep.animeSession}/${ep.session}`;
+      else if (ep.animeSession) return `/anime/${ep.animeSession}`;
+      else if (ep.title) return `/customlink?a=${encodeURIComponent(ep.title)}&e=${ep.episode}`;
+    })();
+    const animeHref = ep.animeSession ? `/anime/${ep.animeSession}` : `/customlink?a=${encodeURIComponent(ep.title)}`;
+
+    const elem = $(`
+    <div class="episode-wrap col-12 col-sm-4">
+      <div class="episode">
+        <div class="episode-snapshot">
+          <img src="${img}" class="ls-is-cached lazyloaded" alt="">
+          <svg class="play-button" viewBox="0 0 150 150" alt="Play Video"><polygon points="20, 20, 20, 140, 120, 80" fill="#fff"></polygon></svg>
+          <a href="${href}" class="play">Watch ${ep.title} - <span>${epValue}</span> Online</a>
+        </div><div class="episode-label-wrap">
+        <div class="episode-label">
+          <div class="episode-title-wrap">
+            ${ep.duration ? `<span class="episode-duration">${secondsToHMS(ep.duration)}</span>` : ''}
+            <span class="episode-title">
+              <a href="${animeHref}" title="${toHtmlCodes(ep.title)}">${ep.title}</a>
+            </span>
+          </div>
+          <div class="episode-number-wrap">
+            <div class="episode-number"><span class="text-hide">Episode </span>${epValue}</div>
           </div>
         </div>
-      </div>`).appendTo('.anitracker-episode-list-wrapper .episode-list.row');
-    }
-
-    const processedAnime = [];
-    const videoTimes = [...storage.videoTimes].reverse();
-    const finalEpisodes = [];
-
-    for (const entry of videoTimes) {
-      if (finalEpisodes.length >= episodeCount) break;
-      if (processedAnime.includes(entry.animeName) || continueWatchingStatus.displayedEps.find(a => a.animeName === entry.animeName && a.episodeNum === entry.episodeNum)) {
-        continue;
-      }
-      if (entry.animeId && isWatched(entry.animeId, entry.episodeNum)) continue;
-
-      const data = await getAnimeData({
-        name: entry.animeName,
-        id: entry.animeId,
-        videoPaths: entry.videoPaths,
-        episode: entry.episodeNum,
-      }, ["session","name","id","episode_session"], {ignored: ['storage_video']});
-      if (data.id && isWatched(data.id, entry.episodeNum)) continue;
-
-      if (data.session) {
-        const sessionResponse = await getPageResponse('/anime/' + data.session);
-        if (sessionResponse.status !== 200) {
-          // If the anime session is expired, try to get a new one
-          const data2 = await getAnimeData({
-            name: data.name || entry.animeName,
-            id: entry.animeId,
-            videoPaths: entry.videoPaths,
-            episode: entry.episodeNum,
-          }, ["session"], {ignored: ['storage_video'], requireNew: true});
-          if (data2.session) data.session = data2.session;
-          delete data.episode_session;
-        }
-      }
-      if (!data.session) {
-        addEpisode(entry, undefined, data, undefined);
-        continue;
-      }
-
-      const episodeData = await getEpisodeData(data.session, entry.episodeNum);
-      const firstEpisode = siteVars.cached.firstEpisode[data.session]; // If not cached, it will be undefined
-      addEpisode(entry, episodeData, data, {firstEpisode: firstEpisode});
-
-      if (clearAll) $('#anitracker-continue-watching-progress .anitracker-progress-bar > div').width((processedAnime.length / episodeCount)*100 + '%');
-    }
-
-    $('.anitracker-continue-watching-skeleton').remove();
-
-    for (const ep of finalEpisodes) {
-      const img = ep.snapshot ?? 'data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==';
-      const epValue = getEpisodeValue(ep.episode, ep.episode2, storage.settings.relativeEpNums ? ep.firstEpisode : undefined);
-      const href = (() => {
-        if (ep.animeSession && ep.session) return `/play/${ep.animeSession}/${ep.session}`;
-        else if (ep.animeSession) return `/anime/${ep.animeSession}`;
-        else if (ep.title) return `/customlink?a=${encodeURIComponent(ep.title)}&e=${ep.episode}`;
-      })();
-      const animeHref = ep.animeSession ? `/anime/${ep.animeSession}` : `/customlink?a=${encodeURIComponent(ep.title)}`;
-
-      const elem = $(`
-      <div class="episode-wrap col-12 col-sm-4">
-        <div class="episode">
-          <div class="episode-snapshot">
-            <img src="${img}" class="ls-is-cached lazyloaded" alt="">
-            <svg class="play-button" viewBox="0 0 150 150" alt="Play Video"><polygon points="20, 20, 20, 140, 120, 80" fill="#fff"></polygon></svg>
-            <a href="${href}" class="play">Watch ${ep.title} - <span>${epValue}</span> Online</a>
-          </div><div class="episode-label-wrap">
-          <div class="episode-label">
-            <div class="episode-title-wrap">
-              ${ep.duration ? `<span class="episode-duration">${secondsToHMS(ep.duration)}</span>` : ''}
-              <span class="episode-title">
-                <a href="${animeHref}" title="${toHtmlCodes(ep.title)}">${ep.title}</a>
-              </span>
-            </div>
-            <div class="episode-number-wrap">
-              <div class="episode-number"><span class="text-hide">Episode </span>${epValue}</div>
-            </div>
-          </div>
-          </div>
         </div>
-      </div>`).appendTo('.anitracker-episode-list-wrapper .episode-list.row')
-      .data('ep', ep.episode).data('ep2', ep.episode2).data('firstEp', ep.firstEpisode)
-      .data('videoTimeName',ep.videoTimeName).data('videoTimeEpisode',ep.videoTimeEpisode)
-      .data('animeId', ep.animeId).data('duration', ep.duration);
+      </div>
+    </div>`).appendTo('.anitracker-episode-list-wrapper .episode-list.row')
+    .data('ep', ep.episode).data('ep2', ep.episode2).data('firstEp', ep.firstEpisode)
+    .data('videoTimeName',ep.videoTimeName).data('videoTimeEpisode',ep.videoTimeEpisode)
+    .data('animeId', ep.animeId).data('duration', ep.duration);
 
-      if (ep.duration) setProgressBar(elem, false, ep.time, ep.duration);
+    if (ep.duration) setProgressBar(elem, false, ep.time, ep.duration);
 
-      addEpisodeOptions(elem.find('.episode'), {
-        copyLink: true,
-        addWatched: Boolean(ep.animeId),
-        download: true,
-        remove: true,
-      }, {
-        ep: +ep.episode,
-        title: ep.title,
-        'anime-id': ep.animeId
-      });
-    }
-    applyEpisodeOptionsEvents($('.anitracker-episode-list-wrapper .episode-wrap'));
+    addEpisodeOptions(elem.find('.episode'), {
+      copyLink: true,
+      addWatched: Boolean(ep.animeId),
+      download: true,
+      remove: true,
+    }, {
+      ep: +ep.episode,
+      title: ep.title,
+      'anime-id': ep.animeId
+    });
+  }
+  applyEpisodeOptionsEvents($('.anitracker-episode-list-wrapper .episode-wrap'));
 
-    function addEpisode(videoTimeEntry, episodeEntry, animeData, extra) {
-      // Piece together anime data based on available info
-      const episode = {
-        time: videoTimeEntry.time,
-        snapshot: episodeEntry?.snapshot,
-        episode2: episodeEntry?.episode2,
-        duration: episodeEntry?.duration ? HMStoSeconds(episodeEntry.duration) : videoTimeEntry.duration,
-        firstEpisode: extra?.firstEpisode,
-        videoTimeName: videoTimeEntry.animeName,
-        videoTimeEpisode: videoTimeEntry.episodeNum,
-        animeSession: animeData.session,
-      };
+  function addEpisode(videoTimeEntry, episodeEntry, animeData, extra) {
+    // Piece together anime data based on available info
+    const episode = {
+      time: videoTimeEntry.time,
+      snapshot: episodeEntry?.snapshot,
+      episode2: episodeEntry?.episode2,
+      duration: episodeEntry?.duration ? HMStoSeconds(episodeEntry.duration) : videoTimeEntry.duration,
+      firstEpisode: extra?.firstEpisode,
+      videoTimeName: videoTimeEntry.animeName,
+      videoTimeEpisode: videoTimeEntry.episodeNum,
+      animeSession: animeData.session,
+    };
 
-      if (episodeEntry) episode.session = episodeEntry.session;
-      else if (animeData.episode_session) episode.session = animeData.episode_session;
+    if (episodeEntry) episode.session = episodeEntry.session;
+    else if (animeData.episode_session) episode.session = animeData.episode_session;
 
-      if (animeData.id) episode.animeId = animeData.id;
-      else if (videoTimeEntry.animeId) episode.animeId = videoTimeEntry.animeId;
+    if (animeData.id) episode.animeId = animeData.id;
+    else if (videoTimeEntry.animeId) episode.animeId = videoTimeEntry.animeId;
 
-      if (animeData.name) episode.title = animeData.name;
-      else episode.title = videoTimeEntry.animeName;
+    if (animeData.name) episode.title = animeData.name;
+    else episode.title = videoTimeEntry.animeName;
 
-      if (episodeEntry) episode.episode = episodeEntry.episode;
-      else episode.episode = videoTimeEntry.episodeNum;
+    if (episodeEntry) episode.episode = episodeEntry.episode;
+    else episode.episode = videoTimeEntry.episodeNum;
 
-      if (!episode.animeSession && !episode.animeId) return;
+    if (!episode.animeSession && !episode.animeId) return;
 
-      finalEpisodes.push(episode);
-      processedAnime.push(videoTimeEntry.animeName);
-      continueWatchingStatus.displayedEps.push({animeName: videoTimeEntry.animeName, episodeNum: videoTimeEntry.episodeNum});
-    }
+    finalEpisodes.push(episode);
+    processedAnime.push(videoTimeEntry.animeName);
+    continueWatchingStatus.displayedEps.push({animeName: videoTimeEntry.animeName, episodeNum: videoTimeEntry.episodeNum});
+  }
 
-    $('#anitracker-continue-watching-progress').remove();
+  $('#anitracker-continue-watching-progress').remove();
 
-    continueWatchingStatus.inProgress = false;
-    if (continueWatchingStatus.queue.length) addContinueWatchingEpisodes(getStorage(), continueWatchingStatus.queue.shift()); // Advance the queue
-    resolve();
-  });
+  continueWatchingStatus.inProgress = false;
+  if (continueWatchingStatus.queue.length) addContinueWatchingEpisodes(getStorage(), continueWatchingStatus.queue.shift()); // Advance the queue
 
   function getPageResponse(qurl) {
     const request = new XMLHttpRequest();
@@ -7839,27 +7789,20 @@ if (isEpisode()) {
 }
 
 async function getEpisodeData(aSession, episodeNum) {
-  return new Promise(async resolve => {
-    let episodes = await getResponse(`/api?m=release&sort=episode_asc&id=${aSession}`);
-    if (!episodes) {
-      resolve(undefined);
-      return;
-    }
-    const firstEpisode = episodes.data[0].episode;
-    siteVars.cached.firstEpisode[aSession] = firstEpisode;
-    let data = episodes.data.find(a => a.episode === episodeNum);
-    if (data) {
-      resolve(data);
-      return;
-    }
-    // If the episode wasn't found on the first page, find the page where the episode is
-    const episodeOffset = firstEpisode - 1;
-    const page = Math.min(episodes.last_page, Math.ceil((episodeNum - episodeOffset) / episodes.per_page));
-    episodes = await getResponse(`/api?m=release&sort=episode_asc&id=${aSession}&page=${page}`);
-    data = episodes.data.find(a => a.episode === episodeNum);
+  let episodes = await getResponse(`/api?m=release&sort=episode_asc&id=${aSession}`);
+  if (!episodes) return undefined;
 
-    resolve(data);
-  });
+  const firstEpisode = episodes.data[0].episode;
+  siteVars.cached.firstEpisode[aSession] = firstEpisode;
+  let data = episodes.data.find(a => a.episode === episodeNum);
+  if (data) return data;
+  // If the episode wasn't found on the first page, find the page where the episode is
+  const episodeOffset = firstEpisode - 1;
+  const page = Math.min(episodes.last_page, Math.ceil((episodeNum - episodeOffset) / episodes.per_page));
+  episodes = await getResponse(`/api?m=release&sort=episode_asc&id=${aSession}&page=${page}`);
+  data = episodes.data.find(a => a.episode === episodeNum);
+
+  return data;
 }
 
 /* Return codes:
@@ -7867,71 +7810,60 @@ async function getEpisodeData(aSession, episodeNum) {
  * 1: couldn't find stored session at 404 page
  * 2: couldn't get anime data
  * 3: couldn't get episode session
- * 4: idk
 */
 async function refreshSession(from404 = false) {
-  return new Promise(async (resolve) => {
-    const storage = getStorage();
-    const storedSession = getStoredLinkData(storage);
+  const storage = getStorage();
+  const storedSession = getStoredLinkData(storage);
 
-    let name = '';
-    let episodeNum = 0;
+  if (!storedSession && from404) return 1;
+  
+  let name;
+  let episodeNum;
+  if (storedSession) {
+    name = storedSession.animeName;
+    episodeNum = storedSession.episodeNum;
+  }
+  else {
+    name = getAnimeName();
+    episodeNum = getEpisodeNum();
+  }
 
-    if (!storedSession && from404) {
-      resolve(1);
-      return;
-    }
+  const animeData = await getAnimeData({
+    name: name,
+    id: storedSession?.animeId,
+  }, ["name","session"], {allowGuessing:true,requireNew:true});
+  if (!animeData.session || (animeData.name !== name && !refreshGuessWarning(name, animeData.name))) {
+    return 2;
+  }
 
+  if (isEpisode()) {
     if (storedSession) {
-      name = storedSession.animeName;
-      episodeNum = storedSession.episodeNum;
-    }
-    else {
-      name = getAnimeName();
-      episodeNum = getEpisodeNum();
-    }
-
-    const animeData = await getAnimeData({
-      name: name,
-      id: storedSession?.animeId,
-    }, ["name","session"], {allowGuessing:true,requireNew:true});
-    if (!animeData.session || (animeData.name !== name && !refreshGuessWarning(name, animeData.name))) {
-      return resolve(2);
-    }
-
-    if (isEpisode()) {
-      if (storedSession) {
-        if (isSyncEnabled(storage)) {
-          storage.sync.temp.removedData.push(...storage.linkList.filter(g => g.type === 'episode' && g.animeSession === storedSession.animeSession && g.episodeSession === storedSession.episodeSession).map(g => {return {type: 'linkList', episodeSession: g.episodeSession}}));
-        }
-        storage.linkList = storage.linkList.filter(g => !(g.type === 'episode' && g.animeSession === storedSession.animeSession && g.episodeSession === storedSession.episodeSession));
-        saveData(storage);
+      if (isSyncEnabled(storage)) {
+        storage.sync.temp.removedData.push(...storage.linkList.filter(g => g.type === 'episode' && g.animeSession === storedSession.animeSession && g.episodeSession === storedSession.episodeSession).map(g => {return {type: 'linkList', episodeSession: g.episodeSession}}));
       }
-
-      const episodeData = await getEpisodeData(animeData.session, episodeNum);
-      const episodeSession = episodeData?.session;
-      if (!episodeSession) return resolve(3);
-
-      window.location.replace('/play/' + animeData.session + '/' + episodeSession + window.location.search);
-      resolve(0);
-      return;
+      storage.linkList = storage.linkList.filter(g => !(g.type === 'episode' && g.animeSession === storedSession.animeSession && g.episodeSession === storedSession.episodeSession));
+      saveData(storage);
     }
-    else {
-      if (storedSession) {
-        if (isSyncEnabled(storage)) {
-          storage.sync.temp.removedData.push(...storage.linkList.filter(g => g.type === 'anime' && g.animeSession === storedSession.animeSession).map(g => {return {type: 'linkList', animeSession: g.animeSession}}));
-        }
-        storage.linkList = storage.linkList.filter(g => !(g.type === 'anime' && g.animeSession === storedSession.animeSession));
-        saveData(storage);
+
+    const episodeData = await getEpisodeData(animeData.session, episodeNum);
+    const episodeSession = episodeData?.session;
+    if (!episodeSession) return 3;
+
+    window.location.replace('/play/' + animeData.session + '/' + episodeSession + window.location.search);
+    return 0;
+  }
+  else {
+    if (storedSession) {
+      if (isSyncEnabled(storage)) {
+        storage.sync.temp.removedData.push(...storage.linkList.filter(g => g.type === 'anime' && g.animeSession === storedSession.animeSession).map(g => {return {type: 'linkList', animeSession: g.animeSession}}));
       }
-
-      window.location.replace('/anime/' + animeData.session);
-      resolve(0);
-      return;
+      storage.linkList = storage.linkList.filter(g => !(g.type === 'anime' && g.animeSession === storedSession.animeSession));
+      saveData(storage);
     }
 
-    resolve(4);
-  });
+    window.location.replace('/anime/' + animeData.session);
+    return 0;
+  }
 }
 
 function refreshGuessWarning(name, title) {
@@ -8211,7 +8143,7 @@ function setRelativeEpNums(on) {
   updateEpisodePages();
   if (isAnime()) {
     if (on) {
-      const titleParts = /^(.*) Ep\. ([\d\.]+)\-?([\d\.]+)?( \[Completed\])? :: animepahe$/.exec(document.title);
+      const titleParts = /^(.*) Ep\. ([\d.]+)-?([\d.]+)?( \[Completed\])? :: animepahe$/.exec(document.title);
       if (!titleParts) return;
       siteVars.prevDocumentTitle = document.title;
 
@@ -8251,7 +8183,7 @@ function setRelativeEpNums(on) {
     else return undefined;
   })();
 
-  const dropdownEpRegex = /Episode ([\d\.]+)\-?([\d\.]+)?/;
+  const dropdownEpRegex = /Episode ([\d.]+)-?([\d.]+)?/;
   if (on) {
     getFirstEpisode(animeSession).then(firstEp => {
       setEpValue(getEpisodeValue(currentEpisode, currentEpisode2, firstEp));
@@ -8327,48 +8259,40 @@ async function getAllEpisodes(session, sort = "asc") {
 }
 
 async function getRelationData(session, relationType) {
-  return new Promise(async resolve => {
-    const relations = await getRelationList(session);
-    for (const rel of relations) {
-      if (rel.relation_type !== relationType) continue;
+  const relations = await getRelationList(session);
+  for (const rel of relations) {
+    if (rel.relation_type !== relationType) continue;
 
-      rel.episodeList = await getAllEpisodes(rel.session);;
+    rel.episodeList = await getAllEpisodes(rel.session);;
 
-      resolve(rel);
-      return;
-    }
-    resolve(undefined);
-  });
+    return rel;
+  }
+  return undefined;
 }
 
 async function getRelationList(session) {
-  return new Promise(async resolve => {
-    const page = await asyncGetPage('/anime/' + session);
-    if (!page.length) {
-      resolve(undefined);
-      return;
-    }
+  const page = await asyncGetPage('/anime/' + session);
+  if (!page.length) return undefined;
 
-    const relations = [];
-    for (const div of page.find('.anime-relation .row .col-12')) {
-      const elem = $(div);
-      const infoParts = /\s*\- (\d+|\?) Episodes? \(([^\)]+)\)/.exec(getTextContent(elem.find('.col-9.px-1')));
-      const seasonParts = /\s*([A-Za-z]+) (\d+)/.exec($(elem.find('.col-9.px-1 a')[2]).text());
-      relations.push({
-        title: $(elem.find('h5')[0]).text(),
-        type: elem.find('strong').text(),
-        episodes: infoParts[1] !== '?' ? +infoParts[1] : undefined,
-        status: infoParts[2],
-        season: seasonParts[1],
-        year: +seasonParts[2],
-        poster: elem.find('img').attr('data-src').replace('.th',''),
-        session: /^.*animepahe\.[a-z]+\/anime\/([^\/]+)/.exec(elem.find('a')[0].href)[1],
-        relation_type: elem.parents(':eq(1)').find('h4 span').text(),
-      });
-    }
+  const relations = [];
+  for (const div of page.find('.anime-relation .row .col-12')) {
+    const elem = $(div);
+    const infoParts = /\s*- (\d+|\?) Episodes? \(([^)]+)\)/.exec(getTextContent(elem.find('.col-9.px-1')));
+    const seasonParts = /\s*([A-Za-z]+) (\d+)/.exec($(elem.find('.col-9.px-1 a')[2]).text());
+    relations.push({
+      title: $(elem.find('h5')[0]).text(),
+      type: elem.find('strong').text(),
+      episodes: infoParts[1] !== '?' ? +infoParts[1] : undefined,
+      status: infoParts[2],
+      season: seasonParts[1],
+      year: +seasonParts[2],
+      poster: elem.find('img').attr('data-src').replace('.th',''),
+      session: /^.*animepahe\.[a-z]+\/anime\/([^/]+)/.exec(elem.find('a')[0].href)[1],
+      relation_type: elem.parents(':eq(1)').find('h4 span').text(),
+    });
+  }
 
-    resolve(relations);
-  });
+  return relations;
 }
 
 function hideSpinner(t, parents = 1) {
@@ -8986,7 +8910,7 @@ function updateEpisodePage(entry, allowCache = true) {
       const ep = episodes[i].episode;
       const ep2 = episodes[i].episode2;
 
-      const textNode = $(episodeElements[i]).find('.episode-number:not(.text-success)').contents().filter(function(){
+      $(episodeElements[i]).find('.episode-number:not(.text-success)').contents().filter(function(){
         return this.nodeType === 3;
       })[0].textContent = getEpisodeValue(ep, ep2, firstEpisode);
     }
@@ -9032,7 +8956,6 @@ function addTitleIcons(animeid) {
 
   $('.anitracker-bookmark-toggle').on('click keydown', (e) => {
     if (e.type === 'keydown' && e.key !== "Enter") return;
-    const check = $(e.currentTarget).find('.anitracker-title-icon-check');
     const storage = getStorage();
     const entry = storage.bookmarks.find(g => g.id === animeid);
 
@@ -9308,68 +9231,63 @@ function getBadCovers() {
 }
 
 async function getAnimeCoverUrl() {
-  return new Promise(async resolve => {
-    const anilistId = (() => {
-      for (const link of $('.external-links a')) {
-        const elem = $(link);
-        if (!elem.text().includes('AniList')) continue;
-        const regexRes = /\/\/anilist.co\/anime\/(\d+)/.exec(elem.attr('href'));
-        if (regexRes) return regexRes[1];
-        else return undefined;
-      }
-      return undefined;
-    })();
-
-    if (!anilistId) {
-      const googleRes = await withGoogle();
-      resolve(googleRes);
-      return;
+  const anilistId = (() => {
+    for (const link of $('.external-links a')) {
+      const elem = $(link);
+      if (!elem.text().includes('AniList')) continue;
+      const regexRes = /\/\/anilist.co\/anime\/(\d+)/.exec(elem.attr('href'));
+      if (regexRes) return regexRes[1];
+      else return undefined;
     }
+    return undefined;
+  })();
 
-    const request = new XMLHttpRequest();
-    request.open('POST', 'https://graphql.anilist.co', true);
-    request.setRequestHeader('Content-Type', 'application/json');
-    request.setRequestHeader('Accept', 'application/json');
+  if (!anilistId) {
+    const googleRes = await withGoogle();
+    return googleRes;
+  }
 
-    request.onload = async () => {
-      let response;
-      try {
-        response = JSON.parse(request.response);
-      }
-      catch (err) {
-        console.error(err);
-        const googleRes = await withGoogle();
-        resolve(googleRes);
-        return;
-      }
-      const animeObj = response?.data?.Media;
-      if (!animeObj || !animeObj.bannerImage) {
-        const googleRes = await withGoogle();
-        resolve(googleRes);
-        return;
-      }
+  const request = new XMLHttpRequest();
+  request.open('POST', 'https://graphql.anilist.co', true);
+  request.setRequestHeader('Content-Type', 'application/json');
+  request.setRequestHeader('Accept', 'application/json');
 
-      resolve(animeObj.bannerImage);
-    };
-    request.onerror = async (err) => {
+  request.onload = async () => {
+    let response;
+    try {
+      response = JSON.parse(request.response);
+    }
+    catch (err) {
       console.error(err);
       const googleRes = await withGoogle();
-      resolve(googleRes);
+      return googleRes;
     }
-    request.ontimeout = request.onerror;
+    const animeObj = response?.data?.Media;
+    if (!animeObj || !animeObj.bannerImage) {
+      const googleRes = await withGoogle();
+      return googleRes;
+    }
 
-    request.send(JSON.stringify({
-      query: `
-        query ($id: Int) {
-          Media (id: $id, type: ANIME) {
-            bannerImage
-          }
-        }`,
-      variables: {
-        id: anilistId
-      }
-    }));
-  });
+    return animeObj.bannerImage;
+  };
+  request.onerror = async (err) => {
+    console.error(err);
+    const googleRes = await withGoogle();
+    return googleRes;
+  }
+  request.ontimeout = request.onerror;
+
+  request.send(JSON.stringify({
+    query: `
+      query ($id: Int) {
+        Media (id: $id, type: ANIME) {
+          bannerImage
+        }
+      }`,
+    variables: {
+      id: anilistId
+    }
+  }));
 
   async function withGoogle() {
     console.log('[AnimePahe Improvements] Could not get anime cover with AniList. Trying Google.');
@@ -9690,8 +9608,8 @@ function addGeneralButtons() {
       </button>
     </div>`).appendTo('#anitracker-modal-body');
 
-    $('#anitracker-refresh-session').on('click', function(e) {
-      const elem = $('#anitracker-refresh-session');
+    $('#anitracker-refresh-session').on('click', function() {
+      const elem = $(this);
       const timeout = temporaryHtmlChange(elem, 10000, '<i class="fa fa-refresh" aria-hidden="true" style="animation: anitracker-spin 1s linear infinite;"></i>&nbsp;&nbsp;Refreshing...');
 
       refreshSession().then(result => {
@@ -9728,10 +9646,10 @@ function addGeneralButtons() {
         let currentList;
         let currentIndentation = 0;
         for (const line of lines) {
-          let finalText = line.replace(/^\s*[#\-]*\s*/,'');
+          let finalText = line.replace(/^\s*[#-]*\s*/,'');
           if (line.startsWith('###')) {
-            const matches = / \((\d{4}\-\d{2}\-\d{2})\)$/.exec(finalText);
-            if (matches) finalText = finalText.replace(/\d{4}\-\d{2}\-\d{2}/, new Date(matches[1]).toLocaleDateString());
+            const matches = / \((\d{4}-\d{2}-\d{2})\)$/.exec(finalText);
+            if (matches) finalText = finalText.replace(/\d{4}-\d{2}-\d{2}/, new Date(matches[1]).toLocaleDateString());
 
             const elem = $('<h4></h4>').text(finalText);
             elem.appendTo('#anitracker-modal-body');
@@ -9743,7 +9661,7 @@ function addGeneralButtons() {
 
           // Small markdown unordered list parser lol
           const elem = $('<li></li>').text(finalText);
-          const spaces = /^( *)\-/.exec(line);
+          const spaces = /^( *)-/.exec(line);
           if (!spaces) continue;
           const newIndentation = spaces[1] ? (spaces[1].length / 2) : 0;
           if (newIndentation > currentIndentation) for (let i = currentIndentation; i < newIndentation; i++) {
@@ -10296,7 +10214,7 @@ function addGeneralButtons() {
     $('#anitracker-import-data-label').on('keydown', (e) => {
       if (e.key === "Enter") $("#" + $(e.currentTarget).attr('for')).click();
     });
-    $('#anitracker-import-data').on('change', function(event) {
+    $('#anitracker-import-data').on('change', function() {
       const file = this.files[0];
       const fileReader = new FileReader();
       $(fileReader).on('load', function() {
@@ -10304,7 +10222,7 @@ function addGeneralButtons() {
         try {
           newData = JSON.parse(fileReader.result);
         }
-        catch (err) {
+        catch {
           alert('[AnimePahe Improvements]\n\nPlease input a valid JSON file.');
           return;
         }
@@ -10313,7 +10231,7 @@ function addGeneralButtons() {
         const diffBefore = importData(storage, newData, false);
 
         let totalChanged = 0;
-        for (const [key, value] of Object.entries(diffBefore)) {
+        for (const value of Object.values(diffBefore)) {
           totalChanged += value;
         }
         if (totalChanged === 0) {
@@ -10376,7 +10294,7 @@ function addGeneralButtons() {
         </div>
         `).appendTo('#anitracker-modal-body');
 
-        $('.anitracker-import-data-input').on('change', (e) => {
+        $('.anitracker-import-data-input').on('change', () => {
           let checksOn = 0;
           for (const elem of $('.anitracker-import-data-input')) {
             if ($(elem).prop('checked')) checksOn++;
@@ -10776,7 +10694,7 @@ function addGeneralButtons() {
           }, 1000);
         });
 
-        $('.anitracker-disconnect-sync-button').on('click', (e) => {
+        $('.anitracker-disconnect-sync-button').on('click', () => {
           $('#anitracker-modal-body').empty();
           let loading = false;
           let disconnectFailed = false;
@@ -10848,7 +10766,7 @@ function addGeneralButtons() {
           openModal(openSyncDataModal);
         });
 
-        $('.anitracker-delete-sync-button').on('click', (e) => {
+        $('.anitracker-delete-sync-button').on('click', () => {
           $('#anitracker-modal-body').empty();
           let loading = false;
           const storage = getStorage();
@@ -11220,8 +11138,6 @@ function addGeneralButtons() {
       $('.anitracker-save-button').on('click', () => {
         const storage = getStorage();
         storage.sync.settings.entered = true;
-
-        const previousSettings = copyObj(storage.sync.settings);
 
         storage.sync.settings.linkList = $('#anitracker-link-list-check').prop('checked');
         storage.sync.settings.videoTimes = $('#anitracker-video-times-check').prop('checked');
@@ -11745,7 +11661,6 @@ async function syncData() {
           updateSyncMessageElem(storage);
           resolve();
           return;
-          break;
         case 3:
           storage.sync.currentMessage = {
             type: 'error',
