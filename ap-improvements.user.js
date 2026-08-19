@@ -3000,6 +3000,7 @@ const siteVars = {
     firstEpisode: {},
     animeId: {},
     animeSession: [],
+    page: {},
   },
 };
 
@@ -3362,7 +3363,8 @@ const animeInfoFunctions = [
   },
   {
     "id": "relation_tree", // Very slow
-    "outputs": ["session","name","poster"],
+    "outputs": ["session","name","poster","id","anidb_id"],
+    "cost": 3,
     "fn": async (iinfo = {}, config = {}) => {
       if (!iinfo.startSession && !iinfo.name) return undefined;
       const searchedSessions = [];
@@ -3370,22 +3372,25 @@ const animeInfoFunctions = [
         async function searchBranches(session) {
           return new Promise(async resolve => {
             if (searchedSessions.includes(session)) return resolve(undefined);
-            const page = await asyncGetPage(`/anime/${session}`);
-            if (page) {
-              const pageData = getAnimeDataFromPage(page, false);
-              if (matchDataPartial(pageData,iinfo,["name","id","anidb_id","poster"])) {
-                return resolve({
-                  name: pageData.name,
-                  session: session,
-                  poster: pageData.poster,
-                });
-              }
+            const pageData = await getPageData(session);
+            if (pageData && matchDataPartial(pageData,iinfo,["name","id","anidb_id","poster"])) {
+              pageData.session = session;
+              return resolve(pageData);
             }
             searchedSessions.push(session);
             const relations = await getBranches(session);
             for (const rel of relations) {
-              if (rel.session !== iinfo.session && rel.title !== iinfo.name && trimPosterUrl(rel.poster) !== iinfo.poster) continue;
-              return resolve(rel);
+              if (!matchDataPartial(rel,iinfo,{"session":"session","title":"name"}) && (!rel.poster || trimPosterUrl(rel.poster) !== iinfo.poster)) continue;
+              const pageData2 = await getPageData(rel.session);
+              if (pageData2) {
+                pageData2.session = rel.session;
+                return resolve(pageData2);
+              }
+              return resolve({
+                name: rel.title,
+                session: rel.session,
+                poster: trimPosterUrl(rel.poster),
+              });
             }
             for (const rel of relations) {
               const result = await searchBranches(rel.session);
@@ -3404,20 +3409,17 @@ const animeInfoFunctions = [
         }
         const result = await searchBranches(startSession);
         if (!result) return resolve(undefined);
-        const returnData = {
-          name: result.title,
-          session: result.session,
-          poster: trimPosterUrl(result.poster),
-        };
-        for (const [key, value] of Object.entries(result)) {
-          if (!['title','session','poster'].includes(key)) returnData[key] = value;
-        }
-        resolve(returnData);
+        resolve(result);
       });
       async function getBranches(session) {
         const relations = await getRelationList(session);
         if (!relations) return [];
         return relations.filter(a => a.relation_type !== 'Character');
+      }
+      async function getPageData(session) {
+        const page = await asyncGetPage(`/anime/${session}`);
+        if (!page) return undefined;
+        return getAnimeDataFromPage(page, false);
       }
     }
   }
@@ -3447,9 +3449,10 @@ function getAnimeData(iinfo = {}, reqinfo = [], config = {}) {
       while (reqinfo.length) {
         // Find out which function is the most appropriate for the needed data
         const chosenFunction = candidateFunctions.map(a => {
+          const matches = used.includes(a.id) ? 0 : a.outputs.filter(g => reqinfo.includes(g)).length;
           return {
             fn: a.fn,
-            matches: used.includes(a.id) ? 0 : a.outputs.filter(g => reqinfo.includes(g)).length,
+            matches: matches ? Math.max(1, matches - (a.cost ?? 0)) : 0,
             id: a.id,
           };
         }).sort((a,b) => b.matches - a.matches)[0];
@@ -7126,21 +7129,28 @@ function sortAnimesChronologically(animeList) {
 }
 
 async function asyncGetPage(qurl) {
+  const cached = siteVars.cached.page[qurl];
+  if (cached) return wrapPage(cached);
+
   const req = new XMLHttpRequest();
   req.open('GET', qurl, true);
   return new Promise(resolve => {
     req.onload = () => {
       if (req.status === 200) {
-        const wrappedPage = $('<html></html>');
-        $(req.response).appendTo(wrappedPage);
-        resolve(wrappedPage);
+        if (!qurl.endsWith('anime')) siteVars.cached.page[qurl] = req.responseText;
+        resolve(wrapPage(req.responseText));
         return;
       }
-
       resolve(undefined);
     }
     req.send();
   });
+
+  function wrapPage(responseText) {
+    const wrappedPage = $('<html></html>');
+    $(responseText).appendTo(wrappedPage);
+    return wrappedPage;
+  }
 }
 
 async function getResponse(qurl) {
