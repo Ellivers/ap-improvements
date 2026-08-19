@@ -10546,7 +10546,7 @@ function addGeneralButtons() {
       else if (dataType === 'videoTimes') {
         [...storage.videoTimes].reverse().forEach(g => {
           const linkListObj = storage.linkList.find(a => a.animeId === g.animeId || a.animeName === g.animeName);
-          const href = linkListObj ? `/anime/${linkListObj.animeSession}` : `/customlink?a=${g.animeId ? g.animeId : encodeURIComponent(g.animeName)}`;
+          const href = linkListObj ? `/anime/${linkListObj.animeSession}` : `/customlink?a=${encodeURIComponent(g.animeName)}`;
           $(`
           <div class="anitracker-modal-list-entry">
             <span title="${toHtmlCodes(g.animeName)}">
@@ -10631,7 +10631,7 @@ function addGeneralButtons() {
             else return `animename="${toHtmlCodes(g.animeName)}"`;
           })();
           const linkListObj = storage.linkList.find(a => a.animeId === g.animeId || a.animeName === g.animeName);
-          const href = linkListObj ? `/anime/${linkListObj.animeSession}` : `/customlink?a=${g.animeId ? g.animeId : encodeURIComponent(g.animeName)}`;
+          const href = linkListObj ? `/anime/${linkListObj.animeSession}` : `/customlink?a=${encodeURIComponent(g.animeName)}`;
           $(`
           <div class="anitracker-modal-list-entry">
             <span title="${toHtmlCodes(g.animeName)}">
