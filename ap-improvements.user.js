@@ -3281,8 +3281,8 @@ const animeInfoFunctions = [
       const found = storage.bookmarks.find(a => matchDataPartial(a,iinfo,{"name":"name","id":"id","posterUrl":"poster"}));
       if (!found) return undefined;
       return {
-        inacurrate_name: found.animeName,
-        id: found.animeId,
+        inacurrate_name: found.name,
+        id: found.id,
         poster: found.posterUrl,
       };
     }
@@ -3296,8 +3296,8 @@ const animeInfoFunctions = [
       const found = storage.notifications.anime.find(a => matchDataPartial(a,iinfo,["name","id"]));
       if (!found) return undefined;
       return {
-        inacurrate_name: found.animeName,
-        id: found.animeId,
+        inacurrate_name: found.name,
+        id: found.id,
       };
     }
   },
