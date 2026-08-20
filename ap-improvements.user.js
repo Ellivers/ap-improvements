@@ -4803,9 +4803,19 @@ if (window.location.pathname.startsWith('/customlink')) {
 // MARKER:MAIN PAGE KEYBOARD SHORTCUTS
 // Main key events
 $(document).on('keydown', (e, other = undefined) => {
-  if (other) e = other.event;
+  if (other) {
+    e = other.event;
+    e.preventDefault = function() {};
+  }
   if (!e.key) return;
   const isTextInput = $(e.target).is('input[type=text],input[type=number],input[type=""],input:not([type]),textarea,*[role=textbox]');
+  const storage = getStorage();
+
+  // In case a keybind would scroll the page
+  if (!isTextInput && [" ","Home","End","ArrowDown","ArrowUp","PageUp","PageDown"].includes(e.key) &&
+  Object.entries(storage.settings).find(
+    ([key,val]) => key.startsWith('keybind') && val.includes(e.key)
+  )) e.preventDefault();
 
   if (modalIsOpen()) {
     if (e.key === 'Escape') return closeModal();
@@ -4821,7 +4831,6 @@ $(document).on('keydown', (e, other = undefined) => {
 
   if (isTextInput) return;
 
-  const storage = getStorage();
   if (!document.fullscreenElement) {
     if (pressedKeybind(e, storage.settings.keybindBookmarks)) return openBookmarksModal();
     if (pressedKeybind(e, storage.settings.keybindNotifications)) return openNotificationsModal();
