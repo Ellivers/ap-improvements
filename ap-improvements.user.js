@@ -5250,10 +5250,6 @@ function openBookmarksModal() {
   $('#anitracker-modal-body').empty();
   const storage = getStorage();
 
-  function isReversed() {
-    return $('.anitracker-reverse-order-button').attr('dir') === 'up';
-  }
-
   let layout = storage.settings.bookmarkLayout;
   let sort = storage.settings.bookmarkSort;
   const sessionCache = {}; // {id:session}
@@ -5292,13 +5288,18 @@ function openBookmarksModal() {
   function sortEntries(entries) {
     if (['alphabetical','status'].includes(sort)) entries.sort((a,b) => a.name < b.name ? 1 : -1);
     if (sort === 'status') entries.sort((a, b) => getStatusAttributes(a.status)[3] < getStatusAttributes(b.status)[3] ? 1 : -1)
-    if (!isReversed()) entries.reverse();
+    if ($('.anitracker-reverse-order-button').attr('dir') === 'down') entries.reverse();
   }
 
   async function layoutEntries(storage = getStorage(), goToTop = true) {
     $('.anitracker-modal-list').empty();
 
     const entries = [...storage.bookmarks];
+    if (!entries.length) {
+      $('.anitracker-modal-list').addClass('flex');
+      return $(`<span style="margin:auto;">No bookmarks yet!</span>`).appendTo('#anitracker-modal-body .anitracker-modal-list');
+    }
+
     sortEntries(entries);
     const searchInput = $('.anitracker-modal-search').val().toLowerCase();
 
@@ -5659,7 +5660,7 @@ function openBookmarksModal() {
   });
 
   if (!storage.bookmarks.length) {
-    $(`<span style="display: block;">No bookmarks yet!</span>`).appendTo('#anitracker-modal-body .anitracker-modal-list');
+    layoutEntries();
     return openModal();
   }
 
