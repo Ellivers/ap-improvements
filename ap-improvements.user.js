@@ -4761,10 +4761,8 @@ if (window.location.pathname.startsWith('/customlink')) {
     const destination = await (async () => {
       const animeParam = searchParams.get('a');
       if (!animeParam) return;
-      const animeId = searchParams.get('i');
 
       const iinfo = {};
-      if (+animeId) iinfo.id = +animeId;
       if (+animeParam) iinfo.id = +animeParam; // animeParam can be both an ID (legacy) and a name
       else iinfo.name = decodeURIComponent(animeParam);
 
@@ -4978,7 +4976,7 @@ function openNotificationsModal() {
           id: g.id,
           name: g.name
         }, ["session"], {requireInstant:true,ignored:['storage_notification_anime']});
-        const href = data.session ? `/anime/${data.session}` : `/customlink?a=${encodeURIComponent(g.name)}&i=${g.id}`;
+        const href = data.session ? `/anime/${data.session}` : `/customlink?a=${encodeURIComponent(g.name)}`;
         $(`
         <div class="anitracker-modal-list-entry" animeid="${g.id}" animename="${toHtmlCodes(g.name)}">
           <a href="${href}" target="_blank" title="${toHtmlCodes(g.name)}">
@@ -5063,7 +5061,7 @@ function openNotificationsModal() {
           <div class="anitracker-feed-schedule-header">${getDayName(entry.num).slice(0,3)}</div>
           <div class="anitracker-feed-schedule-body${entry.num === today ? ' anitracker-feed-schedule-today' : ''}">
             ${entry.list.map(g => {
-              const href = g.session ? `/anime/${g.session}` : `/customlink?a=${encodeURIComponent(g.name)}&i=${g.id}`;
+              const href = g.session ? `/anime/${g.session}` : `/customlink?a=${encodeURIComponent(g.name)}`;
               return `<a href="${href}" target="_blank" title="${toHtmlCodes(g.name)} (${g.time.toLocaleTimeString([], {timeStyle:'short'})})">${g.name}</a>`;
             }).join('')}
           </div>
@@ -7460,7 +7458,7 @@ function setupContinueWatchingSection() {
         const href = (() => {
           if (data.session && data.episode_session) return `/play/${data.session}/${data.episode_session}`;
           else if (data.session) return `/anime/${data.session}`;
-          return `/customlink?a=${encodeURIComponent(visibleAnimeName)}${animeId ? `&i=${animeId}` : ''}&e=${entry.episodeNum}`;
+          return `/customlink?a=${encodeURIComponent(visibleAnimeName)}&e=${entry.episodeNum}`;
         })();
 
         const elem = $(`
@@ -7688,7 +7686,7 @@ async function addContinueWatchingEpisodes(storage, episodeCount, clearAll = fal
     const href = (() => {
       if (ep.animeSession && ep.session) return `/play/${ep.animeSession}/${ep.session}`;
       else if (ep.animeSession) return `/anime/${ep.animeSession}`;
-      else if (ep.title) return `/customlink?a=${encodeURIComponent(ep.title)}${ep.animeId ? `&i=${ep.animeId}` : ''}&e=${ep.episode}`;
+      else if (ep.title) return `/customlink?a=${encodeURIComponent(ep.title)}&e=${ep.episode}`;
     })();
     const animeHref = ep.animeSession ? `/anime/${ep.animeSession}` : `/customlink?a=${encodeURIComponent(ep.title)}`;
 
@@ -8653,7 +8651,7 @@ function applyEpisodeOptionsEvents(elems) {
     dropdown.hide();
 
     if (action === 'copy') {
-      navigator.clipboard.writeText(`${window.location.origin}/customlink?a=${encodeURIComponent(animeName)}${animeId ? `&i=${animeId}` : ''}&e=${episode}`);
+      navigator.clipboard.writeText(`${window.location.origin}/customlink?a=${encodeURIComponent(animeName)}&e=${episode}`);
       showMessage('Copied link!');
       return;
     }
@@ -8988,7 +8986,7 @@ function addTitleIcons(animeid) {
   $('.anitracker-title-copy-link').parent().find('>div').tooltip({trigger: "manual"});
   $('.anitracker-title-copy-link').on('click keydown', function(e) {
     if (e.type === 'keydown' && e.key !== "Enter") return;
-    navigator.clipboard.writeText(window.location.origin + '/customlink?a=' + encodeURIComponent(getAnimeName()) + '&i=' + animeid);
+    navigator.clipboard.writeText(window.location.origin + '/customlink?a=' + encodeURIComponent(getAnimeName()));
     $(this).replaceClass('fa-link','fa-check');
     const tooltipElem = $(this).parent().find('>div');
     tooltipElem.tooltip('show');
@@ -10518,7 +10516,7 @@ function addGeneralButtons() {
       else if (dataType === 'videoTimes') {
         [...storage.videoTimes].reverse().forEach(g => {
           const linkListObj = storage.linkList.find(a => a.animeId === g.animeId || a.animeName === g.animeName);
-          const href = linkListObj ? `/anime/${linkListObj.animeSession}` : `/customlink?a=${encodeURIComponent(g.animeName)}${g.animeId ? `&i=${g.animeId}` : ''}`;
+          const href = linkListObj ? `/anime/${linkListObj.animeSession}` : `/customlink?a=${encodeURIComponent(g.animeName)}`;
           $(`
           <div class="anitracker-modal-list-entry">
             <span title="${toHtmlCodes(g.animeName)}">
@@ -10603,7 +10601,7 @@ function addGeneralButtons() {
             else return `animename="${toHtmlCodes(g.animeName)}"`;
           })();
           const linkListObj = storage.linkList.find(a => a.animeId === g.animeId || a.animeName === g.animeName);
-          const href = linkListObj ? `/anime/${linkListObj.animeSession}` : `/customlink?a=${encodeURIComponent(g.animeName)}${g.animeId ? `&i=${g.animeId}` : ''}`;
+          const href = linkListObj ? `/anime/${linkListObj.animeSession}` : `/customlink?a=${encodeURIComponent(g.animeName)}`;
           $(`
           <div class="anitracker-modal-list-entry">
             <span title="${toHtmlCodes(g.animeName)}">
@@ -12048,27 +12046,23 @@ if (isEpisode()) {
   </div>`).appendTo('#anitracker');
   addOptionSwitch('autoPlayNext','Auto-Play Next','Automatically go to the next episode when the current one has ended.','#anitracker');
 
-  const copyButtons = $('.anitracker-copy-button');
-  showButtonSpinner(copyButtons);
+  $('.anitracker-copy-button').on('click', (e) => {
+    const targ = $(e.currentTarget);
+    const type = targ.attr('copy');
+    const episode = getEpisodeNum();
+    if (['link','link-time'].includes(type)) {
+      navigator.clipboard.writeText(`${window.location.origin}/customlink?a=${encodeURIComponent(getAnimeName())}&e=${episode}${type !== 'link-time' ? '' : ('&t=' + currentEpisodeTime.toString())}`);
+    }
+    targ.popover('show');
+    setTimeout(() => {
+      targ.popover('hide');
+    }, 1000);
+  });
 
   getAnimeData({
     session: animeSession
   }, ["id"]).then(data => {
     if (data.id) addTitleIcons(data.id);
-
-    hideButtonSpinner(copyButtons);
-    copyButtons.on('click', (e) => {
-      const targ = $(e.currentTarget);
-      const type = targ.attr('copy');
-      const episode = getEpisodeNum();
-      if (['link','link-time'].includes(type)) {
-        navigator.clipboard.writeText(`${window.location.origin}/customlink?a=${encodeURIComponent(getAnimeName())}${data.id ? `&i=${data.id}` : ''}&e=${episode}${type !== 'link-time' ? '' : ('&t=' + currentEpisodeTime.toString())}`);
-      }
-      targ.popover('show');
-      setTimeout(() => {
-        targ.popover('hide');
-      }, 1000);
-    });
   });
 }
 
