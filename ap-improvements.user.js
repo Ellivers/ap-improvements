@@ -7084,11 +7084,8 @@ function deleteEpisodesFromTracker(exclude, nameInput, id = undefined) {
     storage.sync.temp.removedData.push(...storage.videoTimes.filter(g => ((id && g.animeId === id) || stringSimilarity(g.animeName, animeName) > 0.81) && g.episodeNum !== exclude).map(g => {return {type: 'videoTimes', animeName: g.animeName, episodeNum: g.episodeNum}}));
   }
 
-  storage.linkList = (() => {
-    if (id) return storage.linkList.filter(g => !(g.type === 'episode' && g.animeId === id && g.episodeNum !== exclude));
-    return storage.linkList.filter(g => !(g.type === 'episode' && g.animeName === animeName && g.episodeNum !== exclude));
-  })();
-  storage.videoTimes = (() => {
+  storage.linkList = storage.linkList.filter(g => !(g.type === 'episode' && ((id && g.animeId === id) || g.animeName === animeName) && g.episodeNum !== exclude));
+  storage.videoTimes = (() => { // Different method so unrelated entries don't get accidentally removed
     if (id) return storage.videoTimes.filter(g => !(g.animeId === id && g.episodeNum !== exclude));
     return storage.videoTimes.filter(g => !(g.episodeNum !== exclude && stringSimilarity(g.animeName, animeName) > 0.81));
   })();
@@ -7108,20 +7105,8 @@ function deleteEpisodeFromTracker(animeName, episodeNum, animeId = undefined) {
     storage.sync.temp.removedData.push(...storage.videoTimes.filter(g => ((animeId && g.animeId === animeId) || stringSimilarity(g.animeName, animeName) > 0.81) && g.episodeNum === episodeNum).map(g => {return {type: 'videoTimes', animeName: g.animeName, episodeNum: g.episodeNum}}));
   }
 
-  storage.linkList = (() => {
-    if (animeId) {
-      const found = storage.linkList.find(g => g.type === 'episode' && g.animeId === animeId && g.episodeNum === episodeNum);
-      if (found) return storage.linkList.filter(g => !(g.type === 'episode' && g.animeId === animeId && g.episodeNum === episodeNum));
-    }
-    return storage.linkList.filter(g => !(g.type === 'episode' && g.animeName === animeName && g.episodeNum === episodeNum));
-  })();
-  storage.videoTimes = (() => {
-    if (animeId) {
-      const found = storage.videoTimes.find(g => g.animeId === animeId && g.episodeNum === episodeNum);
-      if (found) return storage.videoTimes.filter(g => !(g.animeId === animeId && g.episodeNum === episodeNum));
-    }
-    return storage.videoTimes.filter(g => !(g.episodeNum === episodeNum && stringSimilarity(g.animeName, animeName) > 0.81));
-  })();
+  storage.linkList = storage.linkList.filter(g => !(g.type === 'episode' && ((animeId && g.animeId === animeId) || g.animeName === animeName) && g.episodeNum === episodeNum));
+  storage.videoTimes = storage.videoTimes.filter(g => !(((animeId && g.animeId === animeId) || stringSimilarity(g.animeName, animeName) > 0.81) && g.episodeNum === episodeNum));
 
   if (animeId) {
     if (!storage.videoTimes.find(g => g.animeId === animeId)) {
