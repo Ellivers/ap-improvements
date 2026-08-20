@@ -13,7 +13,7 @@
 // @grant       GM_setValue
 // @grant       GM_xmlhttpRequest
 // @grant       GM_info
-// @version     4.11.0
+// @version     4.11.1
 // @author      Ellivers
 // @license     MIT
 // @description Improvements and additions for the AnimePahe site
@@ -4726,7 +4726,10 @@ if (window.location.pathname.startsWith('/customlink')) {
           if (iinfo.name && iinfo.name !== data.name) {
             const data2 = await getAnimeData(JSON.parse(JSON.stringify(iinfo)),["session","name"]);
             if (!data2.session && !confirm(`[AnimePahe Improvements]\n\nCouldn't find any anime with name "${iinfo.name}".\nGo to "${data.name}" instead?`)) return;
-            else if (data2.session) parts.animeSession = data2.session;
+            else if (data2.session) {
+              parts.animeSession = data2.session;
+              continue;
+            }
           }
           parts.animeSession = data.session;
           continue;

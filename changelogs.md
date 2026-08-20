@@ -1,3 +1,7 @@
+### 4.11.1 (2026-08-20)
+- Fixed share links failing when confirming a redirect
+- Fixed a potential error
+
 ### 4.11.0 (2026-08-19)
 - Added bookmark and episode feed buttons to episode pages
 - Added an icon on anime and episode pages to copy a link to the anime
