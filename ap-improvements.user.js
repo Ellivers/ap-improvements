@@ -9455,7 +9455,7 @@ function addGeneralButtons() {
   function openOptionsModal() {
     $('#anitracker-modal-body').empty();
 
-    $(`<div class="anitracker-dark-area" id="anitracker-player-options"><span style="display:block;">Video player:</span></div>`).appendTo('#anitracker-modal-body');
+    $(`<div class="anitracker-dark-area" id="anitracker-player-options"><strong style="display:block;">Video player:</strong></div>`).appendTo('#anitracker-modal-body');
 
     addOptionSwitch('autoPlayVideo', 'Auto-Play Video', 'Automatically play the video when it is loaded. (You might need to tell your browser to allow auto-playing on this website)', '#anitracker-player-options');
     addOptionSwitch('theatreMode', 'Theatre Mode', 'Expand the video player for a better experience on bigger screens.', '#anitracker-player-options');
@@ -9505,7 +9505,7 @@ function addGeneralButtons() {
       });
     }
 
-    $('<div class="anitracker-dark-area" id="anitracker-site-options" style="margin-top:10px;"><span style="display:block;">Site:</span></div>').appendTo('#anitracker-modal-body');
+    $('<div class="anitracker-dark-area" id="anitracker-site-options" style="margin-top:10px;"><strong style="display:block;">Site:</strong></div>').appendTo('#anitracker-modal-body');
     addOptionSwitch('hideThumbnails', 'Hide Thumbnails', 'Hide thumbnails and preview images.', '#anitracker-site-options');
     addOptionSwitch('relativeEpNums', 'Relative Episode Numbers', 'Don\'t continue episode numbers through sequels.', '#anitracker-site-options');
     addOptionSwitch('autoDelete', 'Auto-Clear Episodes', 'Only one episode of a series is stored in the tracker at a time.', '#anitracker-site-options');
