@@ -128,6 +128,7 @@ function getDefaultData() {
       keybindBookmarks: "b",
       keybindNotifications: "n",
       keybindSearch: "s",
+      keybindModalBack: "Backspace",
       keybindTheatreMode: "t",
       keybindNextEpisode: "Shift+N",
       keybindPrevEpisode: "Shift+P",
@@ -4819,7 +4820,7 @@ $(document).on('keydown', (e, other = undefined) => {
 
   if (modalIsOpen()) {
     if (e.key === 'Escape') return closeModal();
-    if (e.key === 'Backspace' && !isTextInput) return modalBackFunction();
+    if (pressedKeybind(e, storage.settings.keybindModalBack) && !isTextInput) return modalBackFunction();
     if (e.ctrlKey && e.key === 'f' && $('.anitracker-modal-search').length) {
       const elems = $('.anitracker-modal-search');
       elems[0].scrollIntoView(true);
@@ -9693,6 +9694,7 @@ function addGeneralButtons() {
         {title:'Bookmarks',id:'keybindBookmarks',parent:'#anitracker-site-keybinds'},
         {title:'Episode Feed',id:'keybindNotifications',parent:'#anitracker-site-keybinds'},
         {title:'Open Search',id:'keybindSearch',parent:'#anitracker-site-keybinds'},
+        {title:'Previous Menu',id:'keybindModalBack',parent:'#anitracker-site-keybinds'},
         {title:'Toggle Theatre Mode',id:'keybindTheatreMode',parent:'#anitracker-site-keybinds'},
         {title:'Next Episode',id:'keybindNextEpisode',parent:'#anitracker-site-keybinds'},
         {title:'Previous Episode',id:'keybindPrevEpisode',parent:'#anitracker-site-keybinds'},
