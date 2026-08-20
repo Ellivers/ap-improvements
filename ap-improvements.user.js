@@ -7092,19 +7092,11 @@ function deleteEpisodesFromTracker(exclude, nameInput, id = undefined) {
   }
 
   storage.linkList = (() => {
-    if (id) {
-      const found = storage.linkList.filter(g => g.type === 'episode' && g.animeId === id && g.episodeNum !== exclude);
-      if (found.length > 0) return storage.linkList.filter(g => !(g.type === 'episode' && g.animeId === id && g.episodeNum !== exclude));
-    }
-
+    if (id) return storage.linkList.filter(g => !(g.type === 'episode' && g.animeId === id && g.episodeNum !== exclude));
     return storage.linkList.filter(g => !(g.type === 'episode' && g.animeName === animeName && g.episodeNum !== exclude));
   })();
   storage.videoTimes = (() => {
-    if (id) {
-      const found = storage.videoTimes.filter(g => g.animeId === id && g.episodeNum !== exclude);
-      if (found.length > 0) return storage.videoTimes.filter(g => !(g.animeId === id && g.episodeNum !== exclude));
-    }
-
+    if (id) return storage.videoTimes.filter(g => !(g.animeId === id && g.episodeNum !== exclude));
     return storage.videoTimes.filter(g => !(g.episodeNum !== exclude && stringSimilarity(g.animeName, animeName) > 0.81));
   })();
 
@@ -7128,7 +7120,6 @@ function deleteEpisodeFromTracker(animeName, episodeNum, animeId = undefined) {
       const found = storage.linkList.find(g => g.type === 'episode' && g.animeId === animeId && g.episodeNum === episodeNum);
       if (found) return storage.linkList.filter(g => !(g.type === 'episode' && g.animeId === animeId && g.episodeNum === episodeNum));
     }
-
     return storage.linkList.filter(g => !(g.type === 'episode' && g.animeName === animeName && g.episodeNum === episodeNum));
   })();
   storage.videoTimes = (() => {
@@ -7136,7 +7127,6 @@ function deleteEpisodeFromTracker(animeName, episodeNum, animeId = undefined) {
       const found = storage.videoTimes.find(g => g.animeId === animeId && g.episodeNum === episodeNum);
       if (found) return storage.videoTimes.filter(g => !(g.animeId === animeId && g.episodeNum === episodeNum));
     }
-
     return storage.videoTimes.filter(g => !(g.episodeNum === episodeNum && stringSimilarity(g.animeName, animeName) > 0.81));
   })();
 
@@ -8278,13 +8268,13 @@ async function getAllEpisodes(session, sort = "asc") {
   });
 }
 
+// "Relation data" is what the relation list entry contains + the full episode list
 async function getRelationData(session, relationType) {
   const relations = await getRelationList(session);
   for (const rel of relations) {
     if (rel.relation_type !== relationType) continue;
 
     rel.episodeList = await getAllEpisodes(rel.session);;
-
     return rel;
   }
   return undefined;
@@ -8389,7 +8379,9 @@ async function setRelationPoster(name, type) {
 
   // If auto-clear is on and the episode is a prequel, delete the episode from the tracker
   if (type === 'prequel' && getStorage().settings.autoDelete === true) {
-    deleteEpisodesFromTracker(getEpisodeNum(), relationData.title);
+    const page = await asyncGetPage(`/anime/${relationData.session}`);
+    const pageData = page ? await getAnimeDataFromPage(page, false) : undefined;
+    deleteEpisodesFromTracker(pageData ? undefined : getEpisodeNum(), relationData.title, pageData?.id);
   }
 }
 
