@@ -136,6 +136,8 @@ function getDefaultData() {
       keybind10sForward: "l",
       keybind1fBackward: ",",
       keybind1fForward: ".",
+      keybindPlayerStart: "Home",
+      keybindPlayerEnd: "End",
       keybindToggleLoop: "Shift+L",
       keybindResetPlayer: "",
     },
@@ -1600,6 +1602,14 @@ const _css = `
       else if (pressedKeybind(e, anitrackerSettings.keybind1fForward)) {
         player.currentTime = Math.min(player.duration, player.currentTime + frametime);
         return;
+      }
+    }
+    if (player.readyState > 2) {
+      if (pressedKeybind(e, anitrackerSettings.keybindPlayerStart)) {
+        return player.currentTime = 0;
+      }
+      if (pressedKeybind(e, anitrackerSettings.keybindPlayerEnd)) {
+        return player.currentTime = player.duration;
       }
     }
 
@@ -9702,6 +9712,8 @@ function addGeneralButtons() {
         {title:'Forward 10 Seconds',id:'keybind10sForward',parent:'#anitracker-player-keybinds'},
         {title:'Backward 1 Frame',id:'keybind1fBackward',parent:'#anitracker-player-keybinds'},
         {title:'Forward 1 Frame',id:'keybind1fForward',parent:'#anitracker-player-keybinds'},
+        {title:'Go to Start',id:'keybindPlayerStart',parent:'#anitracker-player-keybinds'},
+        {title:'Go to End',id:'keybindPlayerEnd',parent:'#anitracker-player-keybinds'},
         {title:'Toggle Looping',id:'keybindToggleLoop',parent:'#anitracker-player-keybinds'},
         {title:'Reset Player',id:'keybindResetPlayer',parent:'#anitracker-player-keybinds'},
       ];
