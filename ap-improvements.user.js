@@ -4767,14 +4767,7 @@ if (window.location.pathname.startsWith('/customlink')) {
           else iinfo.name = decodeURIComponent(value);
           const data = await getAnimeData(copyObj(iinfo),["session","name"],{allowGuessing:true});
           if (!data.session) return;
-          if (iinfo.name && iinfo.name !== data.name) {
-            const data2 = await getAnimeData(copyObj(iinfo),["session","name"]);
-            if (!data2.session && !confirm(`[AnimePahe Improvements]\n\nCouldn't find any anime with name "${iinfo.name}".\nGo to "${data.name}" instead?`)) return;
-            else if (data2.session) {
-              parts.animeSession = data2.session;
-              continue;
-            }
-          }
+          if (iinfo.name && iinfo.name !== data.name && !confirm(`[AnimePahe Improvements]\n\nCouldn't find any anime with name "${iinfo.name}".\nGo to "${data.name}" instead?`)) return;
           parts.animeSession = data.session;
           continue;
         }
