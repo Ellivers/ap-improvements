@@ -3405,7 +3405,7 @@ const animeInfoFunctions = [
           const data = await getAnimeDataFromSearch(iinfo, {
             allowGuessing: true
           });
-          if (!data) return resolve(undefined);
+          if (!data?.session) return resolve(undefined);
           startSession = data.session;
         }
         const result = await searchBranches(startSession);
