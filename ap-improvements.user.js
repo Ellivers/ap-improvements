@@ -1800,6 +1800,10 @@ const _css = `
   z-index:50;
   box-shadow: rgba(0, 0, 0, 0.49) 0px 0px 10px 2px;
 }
+#anitracker-modal-content>div {
+  display:flex;
+  flex-direction:column;
+}
 #anitracker-modal-close {
   font-size: 2.5em;
   margin-right: 5px;
@@ -1821,15 +1825,18 @@ const _css = `
 #anitracker-modal-content.shift #anitracker-modal-close {
   position: relative;
 }
-#anitracker-modal-title {
-  min-height: 2.3rem;
-  margin: auto;
-  width: fit-content;
+#anitracker-modal-title {min-height: 2.3rem;\n}
+#anitracker-modal-title, #anitracker-modal-subtitle {
+  text-align:center;
+  margin: 0;
+  display: block;
+}
+#anitracker-modal-content header {
+  padding: 5px;
 }
 #anitracker-modal-body {
   padding: 10px;
   overflow-y: auto;
-  height: calc(100% - 2.3rem);
 }
 #anitracker-modal-body .anitracker-switch {margin-bottom: 2px;\n}
 #anitracker-message-container>span {
@@ -3555,7 +3562,10 @@ function addPermanentElements() {
     <div id="anitracker-modal-content">
       <i tabindex="0" id="anitracker-modal-close" class="fa fa-close"></i>
       <div>
-        <h4 id="anitracker-modal-title"></h4>
+        <header>
+          <h4 id="anitracker-modal-title"></h4>
+          <span id="anitracker-modal-subtitle" class="anitracker-secondary-info"></span>
+        </header>
         <div id="anitracker-modal-body"></div>
       </div>
     </div>
@@ -3581,7 +3591,8 @@ function openModal(title = '', backFunction, options = {}) {
   if (backFunction) close.replaceClass('fa-close', 'fa-arrow-left').attr('title', 'Go back to previous menu');
   else close.replaceClass('fa-arrow-left', 'fa-close').attr('title', 'Close modal');
   setModalTitle(title);
-  $('#anitracker-modal-content').removeClass('shift').addClass(options.shiftContent ? 'shift':'');
+  setModalSubtitle('');
+  setModalShift(options.shiftContent);
 
   const storage = getStorage();
 
@@ -3628,8 +3639,17 @@ function modalIsOpen() {
   return $('#anitracker-modal').is(':visible');
 }
 
-function setModalTitle(title = '') {
-  $('#anitracker-modal-title').text(title);
+function setModalTitle(text = '') {
+  $('#anitracker-modal-title').text(text);
+}
+
+function setModalSubtitle(text = '') {
+  $('#anitracker-modal-subtitle').text(text);
+}
+
+function setModalShift(shift) {
+  if (shift) $('#anitracker-modal-content').addClass('shift');
+  else $('#anitracker-modal-content').removeClass('shift');
 }
 
 function addModalEvent(elem, events, handler) {
@@ -4315,7 +4335,6 @@ function displayCollection(seriesList, elem) {
   elem.on('click', () => {
     $('#anitracker-modal-body').empty();
     $(`
-    <p class="anitracker-secondary-info">May not be entirely accurate</p>
     <div class="anitracker-modal-list-container">
       <div class="anitracker-modal-list" style="min-height: 100px;min-width: 200px;"></div>
     </div>`).appendTo('#anitracker-modal-body');
@@ -4339,6 +4358,7 @@ function displayCollection(seriesList, elem) {
     }
 
     openModal(`Collection - ${seriesList.length} Entries`);
+    setModalSubtitle('May not be entirely accurate');
     scrollModalToTop();
   });
 }
@@ -4978,11 +4998,10 @@ function openNotificationsModal() {
       makeSchedule(day);
     });
 
-    openModal('', openNotificationsModal, {hideAnimation: !animation});
+    openModal('Manage Episode Feed', openNotificationsModal, {hideAnimation: !animation, shiftContent: true});
     if (!storage.notifications.anime.length) {
       $(`<span>Use the <i class="fa fa-bell" title="bell"></i> button on an ongoing anime to add it to the feed.</span>`).appendTo('#anitracker-modal-body .anitracker-modal-list');
       makeSchedule(storage.settings.notifScheduleStart);
-      setModalTitle('Manage Episode Feed');
       return;
     }
 
@@ -5027,7 +5046,7 @@ function openNotificationsModal() {
         });
       }
       makeSchedule(storage.settings.notifScheduleStart);
-      setModalTitle('Manage Episode Feed');
+      setModalShift(false);
 
       $('.anitracker-modal-list-entry .anitracker-get-all-button').on('click', (e) => {
         const elem = $(e.currentTarget);
@@ -5669,15 +5688,11 @@ function openBookmarksModal() {
     $('#anitracker-modal-body .anitracker-dropdown-content').hide();
   });
 
-  if (!storage.bookmarks.length) {
-    layoutEntries();
-    openModal('Bookmarks');
-  }
+  if (!storage.bookmarks.length) return layoutEntries();
 
   const promise = siteVars.cached.animeSession.length ? waitTime(200) : getAnimeSession({},{justCache:true});
   loadUntilPromise($('#anitracker-modal-body .anitracker-modal-list'), promise).then(() => {
     layoutEntries().then(() => {
-      setModalTitle('Bookmarks');
       const storage = getStorage();
       storage.bookmarks.forEach(b => {delete b.newlyAdded;});
       saveData(storage);
@@ -5687,7 +5702,7 @@ function openBookmarksModal() {
   if (!isMobileOrTablet()) setTimeout(() => {
     $('.anitracker-modal-search').focus();
   }, 0);
-  openModal();
+  openModal('Bookmarks');
 }
 
 function getBookmarkImage(elem, bookmark, session = undefined) {
