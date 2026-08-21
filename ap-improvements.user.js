@@ -5749,7 +5749,7 @@ function openBookmarkStatusEditModal(id, adding=false) {
 
   if (adding) {
     $(`
-    ${limitReached ? '<span style="color: var(--danger);">You already have too many bookmarks</span>' : ''}
+    ${limitReached ? '<span style="color: var(--danger);display: block;text-align: center;">You already have too many bookmarks</span>' : ''}
     <button class="btn btn-secondary anitracker-flat-button anitracker-confirm-button" title="Add bookmark" style="width:100%;" ${limitReached ? 'disabled' : ''}>
       <i class="fa fa-bookmark" aria-hidden="true"></i>
       &nbsp;Add Bookmark
