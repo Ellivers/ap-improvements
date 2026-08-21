@@ -1808,6 +1808,8 @@ const _css = `
   aspect-ratio: 1;
   border-radius: 5px;
   text-align: center;
+  position: absolute;
+  margin-top: -5px;
 }
 #anitracker-modal-close:hover,#anitracker-modal-close:focus-visible {
   color: rgb(255, 0, 108);
@@ -1816,9 +1818,18 @@ const _css = `
 #anitracker-modal-close:active {
   translate: 0px 7%;
 }
+#anitracker-modal-content.shift #anitracker-modal-close {
+  position: relative;
+}
+#anitracker-modal-title {
+  min-height: 2.3rem;
+  margin: auto;
+  width: fit-content;
+}
 #anitracker-modal-body {
   padding: 10px;
-  overflow-x: hidden;
+  overflow-y: auto;
+  height: calc(100% - 2.3rem);
 }
 #anitracker-modal-body .anitracker-switch {margin-bottom: 2px;\n}
 #anitracker-message-container>span {
@@ -3542,9 +3553,11 @@ function addPermanentElements() {
   <div id="anitracker-message-container" class="anitracker-center-content"></div>
   <div id="anitracker-modal" tabindex="-1">
     <div id="anitracker-modal-content">
-      <i tabindex="0" id="anitracker-modal-close" class="fa fa-close">
-      </i>
-      <div id="anitracker-modal-body"></div>
+      <i tabindex="0" id="anitracker-modal-close" class="fa fa-close"></i>
+      <div>
+        <h4 id="anitracker-modal-title"></h4>
+        <div id="anitracker-modal-body"></div>
+      </div>
     </div>
   </div>`).insertBefore('.main-header');
 
@@ -3560,17 +3573,20 @@ function addPermanentElements() {
 }
 addPermanentElements();
 
-function openModal(backFunction, animation = true) {
+function openModal(title = '', backFunction, options = {}) {
   modalBackFunction = backFunction || closeModal;
   $('#anitracker-modal').trigger('anitracker:open');
 
-  if (backFunction) $('#anitracker-modal-close').replaceClass('fa-close', 'fa-arrow-left').attr('title', 'Go back to previous menu');
-  else $('#anitracker-modal-close').replaceClass('fa-arrow-left', 'fa-close').attr('title', 'Close modal');
+  const close = $('#anitracker-modal-close');
+  if (backFunction) close.replaceClass('fa-close', 'fa-arrow-left').attr('title', 'Go back to previous menu');
+  else close.replaceClass('fa-arrow-left', 'fa-close').attr('title', 'Close modal');
+  setModalTitle(title);
+  $('#anitracker-modal-content').removeClass('shift').addClass(options.shiftContent ? 'shift':'');
 
   const storage = getStorage();
 
   return new Promise(resolve => {
-    if (animation && storage.settings.reduceMotion !== true) {
+    if (!options.hideAnimation && storage.settings.reduceMotion !== true) {
       if (!modalIsOpen()) {
         playAnimation($('#anitracker-modal-content'), 'modalOpen');
         playAnimation($('#anitracker-modal'), 'fadeIn').then(() => {
@@ -3610,6 +3626,10 @@ function closeModal() {
 
 function modalIsOpen() {
   return $('#anitracker-modal').is(':visible');
+}
+
+function setModalTitle(title = '') {
+  $('#anitracker-modal-title').text(title);
 }
 
 function addModalEvent(elem, events, handler) {
@@ -3765,14 +3785,14 @@ if (isEpisode()) {
         if (timestamp.end !== undefined) timestamps[timestamp.type].end = timestamp.end;
       }
 
-      $(`<h4>Timestamp Results</h4>
+      $(`
       <textarea style="padding:10px;background-color: rgb(30, 35, 40);border-radius: 5px;font-family:monospace;color:white;height:20rem;"
                    >${JSON.stringify(timestamps, null, 2)}</textarea>
       <p class="anitracker-secondary-info">You can open an issue
         <a href="https://github.com/Ellivers/open-anime-timestamps" target="_blank" style="text-decoration:underline;">here</a>
         to get these added.</p>`).appendTo('#anitracker-modal-body');
 
-      openModal();
+      openModal('Timestamp Results');
     }
     else if (action === 'key') {
       $(document).trigger('keydown', {event: data.event});
@@ -4295,7 +4315,6 @@ function displayCollection(seriesList, elem) {
   elem.on('click', () => {
     $('#anitracker-modal-body').empty();
     $(`
-    <h4 style="margin-bottom:0px;">Collection - ${seriesList.length} Entries</h4>
     <p class="anitracker-secondary-info">May not be entirely accurate</p>
     <div class="anitracker-modal-list-container">
       <div class="anitracker-modal-list" style="min-height: 100px;min-width: 200px;"></div>
@@ -4319,7 +4338,7 @@ function displayCollection(seriesList, elem) {
       </div>`).appendTo('#anitracker-modal-body .anitracker-modal-list');
     }
 
-    openModal();
+    openModal(`Collection - ${seriesList.length} Entries`);
     scrollModalToTop();
   });
 }
@@ -4914,7 +4933,6 @@ function openNotificationsModal() {
   $('#anitracker-modal-body').empty();
 
   $(`
-  <h4>Episode Feed</h4>
   <div class="btn-group" style="margin-bottom: 10px;">
     <button class="btn btn-secondary anitracker-view-notif-animes" title="View schedule and remove anime from the feed">
       <i class="fa fa-calendar" aria-hidden="true"></i>
@@ -4936,7 +4954,6 @@ function openNotificationsModal() {
     $('#anitracker-modal-body').empty();
     const storage = getStorage();
     $(`
-    <h4>Manage Episode Feed</h4>
     <div class="anitracker-feed-schedule"></div>
     <label for="anitracker-week-start-dropdown-toggle" style="vertical-align: top;" title="Select which day the schedule should start">Start from:</label>
     <div class="btn-group" style="margin-bottom: 10px;">
@@ -4961,10 +4978,11 @@ function openNotificationsModal() {
       makeSchedule(day);
     });
 
+    openModal('', openNotificationsModal, {hideAnimation: !animation});
     if (!storage.notifications.anime.length) {
       $(`<span>Use the <i class="fa fa-bell" title="bell"></i> button on an ongoing anime to add it to the feed.</span>`).appendTo('#anitracker-modal-body .anitracker-modal-list');
       makeSchedule(storage.settings.notifScheduleStart);
-      openModal(openNotificationsModal, animation);
+      setModalTitle('Manage Episode Feed');
       return;
     }
 
@@ -5009,6 +5027,7 @@ function openNotificationsModal() {
         });
       }
       makeSchedule(storage.settings.notifScheduleStart);
+      setModalTitle('Manage Episode Feed');
 
       $('.anitracker-modal-list-entry .anitracker-get-all-button').on('click', (e) => {
         const elem = $(e.currentTarget);
@@ -5069,15 +5088,13 @@ function openNotificationsModal() {
         </div>`).appendTo($('.anitracker-feed-schedule'));
       }
     }
-
-    openModal(openNotificationsModal, animation);
   }
   $('.anitracker-view-notif-animes').on('click', openNotifAnimesModal);
 
   const animeData = [];
   const queue = [...oldStorage.notifications.anime];
 
-  openModal().then(() => {
+  openModal('Episode Feed').then(() => {
     if (queue.length > 0) next();
     else done();
   });
@@ -5248,7 +5265,6 @@ function openBookmarksModal() {
   let sort = storage.settings.bookmarkSort;
   const sessionCache = {}; // {id:session}
   $(`
-  <h4>Bookmarks</h4>
   <div style="display: flex;gap: 8px;flex-wrap: wrap;">
     <div class="btn-group">
       <input autocomplete="off" class="form-control anitracker-text-input-bar anitracker-modal-search" placeholder="Search">
@@ -5607,13 +5623,13 @@ function openBookmarksModal() {
         html2canvas($('.anitracker-modal-list-container')[0], { allowTaint:true, scale: (newWidth > 1024 ? 0.8 : 1), backgroundColor:null }).then(function(canvas) {
           $('.anitracker-spinner').remove();
           $(`
-          <h4>Share Result</h4>
           <p class="anitracker-secondary-info">Right-click to save</p>
           ${layout === 'list' ? '<p class="anitracker-secondary-info"><i>Grid view is recommended over list view</i></p>' : ''}
           <div id="anitracker-bookmark-share-result"></div>`).appendTo('#anitracker-modal-body');
           $(canvas).css('height', '100%').css('width', '').appendTo('#anitracker-bookmark-share-result');
           $('#anitracker-bookmark-share-result').css('max-width', Math.min($(canvas).width(), prevWidth));
           scrollModalToTop();
+          setModalTitle('Share Result');
         });
         $('#anitracker-modal-body').empty();
         $(`
@@ -5622,12 +5638,12 @@ function openBookmarksModal() {
             <span class="sr-only">Loading...</span>
           </div>
         </div>`).appendTo('#anitracker-modal-body');
-        openModal(openBookmarksModal);
+        openModal('', openBookmarksModal);
       }).fail(() => {
         console.error("[AnimePahe Improvements] html2canvas failed to load");
         $('#anitracker-modal-body').empty();
         $('<span style="color:var(--danger)">Failed to load!</span>').appendTo('#anitracker-modal-body');
-        openModal(openBookmarksModal);
+        openModal('Share Result', openBookmarksModal);
       });
     }
     else if (action === 'text') {
@@ -5655,12 +5671,13 @@ function openBookmarksModal() {
 
   if (!storage.bookmarks.length) {
     layoutEntries();
-    return openModal();
+    openModal('Bookmarks');
   }
 
   const promise = siteVars.cached.animeSession.length ? waitTime(200) : getAnimeSession({},{justCache:true});
   loadUntilPromise($('#anitracker-modal-body .anitracker-modal-list'), promise).then(() => {
     layoutEntries().then(() => {
+      setModalTitle('Bookmarks');
       const storage = getStorage();
       storage.bookmarks.forEach(b => {delete b.newlyAdded;});
       saveData(storage);
@@ -6760,7 +6777,6 @@ function loadIndexPage() {
     $('#anitracker-modal-body').empty();
 
     $(`
-    <p>Rules for ${filterType} filters</p>
     <div class="anitracker-filter-rule-selection" ${disableInclude} data-rule-type="include" style="background-color: #485057;">
       <i class="fa fa-plus" aria-hidden="true"></i>
       <span>Include:</span>
@@ -6814,14 +6830,13 @@ function loadIndexPage() {
 
     refreshBtnStates();
 
-    openModal();
+    openModal(`Rules for ${filterType} filters`);
   });
 
   $('#anitracker-time-search-button').on('click', () => {
     $('#anitracker-modal-body').empty();
 
     $(`
-    <h5>Season range</h5>
     <div class="custom-control custom-switch">
       <input type="checkbox" class="custom-control-input" id="anitracker-settings-enable-switch">
       <label class="custom-control-label" for="anitracker-settings-enable-switch" title="Enable season range filter">Enable</label>
@@ -6944,7 +6959,7 @@ function loadIndexPage() {
       closeModal();
     });
 
-    openModal();
+    openModal('Season range');
   });
 
   $('#anitracker-random-anime').on('click', function(e) {
@@ -7411,7 +7426,6 @@ function setupContinueWatchingSection() {
     const storage = getStorage();
 
     $(`
-    <h4 style="margin-bottom:0;">Video Progress</h4>
     <p class="anitracker-secondary-info">Bookmarked entries have icons</p>
     <div class="btn-group" style="margin-left: 5px;">
       <input autocomplete="off" class="form-control anitracker-text-input-bar anitracker-modal-search" placeholder="Search">
@@ -7541,7 +7555,10 @@ function setupContinueWatchingSection() {
     }
 
     const promise = siteVars.cached.animeSession.length ? waitTime(200) : getAnimeSession({},{justCache:true});
-    loadUntilPromise($('#anitracker-modal-body .anitracker-modal-list'), promise).then(layoutEntries);
+    loadUntilPromise($('#anitracker-modal-body .anitracker-modal-list'), promise).then(() => {
+      layoutEntries();
+      setModalTitle('Video Progress');
+    });
 
     if (!isMobileOrTablet()) setTimeout(() => {
       $('.anitracker-modal-search').focus();
@@ -9614,7 +9631,6 @@ function addGeneralButtons() {
       $('#anitracker-modal-body').empty();
 
       $(`
-      <h4 style="margin-bottom:0;">Version History</h4>
       <div style="margin-top:20px;">
         <div id="anitracker-changelog-spinner" class="anitracker-spinner anitracker-center-content" style="width:100%;">
           <div class="spinner-border" role="status">
@@ -9626,6 +9642,7 @@ function addGeneralButtons() {
       const req = new XMLHttpRequest();
       req.open('GET', `https://raw.githubusercontent.com/Ellivers/ap-improvements/refs/heads/${initialStorage.debug?.devChangelog ? 'dev' : 'master'}/changelogs.md`, true);
       req.onload = () => {
+        setModalTitle('Version History');
         $('#anitracker-changelog-spinner').remove();
         if (req.status !== 200) {
           $('<span class="text-danger">Couldn\'t get version history.</span>').appendTo('#anitracker-modal-body');
@@ -9667,7 +9684,7 @@ function addGeneralButtons() {
       };
       req.send();
 
-      openModal(openOptionsModal);
+      openModal('', openOptionsModal);
     });
 
     $('#anitracker-edit-keybinds').on('click', () => {
@@ -9733,7 +9750,7 @@ function addGeneralButtons() {
       const storage = getStorage();
       const defaultData = getDefaultData();
 
-      $(`<h4>Edit Keybinds</h4>
+      $(`
       <div class="anitracker-dark-area">
         <strong>Site:</strong>
         <div class="anitracker-keybinds-section" id="anitracker-site-keybinds"></div>
@@ -9797,14 +9814,13 @@ function addGeneralButtons() {
         if (changed) updateConflicts();
       });
 
-      openModal(openOptionsModal);
+      openModal('Edit Keybinds', openOptionsModal);
     });
 
     $('#anitracker-dl-options').on('click', () => {
       $('#anitracker-modal-body').empty();
       const storage = getStorage();
       $(`
-        <h4>Download Preferences</h4>
         <p class="anitracker-secondary-info anitracker-thin-text">
           These preferences apply when downloading an episode through its dropdown menu.
         </p>
@@ -9856,10 +9872,10 @@ function addGeneralButtons() {
         })[lang];
       }
 
-      openModal(openOptionsModal);
+      openModal('Download Preferences', openOptionsModal, {shiftContent:true});
     });
 
-    openModal();
+    openModal('Options');
   }
   $('#anitracker-options').on('click', openOptionsModal);
 
@@ -10083,7 +10099,7 @@ function addGeneralButtons() {
         saveData(storage);
       });
 
-      openModal(openShowDataModal);
+      openModal('', openShowDataModal);
 
       $('.anitracker-edit-data-key').focus();
 
@@ -10192,7 +10208,7 @@ function addGeneralButtons() {
             });
           }`);
         });
-        openModal(openEditDataModal);
+        openModal('Debug', openEditDataModal);
       }
     }
 
@@ -10235,7 +10251,6 @@ function addGeneralButtons() {
 
         $('#anitracker-modal-body').empty();
         $(`
-        <h4>Choose what to import</h4>
         <br>
         <div class="form-check">
           <input class="form-check-input anitracker-import-data-input" type="checkbox" value="" id="anitracker-link-list-check" ${diffBefore.linkListAdded > 0 ? "checked" : "disabled"}>
@@ -10312,7 +10327,7 @@ function addGeneralButtons() {
           openShowDataModal();
         });
 
-        openModal(openShowDataModal);
+        openModal('Choose what to import', openShowDataModal);
       });
       fileReader.readAsText(file);
     });
@@ -10757,7 +10772,7 @@ function addGeneralButtons() {
           });
 
           $('.anitracker-disconnect-sync-cancel-button').on('click', openSyncDataModal);
-          openModal(openSyncDataModal);
+          openModal('', openSyncDataModal);
         });
 
         $('.anitracker-delete-sync-button').on('click', () => {
@@ -10888,7 +10903,7 @@ function addGeneralButtons() {
           });
 
           $('.anitracker-delete-sync-cancel-button').on('click', openSyncDataModal);
-          openModal(openSyncDataModal);
+          openModal('', openSyncDataModal);
         });
       }
       else {
@@ -10957,7 +10972,7 @@ function addGeneralButtons() {
             });
           });
 
-          openModal(openSyncDataModal);
+          openModal('', openSyncDataModal);
         });
 
         $('.anitracker-enter-sync-code-button').on('click', openCodeEnterModal);
@@ -10966,7 +10981,7 @@ function addGeneralButtons() {
         openSyncSettingsModal(openSyncDataModal);
       });
 
-      openModal(openShowDataModal);
+      openModal('Data Syncing', openShowDataModal, {shiftContent: true});
 
       function openCodeCreationModal() {
         $('#anitracker-modal-body').empty();
@@ -11001,7 +11016,7 @@ function addGeneralButtons() {
           }, 1000);
         });
         $('.anitracker-done-button').on('click', openSyncDataModal);
-        openModal(openSyncDataModal);
+        openModal('', openSyncDataModal);
       }
 
       function openCodeEnterModal() {
@@ -11048,7 +11063,7 @@ function addGeneralButtons() {
           });
         });
 
-        openModal(openSyncDataModal);
+        openModal('Enter code', openSyncDataModal);
 
         function showError(msg) {
           $('.anitracker-sync-code-enter-error').text(msg).show();
@@ -11062,7 +11077,6 @@ function addGeneralButtons() {
       const storage = getStorage();
       const settings = storage.sync.settings;
       $(`
-      <h4 style="text-align:center;margin-bottom:16px;">Choose sync settings</h4>
       ${firstTime ? '<p class="anitracker-secondary-info anitracker-thin-text">Automatically sync data between multiple devices</p>' : ''}
       <div class="form-check">
         <input class="form-check-input anitracker-sync-settings-input" type="checkbox" value="" id="anitracker-video-times-check" ${settings.videoTimes ? "checked" : ""}>
@@ -11169,7 +11183,7 @@ function addGeneralButtons() {
         else closeModal();
       });
 
-      openModal(backFunction);
+      openModal('Choose sync settings', backFunction);
     }
 
     $('#anitracker-sync-data').on('click', () => {
@@ -11178,7 +11192,7 @@ function addGeneralButtons() {
       else openSyncSettingsModal(openShowDataModal, true);
     });
 
-    openModal();
+    openModal('Manage Data');
   }
 
   $('#anitracker-show-data').on('click', openShowDataModal);
