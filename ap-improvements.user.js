@@ -1825,7 +1825,7 @@ const _css = `
 #anitracker-modal-content.shift #anitracker-modal-close {
   position: relative;
 }
-#anitracker-modal-title {min-height: 2.3rem;\n}
+#anitracker-modal-content:not(.shift) #anitracker-modal-title {min-height: 2.3rem;\n}
 #anitracker-modal-title, #anitracker-modal-subtitle {
   text-align:center;
   margin: 0;
@@ -2501,7 +2501,7 @@ header.main-header nav .main-nav li.nav-item > a:focus {
   width: 100%;
   border: none;
   padding: 5px;
-  margin: 5px;
+  margin: 5px 0;
   border-radius: 10px;
   background-color: #656f79;
   color: white;
@@ -2536,6 +2536,10 @@ header.main-header nav .main-nav li.nav-item > a:focus {
 .anitracker-thin-text {
   max-width: 16rem;
   text-align: center;
+}
+.anitracker-center-item {
+  display: block;
+  margin: auto;
 }
 .anitracker-dark-area {
   display: block;
@@ -3590,8 +3594,8 @@ function openModal(title = '', backFunction, options = {}) {
   const close = $('#anitracker-modal-close');
   if (backFunction) close.replaceClass('fa-close', 'fa-arrow-left').attr('title', 'Go back to previous menu');
   else close.replaceClass('fa-arrow-left', 'fa-close').attr('title', 'Close modal');
-  setModalTitle(title);
-  setModalSubtitle('');
+  $('#anitracker-modal-title').text(title);
+  setModalSubtitle(options.subtitle ?? '');
   setModalShift(options.shiftContent);
 
   const storage = getStorage();
@@ -3637,10 +3641,6 @@ function closeModal() {
 
 function modalIsOpen() {
   return $('#anitracker-modal').is(':visible');
-}
-
-function setModalTitle(text = '') {
-  $('#anitracker-modal-title').text(text);
 }
 
 function setModalSubtitle(text = '') {
@@ -3806,7 +3806,7 @@ if (isEpisode()) {
       }
 
       $(`
-      <textarea style="padding:10px;background-color: rgb(30, 35, 40);border-radius: 5px;font-family:monospace;color:white;height:20rem;"
+      <textarea style="padding:10px;background-color: rgb(30, 35, 40);border-radius: 5px;font-family:monospace;color:white;height:20rem;width:100%;"
                    >${JSON.stringify(timestamps, null, 2)}</textarea>
       <p class="anitracker-secondary-info">You can open an issue
         <a href="https://github.com/Ellivers/open-anime-timestamps" target="_blank" style="text-decoration:underline;">here</a>
@@ -4357,8 +4357,7 @@ function displayCollection(seriesList, elem) {
       </div>`).appendTo('#anitracker-modal-body .anitracker-modal-list');
     }
 
-    openModal(`Collection - ${seriesList.length} Entries`);
-    setModalSubtitle('May not be entirely accurate');
+    openModal(`Collection - ${seriesList.length} Entries`, undefined, {subtitle: 'May not be entirely accurate', shiftContent: true});
     scrollModalToTop();
   });
 }
@@ -5113,7 +5112,7 @@ function openNotificationsModal() {
   const animeData = [];
   const queue = [...oldStorage.notifications.anime];
 
-  openModal('Episode Feed').then(() => {
+  openModal('Episode Feed', undefined, {shiftContent: true}).then(() => {
     if (queue.length > 0) next();
     else done();
   });
@@ -5172,7 +5171,10 @@ function openNotificationsModal() {
     if (!storage.notifications.episodes.length) {
       $("<span>Nothing here yet!</span>").appendTo('#anitracker-modal-body .anitracker-modal-list');
     }
-    else addToList(20);
+    else {
+      addToList(20);
+      setModalShift(false);
+    }
   }
 
   function addToList(num) {
@@ -5648,7 +5650,7 @@ function openBookmarksModal() {
           $(canvas).css('height', '100%').css('width', '').appendTo('#anitracker-bookmark-share-result');
           $('#anitracker-bookmark-share-result').css('max-width', Math.min($(canvas).width(), prevWidth));
           scrollModalToTop();
-          setModalTitle('Share Result');
+          setModalShift(false);
         });
         $('#anitracker-modal-body').empty();
         $(`
@@ -5657,12 +5659,12 @@ function openBookmarksModal() {
             <span class="sr-only">Loading...</span>
           </div>
         </div>`).appendTo('#anitracker-modal-body');
-        openModal('', openBookmarksModal);
+        openModal('Share Result', openBookmarksModal, {shiftContent: true});
       }).fail(() => {
         console.error("[AnimePahe Improvements] html2canvas failed to load");
         $('#anitracker-modal-body').empty();
         $('<span style="color:var(--danger)">Failed to load!</span>').appendTo('#anitracker-modal-body');
-        openModal('Share Result', openBookmarksModal);
+        openModal('Share Result', openBookmarksModal, {shiftContent: true});
       });
     }
     else if (action === 'text') {
@@ -5749,7 +5751,7 @@ function openBookmarkStatusEditModal(id, adding=false) {
 
   $(`
   <div style="display:flex;gap:10px;">
-    <div class="anitracker-bookmark-edit-side" style="max-width:12em;">
+    <div class="anitracker-bookmark-edit-side" style="max-width:12em;min-width:10em;">
       <div><span style="display:inline-block;width:100%;">${toHtmlCodes(entry.name)}</span></div>
       <button class="btn dropdown-toggle btn-secondary anitracker-status-dropdown-button" data-bs-toggle="dropdown" data-toggle="dropdown" data-value="${status}" title="Select anime watching status" style="background-color: ${statusAttrs[1]};width:100%;display:block;margin-bottom:16px;">${statusAttrs[0]}</button>
       <div class="dropdown-menu anitracker-dropdown-content anitracker-status-dropdown" style="width:12em;"></div>
@@ -5812,7 +5814,7 @@ function openBookmarkStatusEditModal(id, adding=false) {
     });
   }
 
-  openModal();
+  openModal(adding ? 'Add Bookmark' : 'Edit Bookmark');
 
   const imgElem = $('.anitracker-image-wrapper');
   imgElem.find('img').on('load', function() {
@@ -7441,7 +7443,6 @@ function setupContinueWatchingSection() {
     const storage = getStorage();
 
     $(`
-    <p class="anitracker-secondary-info">Bookmarked entries have icons</p>
     <div class="btn-group" style="margin-left: 5px;">
       <input autocomplete="off" class="form-control anitracker-text-input-bar anitracker-modal-search" placeholder="Search">
       <button dir="down" class="btn btn-secondary dropdown-toggle anitracker-reverse-order-button anitracker-list-btn" title="Sort direction (down is default, and means newest first)"></button>
@@ -7572,13 +7573,13 @@ function setupContinueWatchingSection() {
     const promise = siteVars.cached.animeSession.length ? waitTime(200) : getAnimeSession({},{justCache:true});
     loadUntilPromise($('#anitracker-modal-body .anitracker-modal-list'), promise).then(() => {
       layoutEntries();
-      setModalTitle('Video Progress');
+      setModalSubtitle('Bookmarked entries have icons');
     });
 
     if (!isMobileOrTablet()) setTimeout(() => {
       $('.anitracker-modal-search').focus();
     }, 0);
-    openModal();
+    openModal('Video Progress');
   });
 }
 
@@ -8750,7 +8751,7 @@ function applyEpisodeOptionsEvents(elems) {
         else if (candidates.length === 1) downloadEpisode(candidates[0].url, elem, resPref, langPref);
         else {
           $('#anitracker-modal-body').empty();
-          $(`<span class="anitracker-thin-text">Select which version to download</span>`).appendTo('#anitracker-modal-body');
+          $(`<span class="anitracker-thin-text anitracker-center-item">Select which version to download</span>`).appendTo('#anitracker-modal-body');
           candidates.forEach(a => {
             $(`<button href="${a.url}" class="anitracker-download-select-button">${a.html}</button>`).appendTo('#anitracker-modal-body');
           });
@@ -8759,7 +8760,7 @@ function applyEpisodeOptionsEvents(elems) {
             downloadEpisode(btnElem.attr('href'), elem, resPref, langPref);
             closeModal();
           });
-          openModal();
+          openModal('', undefined, {shiftContent:true});
           addModalEvent($('#anitracker-modal'), 'anitracker:close', () => {spinner.remove()});
         }
       };
@@ -9657,13 +9658,13 @@ function addGeneralButtons() {
       const req = new XMLHttpRequest();
       req.open('GET', `https://raw.githubusercontent.com/Ellivers/ap-improvements/refs/heads/${initialStorage.debug?.devChangelog ? 'dev' : 'master'}/changelogs.md`, true);
       req.onload = () => {
-        setModalTitle('Version History');
         $('#anitracker-changelog-spinner').remove();
         if (req.status !== 200) {
           $('<span class="text-danger">Couldn\'t get version history.</span>').appendTo('#anitracker-modal-body');
           return;
         }
-        $(`<span>Current version: ${GM_info.script.version}</span>`).insertAfter('#anitracker-modal-body>h4');
+        setModalShift(false);
+        setModalSubtitle(`Current version: ${GM_info.script.version}`);
 
         const lines = req.response.split('\n');
         let currentList;
@@ -9699,7 +9700,7 @@ function addGeneralButtons() {
       };
       req.send();
 
-      openModal('', openOptionsModal);
+      openModal('Version History', openOptionsModal, {shiftContent: true});
     });
 
     $('#anitracker-edit-keybinds').on('click', () => {
@@ -10114,7 +10115,7 @@ function addGeneralButtons() {
         saveData(storage);
       });
 
-      openModal('', openShowDataModal);
+      openModal('Edit Data', openShowDataModal);
 
       $('.anitracker-edit-data-key').focus();
 
@@ -10342,7 +10343,7 @@ function addGeneralButtons() {
           openShowDataModal();
         });
 
-        openModal('Choose what to import', openShowDataModal);
+        openModal('Choose what to import', openShowDataModal, {shiftContent: true});
       });
       fileReader.readAsText(file);
     });
@@ -10787,7 +10788,7 @@ function addGeneralButtons() {
           });
 
           $('.anitracker-disconnect-sync-cancel-button').on('click', openSyncDataModal);
-          openModal('', openSyncDataModal);
+          openModal('Disconnect Sync', openSyncDataModal, {shiftContent: true});
         });
 
         $('.anitracker-delete-sync-button').on('click', () => {
@@ -10918,14 +10919,11 @@ function addGeneralButtons() {
           });
 
           $('.anitracker-delete-sync-cancel-button').on('click', openSyncDataModal);
-          openModal('', openSyncDataModal);
+          openModal('Delete Code', openSyncDataModal, {shiftContent: true});
         });
       }
       else {
         $(`
-        <button class="btn btn-secondary anitracker-change-sync-settings-button" title="Change sync settings" style="float:right;">
-          <i class="fa fa-cog" aria-hidden="true"></i>
-        </button>
         <div style="display:flex;flex-direction:column;align-items:center;gap:5px;">
           <p class="anitracker-secondary-info anitracker-thin-text">Automatically sync data between multiple devices</p>
           <div>
@@ -10937,6 +10935,10 @@ function addGeneralButtons() {
           <button class="btn btn-secondary anitracker-enter-sync-code-button" title="Enter an already existing sync code">
             <i class="fa fa-search" aria-hidden="true"></i>
             &nbsp;Enter Sync Code...
+          </button>
+          <button class="btn btn-secondary anitracker-flat-button anitracker-change-sync-settings-button" title="Change sync settings" style="margin-top:12px;">
+            <i class="fa fa-cog" aria-hidden="true"></i>
+            &nbsp;Settings...
           </button>
           ${getSyncMessageElem(storage)}
         </div>`).appendTo('#anitracker-modal-body');
@@ -10987,7 +10989,7 @@ function addGeneralButtons() {
             });
           });
 
-          openModal('', openSyncDataModal);
+          openModal('Create Code', openSyncDataModal);
         });
 
         $('.anitracker-enter-sync-code-button').on('click', openCodeEnterModal);
@@ -10996,7 +10998,7 @@ function addGeneralButtons() {
         openSyncSettingsModal(openSyncDataModal);
       });
 
-      openModal('Data Syncing', openShowDataModal, {shiftContent: true});
+      openModal('Data Syncing', openShowDataModal, {shiftContent: (syncEnabled && !storage.debug?.noSyncSim)});
 
       function openCodeCreationModal() {
         $('#anitracker-modal-body').empty();
@@ -11031,7 +11033,7 @@ function addGeneralButtons() {
           }, 1000);
         });
         $('.anitracker-done-button').on('click', openSyncDataModal);
-        openModal('', openSyncDataModal);
+        openModal('Create Code', openSyncDataModal);
       }
 
       function openCodeEnterModal() {
@@ -11078,7 +11080,7 @@ function addGeneralButtons() {
           });
         });
 
-        openModal('Enter code', openSyncDataModal);
+        openModal('Enter Code', openSyncDataModal);
 
         function showError(msg) {
           $('.anitracker-sync-code-enter-error').text(msg).show();
@@ -11198,7 +11200,7 @@ function addGeneralButtons() {
         else closeModal();
       });
 
-      openModal('Choose sync settings', backFunction);
+      openModal('Choose sync settings', backFunction, {shiftContent: true});
     }
 
     $('#anitracker-sync-data').on('click', () => {
