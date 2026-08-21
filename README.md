@@ -39,6 +39,7 @@ If you find a bug or have a suggestion, feel free to [open an issue](https://git
  * Allows you to copy screenshots to the clipboard instead of downloading them.
  * Frame-by-frame controls on videos, using ',' and '.'
  * Skip 10 seconds on videos at a time, using 'J' and 'L'
+ * Adds keybinds for going to the start and end of a video (Home & End)
  * Changes the video 'loop' keybind to Shift + L (by default)
  * Allows you to press Shift + N to go to the next episode, or Shift + P to go to the previous one.
  * Speed up or slow down a video by holding Ctrl and:

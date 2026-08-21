@@ -1,3 +1,14 @@
+### 4.12.0 (in development)
+- Added keybinds for going to the start and end of a video
+  - Default keybinds are Home and End, respectively
+- Made the keybind for going to the previous modal menu modifiable
+  - Default keybind is Backspace
+- The page is no longer scrolled when pressing a keybind that would otherwise do so
+- Made the section text of the Options menu bold
+- Fixed the no bookmarks text disappearing when changing the bookmark sorting/layout
+- Fixed some links in the Manage Data menu still using IDs instead of names 
+- Various other fixes
+
 ### 4.11.1 (2026-08-20)
 - Fixed share links failing when confirming a redirect
 - Fixed a potential error
