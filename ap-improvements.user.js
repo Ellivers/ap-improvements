@@ -2943,7 +2943,7 @@ header.main-header nav .nav-search .search-results-wrap a {
     gap: 12px;
   }
   .anitracker-bookmark-grid-entry {
-    width: 8rem;
+    width: 9rem;
   }
   .anitracker-share-bookmarks-button {
     margin-right: 0;
