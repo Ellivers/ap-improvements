@@ -510,8 +510,13 @@ const kwikDLPageRegex = /^https:\/\/kwik\.\w+\/f\//;
 function anitrackerKwikLoad() {
   if (typeof $ !== "undefined" && $() !== null) anitrackerPlayerLoad(window.location.origin + window.location.pathname);
   else {
-    const scriptElem = document.querySelector('head > link:nth-child(12)');
-    if (scriptElem == null) {
+    let scriptElem;
+    for (const elem of document.querySelectorAll('head > link')) {
+      if (!elem.href.includes('jquery')) continue;
+      scriptElem = elem;
+      break;
+    }
+    if (!scriptElem) {
       const h1 = document.querySelector('h1');
       // Some bug that the kwik DL page had before
       // (You're not actually blocked when this happens)
@@ -521,7 +526,7 @@ function anitrackerKwikLoad() {
       }
       return;
     }
-    scriptElem.onload(() => {anitrackerPlayerLoad(window.location.origin + window.location.pathname)});
+    scriptElem.addEventListener('load', () => {anitrackerPlayerLoad(window.location.origin + window.location.pathname)});
   }
 
   function anitrackerPlayerLoad(url) { // "url" does not include search params
@@ -1301,9 +1306,9 @@ const _css = `
 
   let setTimeElapsed = false;
   // MARKER:VIDEO LOADED EVENT
-  player.addEventListener('progress', function loadVideoData() {
+  $(player).on('progress', function loadVideoData() {
     if (player.readyState < 2) return;
-    player.removeEventListener('progress', loadVideoData);
+    $(player).off('progress', loadVideoData);
 
     // Set up video events
     let lastTimeUpdate = 0;
@@ -1422,6 +1427,8 @@ const _css = `
     });
     //
   });
+
+  if (player.readyState > 2) $(player).trigger('progress');
 
   function getFrame(video, time, dimensions) {
     return new Promise((resolve) => {
@@ -1759,7 +1766,7 @@ if ($() !== null) anitrackerLoad();
 else {
   for (const elem of document.querySelectorAll('head > link')) {
     if (!elem.href.includes('jquery')) continue;
-    elem.onload = anitrackerLoad;
+    elem.addEventListener('load', anitrackerLoad);
     break;
   }
 }
