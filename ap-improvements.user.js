@@ -870,8 +870,9 @@ const _css = `
     const storedVideoTime = getStoredTime(vidInfo.animeName, vidInfo.episodeNum, storage);
 
     if (!storedVideoTime) {
-      if (requestId() || waitingState.idRequest === 1) return;
-      createStoredTime(undefined, storage);
+      getValueByRequest('id').then(id => {
+        createStoredTime(id);
+      });
       return;
     }
 
@@ -902,16 +903,6 @@ const _css = `
   let timestampEditModeEnabled = false;
 
   // MARKER:MESSAGES FROM MAIN PAGE
-  // For message requests from the main page
-  // -1: failed
-  // 0: hasn't started
-  // 1: waiting
-  // 2: succeeded
-  const waitingState = {
-    idRequest: 0,
-    videoUrlRequest: 0,
-    anidbIdRequest: 0
-  };
   const requests = {};
   // Messages received from main page
   window.onmessage = async function(e) {
@@ -1178,26 +1169,6 @@ const _css = `
     });
   }
 
-  // Sends a request for the anime ID, and creates a video time entry on response
-  function requestId() {
-    sendRequest('id')?.then(id => {
-      const storage = getStorage();
-      const vidInfo = getVideoInfo();
-      const found = getStoredTime(vidInfo.animeName, vidInfo.episodeNum, storage);
-
-      if (!found) createStoredTime(id, storage);
-      else {
-        found.animeId = id; // If the entry already exists, just add the ID
-        saveData(storage);
-      }
-
-      const storedPlaybackSpeed = storage.videoSpeed.find(a => a.animeId === data.id);
-      if (storedPlaybackSpeed) setSpeed(storedPlaybackSpeed.speed);
-    }).catch(() => {
-      updateStoredTime();
-    });
-  }
-
   // Return values:
   // true: sent
   // false: won't send
@@ -1307,18 +1278,56 @@ const _css = `
     requestAnidbId(); // To get timestamps
   }
 
-  function seeked() {
-    updateStoredTime();
-    checkActiveTimestamps();
-    finishedLoading();
-  }
-
   function initialSeek(time) {
+    if (time === 0) return finishedLoading();
+    $(player).on('seeked', function fn() {
+      finishedLoading();
+      $(player).off('seeked', fn);
+    });
     player.currentTime = time;
-    if (time === 0) seeked();
   }
 
-  let setTimeElapsed = false;
+  function applyPlaybackSpeedFromEntry(id, storage = getStorage()) {
+    const storedPlaybackSpeed = storage.videoSpeed.find(a => a.animeId === id);
+    if (storedPlaybackSpeed) setSpeed(storedPlaybackSpeed.speed);
+  }
+
+  function setupVars(storedVideoTime) {
+    if (storedVideoTime.animeId) applyPlaybackSpeedFromEntry(storedVideoTime.animeId, storage);
+    if (!storedVideoTime.hasTimestamps) return;
+    if (storedVideoTime.timestampData?.timestamps) {
+      // Handle previous format
+      requestAnidbId();
+    }
+    else {
+      if (anitrackerSettings.skipButton) timestamps = storedVideoTime.timestampData;
+      if (anitrackerSettings.seekPoints) setSeekPoints(storedVideoTime.timestampData);
+    }
+  }
+
+  function upgradeVideoTimeData(storedVideoTime, storage) {
+    const videoPath = getVideoPath(url);
+    if (!storedVideoTime.videoPaths.includes(videoPath)) {
+      bumpSyncDiff(storage, 'videoTimeEntryUpdate');
+      storedVideoTime.videoPaths.push(videoPath);
+      saveData(storage);
+    }
+    if (storedVideoTime.duration === undefined) {
+      bumpSyncDiff(storage, 'videoTimeEntryUpdate');
+      storedVideoTime.duration = Math.floor(player.duration);
+      saveData(storage);
+    }
+    if (!storedVideoTime.animeId) getValueByRequest('id').then(id => {
+      if (!id) return;
+      const storage = getStorage();
+      const storedVideoTime2 = getStoredTime(storedVideoTime.animeName, storedVideoTime.episodeNum, storage);
+      storedVideoTime2.animeId = id;
+      saveData(storage);
+
+      applyPlaybackSpeedFromEntry(id, storage);
+    });
+  }
+
   // MARKER:VIDEO LOADED EVENT
   $(player).on('progress', function loadVideoData() {
     if (player.readyState < 2) return;
@@ -1333,18 +1342,24 @@ const _css = `
         updateStoredTime(); 
         lastTimeUpdate = player.currentTime;
       }
-      if (!setTimeElapsed && currentTime !== 0) {
-        setTimeElapsed = true;
-        $('.plyr__time').click(); // Toggle to show time elapsed instead of time remaining
-      }
+    });
+    $(player).on('timeupdate', function fn() {
+      if (player.currentTime === 0) return;
+      $('.plyr__time').click(); // Toggle to show time elapsed instead of time remaining
+      $(player).off('timeupdate', fn);
     });
     player.addEventListener('pause', updateStoredTime);
     player.addEventListener('ended', updateStoredTime);
-    player.addEventListener('seeked', seeked);
+    player.addEventListener('seeked', () => {
+      updateStoredTime();
+      checkActiveTimestamps();
+    });
     player.addEventListener('ratechange', () => {
       if (player.readyState > 2) updateStoredPlaybackSpeed(player.playbackRate);
     });
     // Events end
+
+    player.playbackRate = 1;
 
     // Get stored video time
     const storage = getStorage();
@@ -1354,44 +1369,15 @@ const _css = `
 
     // If time exists:
     if (storedVideoTime) {
-      // Set global variables that are needed
-      if (storedVideoTime.hasTimestamps) {
-        if (storedVideoTime.timestampData?.timestamps) {
-          // Handle previous format
-          requestAnidbId();
-        }
-        else {
-          if (storage.settings.skipButton) timestamps = storedVideoTime.timestampData;
-          if (storage.settings.seekPoints) setSeekPoints(storedVideoTime.timestampData);
-        }
-      }
-      const storedPlaybackSpeed = storage.videoSpeed.find(a => a.animeId === storedVideoTime.animeId);
-      if (storedPlaybackSpeed) setSpeed(storedPlaybackSpeed.speed);
-      else player.playbackRate = 1;
-      //
-      // Update old data with missing keys
-      const videoPath = getVideoPath(url);
-      if (!storedVideoTime.videoPaths.includes(videoPath)) {
-        bumpSyncDiff(storage, 'videoTimeEntryUpdate');
-        storedVideoTime.videoPaths.push(videoPath);
-        saveData(storage);
-      }
-      if (storedVideoTime.duration === undefined) {
-        bumpSyncDiff(storage, 'videoTimeEntryUpdate');
-        storedVideoTime.duration = Math.floor(player.duration);
-        saveData(storage);
-      }
-      if (!storedVideoTime.animeId) requestId();
-      //
-      // Seek to said time
+      setupVars(storedVideoTime);
+      upgradeVideoTimeData(storedVideoTime, storage);
       initialSeek(Math.max(0, Math.min(storedVideoTime.time, player.duration)));
-      //
     }
     else {
-      // Create new stored time
-      requestId();
-      //
-      player.playbackRate = 1;
+      getValueByRequest('id').then(id => {
+        createStoredTime(id);
+        if (id) applyPlaybackSpeedFromEntry(id);
+      });
       finishedLoading();
     }
 
