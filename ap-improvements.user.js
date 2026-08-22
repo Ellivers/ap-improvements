@@ -907,6 +907,7 @@ const _css = `
     videoUrlRequest: 0,
     anidbIdRequest: 0
   };
+  const requests = {};
   // Messages received from main page
   window.onmessage = async function(e) {
     const storage = getStorage();
@@ -1220,6 +1221,48 @@ const _css = `
     return true;
   }
 
+  // Return values:
+  // -1 - request has failed
+  // 0 - request has not been sent yet
+  // 1 - request is underway
+  // 2 - request succeeded
+  function getRequestStatus(type) {
+    const entry = requests[type];
+    if (!entry) return 0;
+    return entry.status;
+  }
+
+  function shouldSendRequest(type) {
+    return [0,2].includes(getRequestStatus(type));
+  }
+
+  function getRequestWaitTime(type) {
+    return ({
+      'id': 2000,
+      'anidb_id': 2000,
+      'video_url': 8000,
+    })[type] || 100;
+  }
+
+  // Return values:
+  // promise: sent
+  // undefined: won't send
+  function sendRequest(type) {
+    if (!shouldSendRequest(type)) return;
+    
+    return new Promise((resolve, reject) => {
+      const rejTimeout = setTimeout(reject, getRequestWaitTime(type));
+      requests[type] = {
+        status: 1,
+        onsuccess: (value) => {
+          clearTimeout(rejTimeout);
+          resolve(value);
+        }
+      };
+      sendMessage({action:'request',type:type});
+    });
+  }
+
   function createStoredTime(id = undefined, storage = getStorage()) {
     const vidInfo = getVideoInfo();
     if (getStoredTime(vidInfo.animeName, vidInfo.episodeNum, storage)) return;
@@ -1262,7 +1305,7 @@ const _css = `
     if (player.readyState < 2) return;
     player.removeEventListener('progress', loadVideoData);
 
-    // Events
+    // Set up video events
     let lastTimeUpdate = 0;
     player.addEventListener('timeupdate', function() {
       const currentTime = player.currentTime;
@@ -1284,12 +1327,15 @@ const _css = `
     });
     // Events end
 
+    // Get stored video time
     const storage = getStorage();
     const vidInfo = getVideoInfo();
     const storedVideoTime = getStoredTime(vidInfo.animeName, vidInfo.episodeNum, storage);
+    //
 
+    // If time exists:
     if (storedVideoTime) {
-      initialSeek(Math.max(0, Math.min(storedVideoTime.time, player.duration)));
+      // Set global variables that are needed
       if (storedVideoTime.hasTimestamps) {
         if (storedVideoTime.timestampData?.timestamps) {
           // Handle previous format
@@ -1300,6 +1346,11 @@ const _css = `
           if (storage.settings.seekPoints) setSeekPoints(storedVideoTime.timestampData);
         }
       }
+      const storedPlaybackSpeed = storage.videoSpeed.find(a => a.animeId === storedVideoTime.animeId);
+      if (storedPlaybackSpeed) setSpeed(storedPlaybackSpeed.speed);
+      else player.playbackRate = 1;
+      //
+      // Update old data with missing keys
       const videoPath = getVideoPath(url);
       if (!storedVideoTime.videoPaths.includes(videoPath)) {
         bumpSyncDiff(storage, 'videoTimeEntryUpdate');
@@ -1312,16 +1363,20 @@ const _css = `
         saveData(storage);
       }
       if (!storedVideoTime.animeId) requestId();
-      const storedPlaybackSpeed = storage.videoSpeed.find(a => a.animeId === storedVideoTime.animeId);
-      if (storedPlaybackSpeed) setSpeed(storedPlaybackSpeed.speed);
-      else player.playbackRate = 1;
+      //
+      // Seek to said time
+      initialSeek(Math.max(0, Math.min(storedVideoTime.time, player.duration)));
+      //
     }
     else {
-      player.playbackRate = 1;
+      // Create new stored time
       requestId();
+      //
+      player.playbackRate = 1;
       finishedLoading();
     }
 
+    // Handle the time argument
     const timeArg = Array.from(new URLSearchParams(window.location.search)).find(a => a[0] === 'time');
     if (timeArg) {
       const newTime = +timeArg[1];
@@ -1331,8 +1386,9 @@ const _css = `
       }
       window.history.replaceState({}, document.title, url);
     }
+    //
 
-    // Screenshot changes
+    // Replace the capture button and assign events
     $('button[data-plyr="capture"]').replaceWith($('button[data-plyr="capture"]').clone()); // Just to remove existing event listeners
     $('button[data-plyr="capture"]').on('click', () => {
       const canvas = document.createElement('canvas');
@@ -1364,6 +1420,7 @@ const _css = `
         element.remove();
       }
     });
+    //
   });
 
   function getFrame(video, time, dimensions) {
@@ -3489,13 +3546,16 @@ const animeInfoFunctions = [
 // TODO:
 // - add bookmark source function
 // - something with anidb_id?
-async function getAnimeData(iinfo = {}, reqinfo = [], config = {}) {
+async function getAnimeData(_iinfo = {}, _reqinfo = [], config = {}) {
   /* - have a list of each info-getting function, ordered in speed with fastest first. each entry has a list of output keys
   - do a while loop while reqdata length is > 0.
   find out which function encompasses the most of reqdata by making a .map and sort the map by amount of reqdata support, then use the function.
   at the end of each loop, if the function was successful, remove all data from reqdata that the function outputs.
   make sure that function isn't run again, no matter the outcome
   */
+  const iinfo = copyObj(_iinfo);
+  let reqinfo = copyObj(_reqinfo);
+
   const debug = initialStorage.debug?.animeInfo;
   const oinfo = {old:{},new:{}};
   const used = [];
@@ -4806,9 +4866,9 @@ if (window.location.pathname.startsWith('/customlink')) {
       else iinfo.name = decodeURIComponent(animeParam);
 
       let animeData;
-      animeData = await getAnimeData(copyObj(iinfo),["session","name"]);
+      animeData = await getAnimeData(iinfo,["session","name"]);
       if (!animeData.session) {
-        animeData = await getAnimeData(copyObj(iinfo),["session","name"],{allowGuessing:true});
+        animeData = await getAnimeData(iinfo,["session","name"],{allowGuessing:true});
         if (!animeData.session) return;
       }
       if (iinfo.name && iinfo.name !== animeData.name && !confirm(`[AnimePahe Improvements]\n\nCouldn't find any anime with name "${iinfo.name}".\nGo to "${animeData.name}" instead?`)) return;
