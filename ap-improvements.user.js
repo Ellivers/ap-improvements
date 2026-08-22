@@ -923,19 +923,7 @@ const _css = `
 
     const action = data.action;
     if (action === 'id_response' && waitingState.idRequest === 1) {
-      const found = storage.videoTimes.find(a => a.animeName === vidInfo.animeName && a.episodeNum === vidInfo.episodeNum);
-
-      if (!found) createStoredTime(data.id, storage);
-      else {
-        found.animeId = data.id; // If the entry already exists, just add the ID
-        saveData(storage);
-      }
-
-      waitingState.idRequest = 2;
-
-      const storedPlaybackSpeed = storage.videoSpeed.find(a => a.animeId === data.id);
-      if (storedPlaybackSpeed) setSpeed(storedPlaybackSpeed.speed);
-
+      requests.id?.onsuccess();
       return;
     }
     else if (action === 'anidb_id_response' && waitingState.anidbIdRequest === 1) {
@@ -1190,21 +1178,24 @@ const _css = `
     });
   }
 
-  // Sends a request for the anime ID, which then automatically creates a video time entry on response
-  // Return values:
-  // true: sent
-  // false: won't send
+  // Sends a request for the anime ID, and creates a video time entry on response
   function requestId() {
-    if ([-1,1].includes(waitingState.idRequest)) return false; // If it has failed or is already waiting
-    waitingState.idRequest = 1;
-    sendMessage({action: "id_request"});
+    sendRequest('id')?.then(id => {
+      const storage = getStorage();
+      const vidInfo = getVideoInfo();
+      const found = getStoredTime(vidInfo.animeName, vidInfo.episodeNum, storage);
 
-    setTimeout(() => {
-      if (waitingState.idRequest !== 1) return;
-      waitingState.idRequest = -1; // Failed to get the anime ID from the main page within 2 seconds
+      if (!found) createStoredTime(id, storage);
+      else {
+        found.animeId = id; // If the entry already exists, just add the ID
+        saveData(storage);
+      }
+
+      const storedPlaybackSpeed = storage.videoSpeed.find(a => a.animeId === data.id);
+      if (storedPlaybackSpeed) setSpeed(storedPlaybackSpeed.speed);
+    }).catch(() => {
       updateStoredTime();
-    }, 2000);
-    return true;
+    });
   }
 
   // Return values:
@@ -1237,8 +1228,14 @@ const _css = `
     return entry.status;
   }
 
-  function shouldSendRequest(type) {
-    return [0,2].includes(getRequestStatus(type));
+  function requestIsInProgress(type) {
+    return getRequestStatus(type) === 1;
+  }
+  function requestHasFailed(type) {
+    return getRequestStatus(type) === -1;
+  }
+  function requestHasSucceeded(type) {
+    return getRequestStatus(type) === 2;
   }
 
   function getRequestWaitTime(type) {
@@ -1249,22 +1246,39 @@ const _css = `
     })[type] || 100;
   }
 
-  // Return values:
-  // promise: sent
-  // undefined: won't send
   function sendRequest(type) {
-    if (!shouldSendRequest(type)) return;
-    
-    return new Promise((resolve, reject) => {
-      const rejTimeout = setTimeout(reject, getRequestWaitTime(type));
-      requests[type] = {
-        status: 1,
-        onsuccess: (value) => {
-          clearTimeout(rejTimeout);
-          resolve(value);
-        }
+    requests[type] = {};
+    const req = requests[type];
+    req.status = 1;
+    req.promise = new Promise((resolve, reject) => {
+      const rejTimeout = setTimeout(() => {
+        requests[type].status = -1;
+        reject(`Couldn't get requested ${type}`);
+      }, getRequestWaitTime(type));
+
+      req.onsuccess = (value) => {
+        requests[type].status = 2;
+        requests[type].value = value;
+        clearTimeout(rejTimeout);
+        resolve(value);
       };
-      sendMessage({action:'request',type:type});
+    });
+    sendMessage({action:'request',type:type});
+    return req.promise;
+  }
+
+  function sendOrGetRequest(type) {
+    if (requestIsInProgress(type)) return requests[type].promise;
+    return sendRequest(type);
+  }
+
+  function getValueByRequest(type) {
+    return new Promise(resolve => {
+      if (requestHasFailed()) return resolve(undefined);
+      if (requestHasSucceeded()) return resolve(requests[type].value);
+      sendOrGetRequest(type)
+      .then(value => {resolve(value)})
+      .catch(() => {resolve(undefined)});
     });
   }
 
