@@ -3,6 +3,12 @@
   - Default keybinds are Home and End, respectively
 - Made the keybind for going to the previous modal menu modifiable
   - Default keybind is Backspace
+- Changed the way modal menus are laid out
+  - In most menus, the close/back button now shares space with the menu title
+  - Menu titles and subtitles are now centered and always at the top of the modal
+  - Most menus now have titles
+- The Edit/Add Bookmark menu is now a bit wider with shorter anime names
+- Made bookmark icons slightly larger with the grid layout on mobile, since there is now more space
 - The page is no longer scrolled when pressing a keybind that would otherwise do so
 - Made the section text of the Options menu bold
 - Fixed the no bookmarks text disappearing when changing the bookmark sorting/layout
@@ -22,7 +28,7 @@
 - Added tooltips to switches in the Options menu (and some other places)
 - Toast messages for removing various entries/data now show the anime's name and episode
 - Added toast messages for marking all episodes as watched/unwatched
-- Lessened performance impact from loading a page
+- Lessened the performance impact from loading a page
 - Moved the Refresh Session button towards the bottom of the Options menu
 - Pressing the Theater Mode keybind while having the video player in fullscreen now exits fullscreen
 - Pressing Ctrl+F in a modal menu with a search bar now focuses the first search bar in the menu
