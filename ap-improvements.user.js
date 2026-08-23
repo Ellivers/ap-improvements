@@ -6929,7 +6929,7 @@ function loadIndexPage() {
 
     refreshBtnStates();
 
-    openModal(`Rules for ${filterType} filters`);
+    openModal('', undefined, {shiftContent: true});
   });
 
   $('#anitracker-time-search-button').on('click', () => {
