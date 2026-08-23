@@ -2474,7 +2474,7 @@ header.main-header nav .main-nav li.nav-item > a:focus {
   color: #fff;
   background-color: #bc0150;
 }
-.theatre-settings .dropup .btn:focus {
+.theatre-settings .dropup .btn[aria-expanded="true"],.theatre-settings .dropup .btn:focus-visible {
   outline: .15rem solid rgb(100, 100, 100)!important;
 }
 .anitracker-episode-date {
