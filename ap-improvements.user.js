@@ -2938,6 +2938,15 @@ header.main-header nav .main-nav li.nav-item > a:focus {
   vertical-align:center;
   border-width:3px;
 }
+.anitracker-relation-poster {
+  filter: blur(5px) !important;
+}
+a:hover .anitracker-relation-poster,a:focus-visible .anitracker-relation-poster {
+  filter: none !important;
+}
+.player .prequel a:focus-visible, .player .sequel a:focus-visible {
+  outline: 5px solid gray;
+}
 .index .col-12:nth-child(4n-3), .index .col-12:nth-child(4n-2) {
   background-color: rgb(20, 19, 25);
 }
@@ -8446,7 +8455,7 @@ async function setRelationPoster(name, type) {
   $(`
   <div class="${type} hidden-sm-down anitracker-thumbnail">
     <a href="${relationLink}" title="Play ${type === 'prequel' ? 'Last Episode' : 'First Episode'} of ${toHtmlCodes(relationData.title)}">
-      <img style="filter: none;" src="${relationData.poster}" data-src="${relationData.poster}" alt="">
+      <img class="anitracker-relation-poster" src="${relationData.poster}" data-src="${relationData.poster}" alt="">
     </a>
     <i class="fa fa-chevron-${type === 'prequel' ? 'left' : 'right'}" aria-hidden="true"></i>
   </div>`).appendTo('.player');
