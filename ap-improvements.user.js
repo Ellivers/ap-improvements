@@ -11287,7 +11287,7 @@ function addGeneralButtons() {
         else closeModal();
       });
 
-      openModal('Choose sync settings', backFunction);
+      openModal('Choose sync settings', backFunction, {shiftContent: true});
     }
 
     $('#anitracker-sync-data').on('click', () => {
