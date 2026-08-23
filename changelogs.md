@@ -9,8 +9,11 @@
   - Most menus now have titles
 - The Edit/Add Bookmark menu is now a bit wider with shorter anime names
 - Made bookmark icons slightly larger with the grid layout on mobile, since there is now more space
+- The image for the link to the previous/next anime is now slightly blurred
+- Tab focusing the link for the previous/next episode/anime now shows an outline
 - The page is no longer scrolled when pressing a keybind that would otherwise do so
 - Made the section text of the Options menu bold
+- Fixed session refreshing sometimes not working properly
 - Fixed the no bookmarks text disappearing when changing the bookmark sorting/layout
 - Fixed some links in the Manage Data menu still using IDs instead of names 
 - Various other fixes
