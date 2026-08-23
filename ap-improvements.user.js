@@ -5107,8 +5107,7 @@ function openNotificationsModal() {
         if (scheduleEntry) scheduleEntry.list.push({
           time: latestEp,
           name: g.name,
-          id: g.id,
-          session: data.session,
+          href: href,
         });
       }
       makeSchedule(storage.settings.notifScheduleStart);
@@ -5166,8 +5165,7 @@ function openNotificationsModal() {
           <div class="anitracker-feed-schedule-header">${getDayName(entry.num).slice(0,3)}</div>
           <div class="anitracker-feed-schedule-body${entry.num === today ? ' anitracker-feed-schedule-today' : ''}">
             ${entry.list.map(g => {
-              const href = g.session ? `/anime/${g.session}` : `/customlink?a=${encodeURIComponent(g.name)}`;
-              return `<a href="${href}" target="_blank" title="${toHtmlCodes(g.name)} (${g.time.toLocaleTimeString([], {timeStyle:'short'})})">${g.name}</a>`;
+              return `<a href="${g.href}" target="_blank" title="${toHtmlCodes(g.name)} (${g.time.toLocaleTimeString([], {timeStyle:'short'})})">${g.name}</a>`;
             }).join('')}
           </div>
         </div>`).appendTo($('.anitracker-feed-schedule'));
