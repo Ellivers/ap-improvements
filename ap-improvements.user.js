@@ -3703,7 +3703,9 @@ function setModalSubtitle(text = '') {
 }
 
 function shouldShiftModal() {
-  return ($('#anitracker-modal-title').offset().left - ($('#anitracker-modal-close').offset().left + $('#anitracker-modal-close').outerWidth())) < 30;
+  let diff = $('#anitracker-modal-title').offset().left - ($('#anitracker-modal-close').offset().left + $('#anitracker-modal-close').outerWidth());
+  if ($('#anitracker-modal-content').hasClass('shift')) diff -= $('#anitracker-modal-close').outerWidth(true);
+  return diff < 30;
 }
 
 function setModalShift(shift) {
@@ -10876,7 +10878,7 @@ function addGeneralButtons() {
           });
 
           $('.anitracker-disconnect-sync-cancel-button').on('click', openSyncDataModal);
-          openModal('Disconnect Sync', openSyncDataModal, {shiftContent: true});
+          openModal('Disconnect Sync', openSyncDataModal);
         });
 
         $('.anitracker-delete-sync-button').on('click', () => {
@@ -11007,7 +11009,7 @@ function addGeneralButtons() {
           });
 
           $('.anitracker-delete-sync-cancel-button').on('click', openSyncDataModal);
-          openModal('Delete Code', openSyncDataModal, {shiftContent: true});
+          openModal('Delete Code', openSyncDataModal);
         });
       }
       else {
@@ -11288,7 +11290,7 @@ function addGeneralButtons() {
         else closeModal();
       });
 
-      openModal('Choose sync settings', backFunction, {shiftContent: true});
+      openModal('Choose sync settings', backFunction);
     }
 
     $('#anitracker-sync-data').on('click', () => {
