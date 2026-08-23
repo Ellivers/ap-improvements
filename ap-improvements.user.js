@@ -7916,7 +7916,7 @@ async function getEpisodeData(aSession, episodeNum) {
 */
 async function refreshSession(from404 = false) {
   const storage = getStorage();
-  const storedSession = getStoredLinkData(storage);
+  const storedSession = storage.linkList.find(g => g.animeSession === animeSession);
 
   if (!storedSession && from404) return 1;
   
@@ -7990,6 +7990,21 @@ else if (isAnime() && !is404) {
 
 console.log('[AnimePahe Improvements]', obj, animeSession, episodeSession);
 
+function isReferrerGood(referrer) {
+  if (!referrer) return false;
+  if (parseUrl(referrer).host !== window.location.host) return false;
+  if (!isEpisode(referrer) && !isAnime(referrer)) {
+    return true;
+  }
+  const session = getAnimeSessionFromUrl(referrer);
+  if (isEpisode(referrer)) {
+    return initialStorage.linkList.find(a => a.type === 'episode' && a.animeSession === session && a.episodeSession === getEpisodeSessionFromUrl(referrer));
+  }
+  else {
+    return initialStorage.linkList.find(a => a.type === 'anime' && a.animeSession === session);
+  }
+}
+
 function setSessionData() {
   const animeName = getAnimeName();
   return new Promise(resolve => {
@@ -8038,11 +8053,20 @@ function setSessionData() {
 if (!obj && !is404) {
   if (!isRandomAnime()) setSessionData();
 }
-else if (obj && is404) {
+else if (is404) {
   document.title = "Refreshing session... :: animepahe";
   $('.text-center h1').text('Refreshing session, please wait...');
   refreshSession(true).then(code => {
-    if (code === 1) $('.text-center h1').text('Couldn\'t refresh session: Link not found in tracker');
+    if (code === 1) {
+      $('.text-center h1').text('Couldn\'t refresh session: Link not found in tracker');
+      if (isReferrerGood(document.referrer)) {
+        const prevUrl = parseUrl(document.referrer);
+        const params = new URLSearchParams(prevUrl);
+        params.set('ref','404');
+        prevUrl.search = params.toString();
+        windowOpen(prevUrl.toString(), '_self');
+      }
+    }
     else if (code === 2) $('.text-center h1').text('Couldn\'t refresh session: Couldn\'t get anime data');
     else if (code === 3) $('.text-center h1').text('Couldn\'t refresh session: Couldn\'t get episode data');
     else if (code !== 0) $('.text-center h1').text('Couldn\'t refresh session: An unknown error occurred');
@@ -8063,32 +8087,6 @@ else if (obj && is404) {
       }
     }
   });
-  return;
-}
-else if (obj === undefined && is404) {
-  if (document.referrer.length > 0) {
-    const bobj = (() => {
-      if (!/\/play\/.+/.test(document.referrer) && !/\/anime\/.+/.test(document.referrer)) {
-        return true;
-      }
-      const session = getAnimeSessionFromUrl(document.referrer);
-      if (isEpisode(document.referrer)) {
-        return initialStorage.linkList.find(a => a.type === 'episode' && a.animeSession === session && a.episodeSession === getEpisodeSessionFromUrl(document.referrer));
-      }
-      else {
-        return initialStorage.linkList.find(a => a.type === 'anime' && a.animeSession === session);
-      }
-    })();
-    if (bobj) {
-      const prevUrl = new URL(document.referrer);
-      const params = new URLSearchParams(prevUrl);
-      params.set('ref','404');
-      prevUrl.search = params.toString();
-      windowOpen(prevUrl.toString(), '_self');
-      return;
-    }
-  }
-  $('.text-center h1').text('Cannot refresh session: Link not stored in tracker');
   return;
 }
 
