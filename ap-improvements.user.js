@@ -1827,7 +1827,8 @@ const _css = `
   height: 100%;
   background-color: rgba(0,0,0,0.6);
   z-index: 20;
-  display: none;
+  display: flex;
+  visibility: hidden;
   will-change: opacity;
 }
 #anitracker-modal-content {
@@ -1867,8 +1868,8 @@ const _css = `
   position: relative;
 }
 #anitracker-modal-title, #anitracker-modal-subtitle {
-  text-align:center;
-  margin: 0;
+  margin: 0px auto;
+  width: fit-content;
   display: block;
 }
 #anitracker-modal-content header {
@@ -3650,13 +3651,16 @@ function openModal(title = '', backFunction, options = {}) {
   else close.replaceClass('fa-arrow-left', 'fa-close').attr('title', 'Close modal');
   $('#anitracker-modal-title').text(title);
   setModalSubtitle(options.subtitle ?? '');
-  setModalShift(options.shiftContent);
+  
+  const isOpen = modalIsOpen();
+  $('#anitracker-modal').css('visibility','visible');
+  $('#anitracker-modal').focus();
 
-  const storage = getStorage();
+  setModalShift(options.shiftContent ?? shouldShiftModal()); // options.shiftContent is allowed to be false
 
   return new Promise(resolve => {
-    if (!options.hideAnimation && storage.settings.reduceMotion !== true) {
-      if (!modalIsOpen()) {
+    if (!options.hideAnimation && getStorage().settings.reduceMotion !== true) {
+      if (!isOpen) {
         playAnimation($('#anitracker-modal-content'), 'modalOpen');
         playAnimation($('#anitracker-modal'), 'fadeIn').then(() => {
           resolve();
@@ -3669,9 +3673,6 @@ function openModal(title = '', backFunction, options = {}) {
       }
     }
     else resolve();
-
-    $('#anitracker-modal').css('display','flex');
-    $('#anitracker-modal').focus();
   });
 }
 
@@ -3684,21 +3685,25 @@ function closeModal() {
 
   const storage = getStorage();
   if (storage.settings.reduceMotion === true || !$('#anitracker-modal').css('animation').startsWith('none')) {
-    $('#anitracker-modal').hide();
+    $('#anitracker-modal').css('visibility','hidden');
     return;
   }
 
   playAnimation($('#anitracker-modal'), 'fadeIn', 0.1, 'reverse').then(() => {
-    $('#anitracker-modal').hide();
+    $('#anitracker-modal').css('visibility','hidden');
   });
 }
 
 function modalIsOpen() {
-  return $('#anitracker-modal').is(':visible');
+  return $('#anitracker-modal').css('visibility') === 'visible';
 }
 
 function setModalSubtitle(text = '') {
   $('#anitracker-modal-subtitle').text(text);
+}
+
+function shouldShiftModal() {
+  return ($('#anitracker-modal-title').offset().left - ($('#anitracker-modal-close').offset().left + $('#anitracker-modal-close').outerWidth())) < 30;
 }
 
 function setModalShift(shift) {
@@ -4434,7 +4439,7 @@ function displayCollection(seriesList, elem) {
       </div>`).appendTo('#anitracker-modal-body .anitracker-modal-list');
     }
 
-    openModal(`Collection - ${seriesList.length} Entries`, undefined, {subtitle: 'May not be entirely accurate', shiftContent: true});
+    openModal(`Collection - ${seriesList.length} Entries`, undefined, {subtitle: 'May not be entirely accurate'});
     scrollModalToTop();
   });
 }
@@ -5074,7 +5079,7 @@ function openNotificationsModal() {
       makeSchedule(day);
     });
 
-    openModal('Manage Episode Feed', openNotificationsModal, {hideAnimation: !animation, shiftContent: true});
+    openModal('Manage Episode Feed', openNotificationsModal, {hideAnimation: !animation});
     if (!storage.notifications.anime.length) {
       $(`<span>Use the <i class="fa fa-bell" title="bell"></i> button on an ongoing anime to add it to the feed.</span>`).appendTo('#anitracker-modal-body .anitracker-modal-list');
       makeSchedule(storage.settings.notifScheduleStart);
@@ -5187,7 +5192,7 @@ function openNotificationsModal() {
   const animeData = [];
   const queue = [...oldStorage.notifications.anime];
 
-  openModal('Episode Feed', undefined, {shiftContent: true}).then(() => {
+  openModal('Episode Feed').then(() => {
     if (queue.length > 0) next();
     else done();
   });
@@ -5248,7 +5253,7 @@ function openNotificationsModal() {
     }
     else {
       addToList(20);
-      setModalShift(false);
+      setModalShift(shouldShiftModal());
     }
   }
 
@@ -5725,7 +5730,7 @@ function openBookmarksModal() {
           $(canvas).css('height', '100%').css('width', '').appendTo('#anitracker-bookmark-share-result');
           $('#anitracker-bookmark-share-result').css('max-width', Math.min($(canvas).width(), prevWidth));
           scrollModalToTop();
-          setModalShift(false);
+          setModalShift(shouldShiftModal());
         });
         $('#anitracker-modal-body').empty();
         $(`
@@ -5734,12 +5739,12 @@ function openBookmarksModal() {
             <span class="sr-only">Loading...</span>
           </div>
         </div>`).appendTo('#anitracker-modal-body');
-        openModal('Share Result', openBookmarksModal, {shiftContent: true});
+        openModal('Share Result', openBookmarksModal);
       }).fail(() => {
         console.error("[AnimePahe Improvements] html2canvas failed to load");
         $('#anitracker-modal-body').empty();
         $('<span style="color:var(--danger)">Failed to load!</span>').appendTo('#anitracker-modal-body');
-        openModal('Share Result', openBookmarksModal, {shiftContent: true});
+        openModal('Share Result', openBookmarksModal);
       });
     }
     else if (action === 'text') {
@@ -7602,6 +7607,7 @@ function setupContinueWatchingSection() {
         showMessage(`Removed "${name?.slice(0,16)}${name?.length > 16 ? '...' : ''}" episode ${episode}`, 4000);
       });
       scrollModalToTop();
+      setModalShift(shouldShiftModal());
     }
 
     $('.anitracker-modal-search').on('input', (e) => {
@@ -9738,7 +9744,6 @@ function addGeneralButtons() {
           $('<span class="text-danger">Couldn\'t get version history.</span>').appendTo('#anitracker-modal-body');
           return;
         }
-        setModalShift(false);
         setModalSubtitle(`Current version: ${GM_info.script.version}`);
 
         const lines = req.response.split('\n');
@@ -9772,10 +9777,12 @@ function addGeneralButtons() {
           currentIndentation = newIndentation;
           elem.appendTo(currentList);
         }
+
+        setModalShift(shouldShiftModal());
       };
       req.send();
 
-      openModal('Version History', openOptionsModal, {shiftContent: true});
+      openModal('Version History', openOptionsModal);
     });
 
     $('#anitracker-edit-keybinds').on('click', () => {
@@ -9963,7 +9970,7 @@ function addGeneralButtons() {
         })[lang];
       }
 
-      openModal('Download Preferences', openOptionsModal, {shiftContent:true});
+      openModal('Download Preferences', openOptionsModal);
     });
 
     openModal('Options');
@@ -10425,7 +10432,7 @@ function addGeneralButtons() {
           openShowDataModal();
         });
 
-        openModal('Choose what to import', openShowDataModal, {shiftContent: true});
+        openModal('Choose what to import', openShowDataModal);
       });
       fileReader.readAsText(file);
     });
@@ -11080,7 +11087,7 @@ function addGeneralButtons() {
         openSyncSettingsModal(openSyncDataModal);
       });
 
-      openModal('Data Syncing', openShowDataModal, {shiftContent: (syncEnabled && !storage.debug?.noSyncSim)});
+      openModal('Data Syncing', openShowDataModal);
 
       function openCodeCreationModal() {
         $('#anitracker-modal-body').empty();
@@ -11282,7 +11289,7 @@ function addGeneralButtons() {
         else closeModal();
       });
 
-      openModal('Choose sync settings', backFunction, {shiftContent: true});
+      openModal('Choose sync settings', backFunction);
     }
 
     $('#anitracker-sync-data').on('click', () => {
