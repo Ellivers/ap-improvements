@@ -9,11 +9,12 @@ export default defineConfig([
 		extends: ["js/recommended"],
 		languageOptions: {
 			sourceType: "script",
+			ecmaVersion: "latest",
 			globals: globals.browser,
 			parserOptions: {
 				ecmaFeatures: {
-					jsx: true,
 					globalReturn: true,
+					impliedStrict: true,
 				},
 			},
 		},
