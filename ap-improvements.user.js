@@ -9722,7 +9722,7 @@ function addGeneralButtons() {
       </div>`).appendTo('#anitracker-modal-body');
 
       const req = new XMLHttpRequest();
-      req.open('GET', `https://raw.githubusercontent.com/Ellivers/ap-improvements/refs/heads/${initialStorage.debug?.devChangelog ? 'dev' : 'master'}/changelogs.md`, true);
+      req.open('GET', `https://raw.githubusercontent.com/Ellivers/ap-improvements/refs/heads/${initialStorage.debug?.devRepo ? 'dev' : 'master'}/changelogs.md`, true);
       req.onload = () => {
         $('#anitracker-changelog-spinner').remove();
         if (req.status !== 200) {
@@ -10235,9 +10235,9 @@ function addGeneralButtons() {
           </label>
         </div>
         <div class="form-check">
-          <input class="form-check-input" type="checkbox" value="" id="anitracker-debug-dev-changelog" ${options.devChangelog ? "checked" : ""}>
-          <label class="form-check-label" for="anitracker-debug-dev-changelog">
-            Dev changelog
+          <input class="form-check-input" type="checkbox" value="" id="anitracker-debug-dev-repo" ${options.devRepo ? "checked" : ""}>
+          <label class="form-check-label" for="anitracker-debug-dev-repo">
+            Use dev repo
           </label>
         </div>
         <div class="form-check">
@@ -10250,6 +10250,9 @@ function addGeneralButtons() {
         <input id="anitracker-encode-base64-input" placeholder="Encode to base64"><button class="btn btn-secondary anitracker-encode-base64-button">Encode</button>
         <div>Override function response: <input placeholder="Function" id="anitracker-funcresover-fn" style="width:50px;">
         <input placeholder="Value" id="anitracker-funcresover-val" style="width:50px;"><button class="btn btn-secondary anitracker-functionresover-button">Confirm</button></div>
+        <div class="btn-group" style="display:block;margin-bottom:5px;">
+          <button class="btn btn-secondary anitracker-copy-id-button">Copy ID</button>
+        </div>
         <div class="btn-group" style="display:block;">
           <button class="btn btn-primary anitracker-save-button">Save</button>
         </div>`).appendTo('#anitracker-modal-body');
@@ -10265,7 +10268,7 @@ function addGeneralButtons() {
           storage.debug.msg = $('#anitracker-debug-msg').prop('checked');
           storage.debug.notifs = $('#anitracker-debug-notifs').prop('checked');
           storage.debug.seekThumbnails = $('#anitracker-debug-seek-thumbnails').prop('checked');
-          storage.debug.devChangelog = $('#anitracker-debug-dev-changelog').prop('checked');
+          storage.debug.devRepo = $('#anitracker-debug-dev-repo').prop('checked');
           storage.debug.animeInfo = $('#anitracker-debug-anime-info').prop('checked');
           saveData(storage);
 
@@ -10289,6 +10292,10 @@ function addGeneralButtons() {
               setTimeout(() => {resolve(${$('#anitracker-funcresover-val').val()})}, 1500);
             });
           }`);
+        });
+        $('.anitracker-copy-id-button').on('click', () => {
+          navigator.clipboard.writeText(getAnimeDataFromPage($(document), isEpisode()).id);
+          showMessage('Copied!');
         });
         openModal('Debug', openEditDataModal);
       }
