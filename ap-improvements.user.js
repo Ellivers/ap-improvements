@@ -9613,7 +9613,7 @@ function addGeneralButtons() {
     if (isAnime()) {
       $(`
       <div class="anitracker-dark-area" style="margin-top:10px;">
-        <span style="display:block;">This anime:</span>
+        <strong style="display:block;">This anime:</strong>
         <div class="btn-group">
           <button class="btn btn-secondary" id="anitracker-mark-watched" title="Mark all episodes of this anime as fully watched">
             <i class="fa fa-eye" aria-hidden="true"></i>
