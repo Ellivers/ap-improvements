@@ -1866,7 +1866,6 @@ const _css = `
 #anitracker-modal-content.shift #anitracker-modal-close {
   position: relative;
 }
-#anitracker-modal-content:not(.shift) #anitracker-modal-title {min-height: 2.3rem;\n}
 #anitracker-modal-title, #anitracker-modal-subtitle {
   text-align:center;
   margin: 0;
@@ -1874,7 +1873,9 @@ const _css = `
 }
 #anitracker-modal-content header {
   padding: 5px;
+  flex-shrink: 0;
 }
+#anitracker-modal-content:not(.shift) header {min-height: 2.3rem;\n}
 #anitracker-modal-body {
   padding: 10px;
   overflow-y: auto;
