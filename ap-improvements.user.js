@@ -453,7 +453,7 @@ function getEpisodeValue(ep, ep2 = undefined, firstEp = undefined) {
   return firstEp !== undefined ? `${getRelativeEpisodeNum(ep, firstEp)}${ep2 ? '-' + getRelativeEpisodeNum(ep2, firstEp) : ''}` : `${ep}${ep2 ? '-' + ep2 : ''}`;
 }
 
-function getStoredTime(name, ep, storage, id = undefined) {
+function getStoredTime(name, ep, storage = getStorage(), id = undefined) {
   if (id) {
     return storage.videoTimes.find(a => a.episodeNum === ep && a.animeId === id);
   }
@@ -722,26 +722,43 @@ const _css = `
   var timestamps = [];
   const anitrackerSettings = initialStorage.settings;
 
-  function setupTimestamps(anidbId, firstEpisode) {
+  async function getAnidbId() {
+    const byRequest = await getValueByRequest('anidb_id');
+    if (byRequest) return byRequest;
+    const name = await getValueByRequest('name');
+    if (!name) return;
+    return await getAnidbIdFromTitle(name);
+  }
+
+  function saveTimestampData(timestampData, storage) {
     const vidInfo = getVideoInfo();
-    getTimestamps(anidbId, vidInfo.episodeNum, firstEpisode).then(response => {
-      const storage = getStorage();
-      const storedVideoTime = getStoredTime(vidInfo.animeName, vidInfo.episodeNum, storage);
+    const storedVideoTime = getStoredTime(vidInfo.animeName, vidInfo.episodeNum, storage);
+    if (!storedVideoTime) return;
 
-      if (response === false) {
-        storedVideoTime.hasTimestamps = false;
-        delete storedVideoTime.timestampData;
-        saveData(storage);
-        return;
-      }
-
-      if (storage.settings.seekPoints) setSeekPoints(response);
-      if (storage.settings.skipButton) timestamps = response;
-
+    if (!timestampData) {
+      storedVideoTime.hasTimestamps = false;
+      delete storedVideoTime.timestampData;
+    }
+    else {
       storedVideoTime.hasTimestamps = true;
-      storedVideoTime.timestampData = response;
-      saveData(storage);
-    });
+      storedVideoTime.timestampData = timestampData;
+    }
+    saveData(storage);
+  }
+
+  function applyTimestampData(timestampData) {
+    setSeekPoints(anitrackerSettings.seekPoints ? timestampData : []);
+    timestamps = anitrackerSettings.skipButton ? timestampData : [];
+  }
+
+  async function setupTimestamps() {
+    const anidbId = await getAnidbId();
+    if (!anidbId) return;
+    const firstEp = await getValueByRequest('first_episode');
+
+    const timestampData = await getTimestampData(anidbId, getVideoInfo().episodeNum, firstEp);
+    saveTimestampData(timestampData, getStorage());
+    if (timestampData) applyTimestampData(timestampData);
   }
 
   async function getAnidbIdFromTitle(title) {
@@ -768,20 +785,16 @@ const _css = `
     });
   }
 
-  async function getTimestamps(anidbId, episode, firstEpisode = undefined) {
+  async function getTimestampData(anidbId, episode, firstEpisode = undefined) {
     return new Promise((resolve) => {
       const req = new XMLHttpRequest();
       req.open('GET', 'https://raw.githubusercontent.com/Ellivers/open-anime-timestamps/refs/heads/master/timestamps.json', true); // Timestamp data
       req.onload = () => {
-        if (req.status !== 200) {
-          resolve(false);
-          return;
-        }
+        if (req.status !== 200) return resolve(undefined);
         const data = JSON.parse(req.response)[anidbId];
         if (!data) {
           console.log(`[AnimePahe Improvements] No timestamp data found for this anime.`);
-          resolve(false);
-          return;
+          return resolve(undefined);
         }
         if (firstEpisode !== undefined) {
           episode = getRelativeEpisodeNum(episode, firstEpisode);
@@ -793,8 +806,7 @@ const _css = `
         }
         else {
           console.log(`[AnimePahe Improvements] No timestamp data found for episode ${episode}.`);
-          resolve(false);
-          return;
+          return resolve(undefined);
         }
 
         const timestampData = [
@@ -865,13 +877,13 @@ const _css = `
     const currentTime = player.currentTime;
     const storage = getStorage();
 
-    if (waitingState.idRequest === 1) return;
     const vidInfo = getVideoInfo();
     const storedVideoTime = getStoredTime(vidInfo.animeName, vidInfo.episodeNum, storage);
 
     if (!storedVideoTime) {
       getValueByRequest('id').then(id => {
-        createStoredTime(id);
+        pushDataEntry(makeDataEntry(id), getStorage());
+        setupTimestamps();
       });
       return;
     }
@@ -883,21 +895,43 @@ const _css = `
         addWatched(storedVideoTime.animeId, vidInfo.episodeNum, storage);
       }
       // Delete the storage entry
-      if (player.duration - currentTime <= 20) {
-        const videoInfo = getVideoInfo();
-        if (isSyncEnabled(storage)) {
-          storage.sync.temp.removedData.push(...storage.videoTimes.filter(g => g.animeName === videoInfo.animeName && g.episodeNum === videoInfo.episodeNum).map(() => {return {type: 'videoTimes', animeName: videoInfo.animeName, episodeNum: vidInfo.episodeNum}}));
-        }
-
-        storage.videoTimes = storage.videoTimes.filter(a => !(a.animeName === videoInfo.animeName && a.episodeNum === videoInfo.episodeNum));
-        saveData(storage);
-        return;
-      }
+      if (player.duration - currentTime <= 20) return deleteDataEntry(storedVideoTime, storage);
     }
 
     bumpSyncDiff(storage, 'videoTimeUpdate');
     storedVideoTime.time = Math.floor(currentTime);
     saveData(storage);
+  }
+
+  function setSeekThumbnailsState(on) {
+    const elem = $('.anitracker-progress-tooltip');
+    if (elem.length) {
+      elem.trigger(on ? 'anitracker:enabled' : 'anitracker:disabled');
+      return;
+    }
+    if (on) requestSeekThumbnails();
+  }
+
+  function updateSetting(id, value) {
+    anitrackerSettings[id] = value;
+    if (player.readyState < 2) return;
+    const vidInfo = getVideoInfo();
+    const storedVideoTime = getStoredTime(vidInfo.animeName, vidInfo.episodeNum);
+
+    if (id === 'seekPoints' && storedVideoTime.hasTimestamps) {
+      setSeekPoints(value ? storedVideoTime.timestampData : []);
+    }
+    else if (id === 'seekThumbnails') setSeekThumbnailsState(value);
+    else if (id === 'skipButton') {
+      if (value) {
+        timestamps = storedVideoTime.timestampData;
+        checkActiveTimestamps();
+      }
+      else {
+        setSkipBtnVisibility(false);
+        timestamps = [];
+      }
+    }
   }
 
   let timestampEditModeEnabled = false;
@@ -906,30 +940,12 @@ const _css = `
   const requests = {};
   // Messages received from main page
   window.onmessage = async function(e) {
-    const storage = getStorage();
-    const vidInfo = getVideoInfo();
-
     const data = e.data;
-    if (storage.debug?.msg) console.log('Received from main page: ' + (typeof(e.data) === 'object' ? JSON.stringify(e.data) : e.data));
+    if (initialStorage.debug?.msg) console.log('Received from main page: ' + (typeof(e.data) === 'object' ? JSON.stringify(e.data) : e.data));
 
     const action = data.action;
-    if (action === 'id_response' && waitingState.idRequest === 1) {
-      requests.id?.onsuccess();
-      return;
-    }
-    else if (action === 'anidb_id_response' && waitingState.anidbIdRequest === 1) {
-      // anidb_id_response also responds with anime name and the anime's first episode number
-      waitingState.anidbIdRequest = 2;
-      let anidbId = data.id;
-      if (anidbId === undefined) {
-        anidbId = await getAnidbIdFromTitle(data.animeName);
-      }
-      if (anidbId === undefined) return console.warn("[AnimePahe Improvements] Couldn't get AniDB ID");
-      setupTimestamps(anidbId, data.firstEpisode);
-    }
-    else if (action === 'video_url_response' && waitingState.videoUrlRequest === 1) {
-      waitingState.videoUrlRequest = 2;
-      setupSeekThumbnails(data.url);
+    if (action === 'response') {
+      requests[data.type]?.onsuccess(data.value);
     }
     else if (action === 'newer_time') {
       if (player.paused && data.time !== undefined && data.time > player.currentTime) player.currentTime = data.time;
@@ -963,33 +979,7 @@ const _css = `
       $(player).trigger('keydown', {event: data.event});
     }
     else if (action === 'setting_changed') {
-      if (data.type === 'generic') {
-        anitrackerSettings[data.id] = data.value;
-        return;
-      }
-      if (player.readyState <= 2) return;
-      const storedVideoTime = getStoredTime(vidInfo.animeName, vidInfo.episodeNum, storage);
-      if (data.type === 'seek_points' && storedVideoTime.hasTimestamps === true) {
-        if (data.value === true && !$('.anitracker-seek-points>i').length) setSeekPoints(storedVideoTime.timestampData);
-        else if (data.value === false) $('.anitracker-seek-points>i').remove();
-      }
-      else if (data.type === 'seek_thumbnails') {
-        if (data.value == true) {
-          if ($('.anitracker-progress-tooltip').length) $('.anitracker-progress-tooltip').trigger('anitracker:enabled');
-          else requestSeekThumbnails();
-        }
-        else if (data.value === false && $('.anitracker-progress-tooltip').length) $('.anitracker-progress-tooltip').trigger('anitracker:disabled');
-      }
-      else if (data.type === 'skip_button' && storedVideoTime.hasTimestamps === true) {
-        if (data.value === true) {
-          timestamps = storedVideoTime.timestampData;
-          checkActiveTimestamps();
-        }
-        else {
-          setSkipBtnVisibility(false);
-          timestamps = [];
-        }
-      }
+      updateSetting(data.id, data.value);
     }
     else if (action === 'timestamp_edit_mode') {
       timestampEditMode();
@@ -1170,25 +1160,6 @@ const _css = `
   }
 
   // Return values:
-  // true: sent
-  // false: won't send
-  function requestAnidbId() {
-    if ([-1,1].includes(waitingState.anidbIdRequest)) return false; // If it has failed or is already waiting
-    waitingState.anidbIdRequest = 1;
-    sendMessage({action:"anidb_id_request"});
-
-    setTimeout(() => {
-      if (waitingState.anidbIdRequest !== 1) return; // Only run if the request didn't succeed on time
-      waitingState.anidbIdRequest = -1;
-      getAnidbIdFromTitle(getVideoInfo().animeName).then(anidbId => {
-        if (!anidbId) return console.warn("[AnimePahe Improvements] Couldn't get AniDB ID");
-        setupTimestamps(anidbId, undefined);
-      });
-    }, 2000);
-    return true;
-  }
-
-  // Return values:
   // -1 - request has failed
   // 0 - request has not been sent yet
   // 1 - request is underway
@@ -1211,9 +1182,11 @@ const _css = `
 
   function getRequestWaitTime(type) {
     return ({
-      'id': 2000,
-      'anidb_id': 2000,
-      'video_url': 8000,
+      'id': 1000,
+      'anidb_id': 1000,
+      'video_source': 8000,
+      'first_episode': 8000,
+      'name': 1000
     })[type] || 100;
   }
 
@@ -1253,13 +1226,8 @@ const _css = `
     });
   }
 
-  function createStoredTime(id = undefined, storage = getStorage()) {
+  function makeDataEntry(id = undefined) {
     const vidInfo = getVideoInfo();
-    if (getStoredTime(vidInfo.animeName, vidInfo.episodeNum, storage)) return;
-    if (isSyncEnabled(storage)) {
-      storage.sync.temp.addedData.push({type: 'videoTimes', animeName: vidInfo.animeName, episodeNum: vidInfo.episodeNum});
-    }
-
     const obj = {
       videoPaths: [getVideoPath(url)],
       time: Math.floor(player.currentTime),
@@ -1268,14 +1236,29 @@ const _css = `
       duration: Math.floor(player.duration)
     };
     if (id) obj.animeId = id;
+    return obj;
+  }
+
+  function pushDataEntry(obj, storage) {
+    if (getStoredTime(obj.animeName, obj.episodeNum, storage)) return;
+
+    if (isSyncEnabled(storage)) {
+      storage.sync.temp.addedData.push({type: 'videoTimes', animeName: obj.animeName, episodeNum: obj.episodeNum});
+    }
 
     storage.videoTimes.push(obj);
     if (storage.videoTimes.length > getStorageLimits().videoTimes) {
       storage.videoTimes.splice(0,1);
     }
     saveData(storage);
+  }
 
-    requestAnidbId(); // To get timestamps
+  function deleteDataEntry(entry, storage) {
+    if (isSyncEnabled(storage)) {
+      storage.sync.temp.removedData.push(...storage.videoTimes.filter(g => g.animeName === entry.animeName && g.episodeNum === entry.episodeNum).map(() => {return {type: 'videoTimes', animeName: entry.animeName, episodeNum: entry.episodeNum}}));
+    }
+    storage.videoTimes = storage.videoTimes.filter(a => !(a.animeName === entry.animeName && a.episodeNum === entry.episodeNum));
+    saveData(storage);
   }
 
   function initialSeek(time) {
@@ -1293,16 +1276,11 @@ const _css = `
   }
 
   function setupVars(storedVideoTime) {
-    if (storedVideoTime.animeId) applyPlaybackSpeedFromEntry(storedVideoTime.animeId, storage);
+    if (storedVideoTime.animeId) applyPlaybackSpeedFromEntry(storedVideoTime.animeId);
+
     if (!storedVideoTime.hasTimestamps) return;
-    if (storedVideoTime.timestampData?.timestamps) {
-      // Handle previous format
-      requestAnidbId();
-    }
-    else {
-      if (anitrackerSettings.skipButton) timestamps = storedVideoTime.timestampData;
-      if (anitrackerSettings.seekPoints) setSeekPoints(storedVideoTime.timestampData);
-    }
+    if (storedVideoTime.timestampData?.timestamps) setupTimestamps(); // Handle previous format
+    else applyTimestampData(storedVideoTime.timestampData);
   }
 
   function upgradeVideoTimeData(storedVideoTime, storage) {
@@ -1375,7 +1353,8 @@ const _css = `
     }
     else {
       getValueByRequest('id').then(id => {
-        createStoredTime(id);
+        pushDataEntry(makeDataEntry(id), getStorage());
+        setupTimestamps();
         if (id) applyPlaybackSpeedFromEntry(id);
       });
       finishedLoading();
@@ -1586,16 +1565,14 @@ const _css = `
   }
 
   // Thumbnails when seeking
-  function requestSeekThumbnails() {
+  async function requestSeekThumbnails() {
     if (!Hls.isSupported()) return;
-    sendMessage({action:"video_url_request"});
-    waitingState.videoUrlRequest = 1;
-    setTimeout(() => {
-      if (waitingState.videoUrlRequest === 2) return;
-
-      waitingState.videoUrlRequest = -1;
+    const videoSource = await getValueByRequest('video_source');
+    if (!videoSource) {
       if (typeof hls !== "undefined") setupSeekThumbnails(hls.url);
-    }, 500);
+      return;
+    }
+    setupSeekThumbnails(videoSource);
   }
   if (initialStorage.settings.seekThumbnails) requestSeekThumbnails();
 
@@ -3152,26 +3129,26 @@ const optionSwitches = [
   {
     optionId: 'seekThumbnails',
     value: initialStorage.settings.seekThumbnails,
-    onEvent: () => {sendMessage({action:'setting_changed',type:'seek_thumbnails',value:true})},
-    offEvent: () => {sendMessage({action:'setting_changed',type:'seek_thumbnails',value:false})}
+    onEvent: () => {sendMessage({action:'setting_changed',id:'seekThumbnails',value:true})},
+    offEvent: () => {sendMessage({action:'setting_changed',id:'seekThumbnails',value:false})}
   },
   {
     optionId: 'seekPoints',
     value: initialStorage.settings.seekPoints,
-    onEvent: () => {sendMessage({action:'setting_changed',type:'seek_points',value:true})},
-    offEvent: () => {sendMessage({action:'setting_changed',type:'seek_points',value:false})}
+    onEvent: () => {sendMessage({action:'setting_changed',id:'seekPoints',value:true})},
+    offEvent: () => {sendMessage({action:'setting_changed',id:'seekPoints',value:false})}
   },
   {
     optionId: 'skipButton',
     value: initialStorage.settings.skipButton,
-    onEvent: () => {sendMessage({action:'setting_changed',type:'skip_button',value:true})},
-    offEvent: () => {sendMessage({action:'setting_changed',type:'skip_button',value:false})}
+    onEvent: () => {sendMessage({action:'setting_changed',id:'skipButton',value:true})},
+    offEvent: () => {sendMessage({action:'setting_changed',id:'skipButton',value:false})}
   },
   {
     optionId: 'copyScreenshots',
     value: initialStorage.settings.copyScreenshots,
-    onEvent: () => {sendMessage({action:'setting_changed',type:'generic',id:'copyScreenshots',value:true})},
-    offEvent: () => {sendMessage({action:'setting_changed',type:'generic',id:'copyScreenshots',value:false})}
+    onEvent: () => {sendMessage({action:'setting_changed',id:'copyScreenshots',value:true})},
+    offEvent: () => {sendMessage({action:'setting_changed',id:'copyScreenshots',value:false})}
   },
   {
     optionId: 'reduceMotion',
@@ -3200,8 +3177,8 @@ const optionSwitches = [
   {
     optionId: 'numpadSeeking',
     value: initialStorage.settings.numpadSeeking,
-    onEvent: () => {sendMessage({action:'setting_changed',type:'generic',id:'numpadSeeking',value:true})},
-    offEvent: () => {sendMessage({action:'setting_changed',type:'generic',id:'numpadSeeking',value:false})}
+    onEvent: () => {sendMessage({action:'setting_changed',id:'numpadSeeking',value:true})},
+    offEvent: () => {sendMessage({action:'setting_changed',id:'numpadSeeking',value:false})}
   }];
 
 const originalEpisodeValue = (() => {
@@ -3758,90 +3735,33 @@ if (isEpisode()) {
     }
 
     const action = data?.action;
-    if (action === 'id_request') {
-      getAnimeData({session: getAnimeSessionFromUrl()},["id"]).then(data => {
-        if (!data.id) return console.error("[AnimePahe Improvements] Couldn't get anime ID to send to iframe");
-        sendMessage({action:"id_response",id:data.id});
-      });
-    }
-    else if (action === 'anidb_id_request') {
-      const pageData = getAnimeDataFromPage($(document), true);
-      getFirstEpisode(animeSession).then(epResponse => {
-        sendMessage({action:"anidb_id_response",id:pageData.anidb_id,animeName:pageData.name,firstEpisode:epResponse});
-      });
-    }
-    else if (action === 'video_url_request') {
-      const selected = {
-        src: undefined,
-        res: undefined,
-        audio: undefined
-      };
-      for (const btn of $('#resolutionMenu>button')) {
-        const src = $(btn).data('src');
-        const res = +$(btn).data('resolution');
-        const audio = $(btn).data('audio');
-        if (selected.src && selected.res < res) continue;
-        if (selected.audio && audio === 'jpn' && selected.res <= res) continue; // Prefer dubs, since they don't have subtitles
-        selected.src = src;
-        selected.res = res;
-        selected.audio = audio;
+    if (action === 'request') {
+      if (data.type === 'id') {
+        getAnimeData({session: getAnimeSessionFromUrl()},["id"]).then(data => {
+          if (!data.id) return console.error("[AnimePahe Improvements] Couldn't get anime ID to send to iframe");
+          sendMessage({action:"response",type:'id',value:data.id});
+        });
       }
-      if (!selected.src) {
-        console.error("[AnimePahe Improvements] Didn't find video URL");
-        return;
+      else if (data.type === 'anidb_id') {
+        const pageData = getAnimeDataFromPage($(document), true);
+        sendMessage({action:"response",type:'anidb_id',value:pageData.anidb_id});
       }
-      console.log('[AnimePahe Improvements] Found lowest resolution URL ' + selected.src);
-
-      const request = new XMLHttpRequest();
-      request.open('GET', selected.src, true);
-      request.onload = () => {
-        if (request.status !== 200) {
-          console.error('[AnimePahe Improvements] Could not get kwik page for video source');
-          return;
-        }
-
-        const pageElements = Array.from($(request.response)); // Elements that are not buried cannot be found with jQuery.find()
-        const hostInfo = (() => {
-          for (const link of pageElements.filter(a => a.tagName === 'LINK')) {
-            const href = $(link).attr('href');
-            if (!href.includes('vault')) continue;
-            const result = /vault-(\d+)\.(\w+\.\w+)$/.exec(href);
-            return {
-              vaultId: result[1],
-              hostName: result[2]
-            };
-          }
-        })();
-
-        const searchInfo = (() => {
-          for (const script of pageElements.filter(a => a.tagName === 'SCRIPT')) {
-            if ($(script).attr('url') || !$(script).text().startsWith('eval')) continue;
-            const result = /(\w{64})\|((?:\w+\|){4,5})https/.exec($(script).text());
-            let extraNumber;
-            result[2].split('|').forEach(a => {if (/\d{2}/.test(a)) extraNumber = a;}); // Some number that's needed for the url (doesn't always exist here)
-            if (extraNumber === undefined) {
-              const result2 = /q=\\'\w+:\/{2}\w+-\w+\.\w+\.\w+\/((?:\w+\/)+)/.exec($(script).text());
-              result2[1].split('/').forEach(a => {if (/\d{2}/.test(a) && a !== hostInfo.vaultId) extraNumber = a;});
-            }
-            if (extraNumber === undefined) {
-              const result2 = /source\|(\d{2})\|ended/.exec($(script).text());
-              if (result2 !== null) extraNumber = result2[1];
-            }
-            return {
-              part1: extraNumber ?? hostInfo.vaultId,
-              part2: result[1]
-            };
-          }
-        })();
-
-        if (searchInfo.part1 === undefined) {
-          console.error('[AnimePahe Improvements] Could not find "extraNumber" from ' + data.url);
-          return;
-        }
-
-        sendMessage({action: "video_url_response", url: `https://vault-${hostInfo.vaultId}.${hostInfo.hostName}/stream/${hostInfo.vaultId}/${searchInfo.part1}/${searchInfo.part2}/uwu.m3u8`});
-      };
-      request.send();
+      else if (data.type === 'name') {
+        sendMessage({action:"response",type:'name',value:getAnimeName()});
+      }
+      else if (data.type === 'first_episode') {
+        getFirstEpisode(animeSession).then(epResponse => {
+          sendMessage({action:"response",type:'first_episode',value:epResponse});
+        });
+      }
+      else if (data.type === 'video_source') {
+        const thumbnailUrl = getBestThumbnailUrl();
+        if (!thumbnailUrl) return; // Don't respond
+        getVideoSourceUrl(thumbnailUrl).then(sourceUrl => {
+          if (!sourceUrl) return;
+          sendMessage({action:"response",type:'video_source',value:sourceUrl});
+        });
+      }
     }
     else if (action === 'timestamp_edit_mode_done') {
       $('#anitracker-modal-body').empty()
@@ -3921,6 +3841,86 @@ function getSeasonValue(season) {
 
 function getSeasonName(season) {
   return ["winter","spring","summer","fall"][season];
+}
+
+function getBestThumbnailUrl() {
+  if (!isEpisode()) return;
+  const selected = {
+    src: undefined,
+    res: undefined,
+    audio: undefined
+  };
+  for (const btn of $('#resolutionMenu>button')) {
+    const src = $(btn).data('src');
+    const res = +$(btn).data('resolution');
+    const audio = $(btn).data('audio');
+    if (selected.src && selected.res < res) continue;
+    if (selected.audio && audio === 'jpn' && selected.res <= res) continue; // Prefer dubs, since they don't have subtitles
+    selected.src = src;
+    selected.res = res;
+    selected.audio = audio;
+  }
+  if (!selected.src) {
+    console.error("[AnimePahe Improvements] Couldn't find thumbnail URL");
+    return;
+  }
+  console.log('[AnimePahe Improvements] Found thumbnail URL ' + selected.src);
+  return selected.src;
+}
+
+function getVideoSourceUrl(videoPageUrl) {
+  return new Promise(resolve => {
+    const request = new XMLHttpRequest();
+    request.open('GET', videoPageUrl, true);
+    request.onload = () => {
+      if (request.status !== 200) {
+        console.error('[AnimePahe Improvements] Could not get kwik page for video source');
+        return resolve(undefined);
+      }
+  
+      const pageElements = Array.from($(request.response)); // Elements that are not buried cannot be found with jQuery.find()
+      const hostInfo = (() => {
+        for (const link of pageElements.filter(a => a.tagName === 'LINK')) {
+          const href = $(link).attr('href');
+          if (!href.includes('vault')) continue;
+          const result = /vault-(\d+)\.(\w+\.\w+)$/.exec(href);
+          return {
+            vaultId: result[1],
+            hostName: result[2]
+          };
+        }
+      })();
+  
+      const searchInfo = (() => {
+        for (const script of pageElements.filter(a => a.tagName === 'SCRIPT')) {
+          if ($(script).attr('url') || !$(script).text().startsWith('eval')) continue;
+          const result = /(\w{64})\|((?:\w+\|){4,5})https/.exec($(script).text());
+          let extraNumber;
+          result[2].split('|').forEach(a => {if (/\d{2}/.test(a)) extraNumber = a;}); // Some number that's needed for the url (doesn't always exist here)
+          if (extraNumber === undefined) {
+            const result2 = /q=\\'\w+:\/{2}\w+-\w+\.\w+\.\w+\/((?:\w+\/)+)/.exec($(script).text());
+            result2[1].split('/').forEach(a => {if (/\d{2}/.test(a) && a !== hostInfo.vaultId) extraNumber = a;});
+          }
+          if (extraNumber === undefined) {
+            const result2 = /source\|(\d{2})\|ended/.exec($(script).text());
+            if (result2 !== null) extraNumber = result2[1];
+          }
+          return {
+            part1: extraNumber ?? hostInfo.vaultId,
+            part2: result[1]
+          };
+        }
+      })();
+  
+      if (searchInfo.part1 === undefined) {
+        console.error('[AnimePahe Improvements] Could not find "extraNumber" from ' + videoPageUrl);
+        return resolve(undefined);
+      }
+  
+      resolve(`https://vault-${hostInfo.vaultId}.${hostInfo.hostName}/stream/${hostInfo.vaultId}/${searchInfo.part1}/${searchInfo.part2}/uwu.m3u8`);
+    };
+    request.send();
+  });
 }
 
 const is404 = $('h1').text().includes('404');
@@ -9814,7 +9814,7 @@ function addGeneralButtons() {
         const elem = $(`#anitracker-${id}-button`);
         elem.html(getKeybindHtml(value));
         elem.attr('title', getKeybindString(value));
-        sendMessage({action:"setting_changed",type:"generic",id:id,value:value}); // Assumes that keybind IDs share space with generic setting IDs
+        sendMessage({action:"setting_changed",id:id,value:value}); // Assumes that keybind IDs share space with generic setting IDs
 
         const found = keybindEntries.find(g => g.id === id);
         if (found) found.value = value;
