@@ -5719,7 +5719,7 @@ function openBookmarksModal() {
         });
         $('#anitracker-modal-body').empty();
         $(`
-        <div class="anitracker-spinner">
+        <div class="anitracker-spinner anitracker-center-content">
           <div class="spinner-border" role="status">
             <span class="sr-only">Loading...</span>
           </div>
