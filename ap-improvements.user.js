@@ -2471,13 +2471,6 @@ a.youtube-preview::before {
   position: absolute;
   bottom: 6em;
 }
-header.main-header nav .main-nav li.nav-item > a:focus {
-  color: #fff;
-  background-color: #bc0150;
-}
-.theatre-settings .dropup .btn[aria-expanded="true"],.theatre-settings .dropup .btn:focus-visible {
-  outline: .15rem solid rgb(100, 100, 100)!important;
-}
 .anitracker-episode-date {
   margin-left: 5%;
   font-size: 0.75rem!important;
@@ -2947,6 +2940,13 @@ a:hover .anitracker-relation-poster,a:focus-visible .anitracker-relation-poster 
 }
 .player .prequel a:focus-visible, .player .sequel a:focus-visible {
   outline: 5px solid gray;
+}
+header.main-header nav .main-nav li.nav-item > a:focus {
+  color: #fff;
+  background-color: #bc0150;
+}
+.theatre-settings .dropup .btn[aria-expanded="true"]:focus,.theatre-settings .dropup .btn:focus-visible {
+  outline: .15rem solid rgb(100, 100, 100)!important;
 }
 .index .col-12:nth-child(4n-3), .index .col-12:nth-child(4n-2) {
   background-color: rgb(20, 19, 25);
