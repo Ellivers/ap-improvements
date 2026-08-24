@@ -3433,9 +3433,8 @@ const animeInfoFunctions = [
     "outputs": ["session","name","id","anidb_id","poster"],
     "fn": async (iinfo = {}, config = {}) => {
       if (!iinfo.session) return undefined;
-      const page = await asyncGetPage(`/anime/${iinfo.session}`);
-      if (!page) return undefined;
-      const data = getAnimeDataFromPage(page, false);
+      const data = getPageDataFromSession(iinfo.session);
+      if (!data) return undefined;
       return {
         old: {},
         new: {
@@ -3487,7 +3486,7 @@ const animeInfoFunctions = [
       const searchedSessions = [];
       async function searchBranches(session) {
         if (searchedSessions.includes(session)) return undefined;
-        const pageData = await getPageData(session);
+        const pageData = await getPageDataFromSession(session);
         if (pageData && matchDataPartial(pageData,iinfo,["name","id","anidb_id","poster"])) {
           pageData.session = session;
           return pageData;
@@ -3496,7 +3495,7 @@ const animeInfoFunctions = [
         const relations = await getBranches(session);
         for (const rel of relations) {
           if (!matchDataPartial(rel,iinfo,{"session":"session","title":"name"}) && (!rel.poster || trimPosterUrl(rel.poster) !== iinfo.poster)) continue;
-          const pageData2 = await getPageData(rel.session);
+          const pageData2 = await getPageDataFromSession(rel.session);
           if (pageData2) {
             pageData2.session = rel.session;
             return pageData2;
@@ -3521,18 +3520,14 @@ const animeInfoFunctions = [
         if (!data?.new.session && !data?.old.session) return undefined;
         startSession = data.new.session ?? data.old.session;
       }
+      if (!startSession) return undefined;
       const result = await searchBranches(startSession);
       if (!result) return undefined;
       return {old:{},new:{...result}};
       async function getBranches(session) {
         const relations = await getRelationList(session);
         if (!relations) return [];
-        return relations.filter(a => a.relation_type !== 'Character');
-      }
-      async function getPageData(session) {
-        const page = await asyncGetPage(`/anime/${session}`);
-        if (!page) return undefined;
-        return getAnimeDataFromPage(page, false);
+        return relations.filter(a => a.relation_type !== 'character');
       }
     }
   }
@@ -4376,7 +4371,7 @@ async function searchForCollections() {
   }
 
   const additional = await getRelationList(sortAnimesChronologically(seriesList)[0].session);
-  seriesList.push(...additional.filter(a => !seriesList.find(g => g.title === a.title) && !['Character'].includes(a.relation_type)));
+  seriesList.push(...additional.filter(a => !seriesList.find(g => g.title === a.title) && !['character'].includes(a.relation_type)));
 
   if (seriesList.length < 2) {
     elem.remove();
@@ -8393,7 +8388,7 @@ async function getRelationList(session) {
       year: +seasonParts[2],
       poster: elem.find('img').attr('data-src').replace('.th',''),
       session: /^.*animepahe\.[a-z]+\/anime\/([^/]+)/.exec(elem.find('a')[0].href)[1],
-      relation_type: elem.parents(':eq(1)').find('h4 span').text(),
+      relation_type: elem.parents(':eq(1)').find('h4 span').text().toLowerCase(),
     });
   }
 
@@ -8411,11 +8406,11 @@ if (isEpisode()) {
   $('.prequel,.sequel').addClass('anitracker-thumbnail');
 
   $(`
-  <span relationType="Prequel" class="dropdown-item anitracker-relation-link" id="anitracker-prequel-link" tabindex="0">
+  <span relationType="prequel" class="dropdown-item anitracker-relation-link" id="anitracker-prequel-link" tabindex="0">
     Previous Anime
   </span>`).prependTo('.episode-menu #scrollArea');
   $(`
-  <span relationType="Sequel" class="dropdown-item anitracker-relation-link" id="anitracker-sequel-link" tabindex="0">
+  <span relationType="sequel" class="dropdown-item anitracker-relation-link" id="anitracker-sequel-link" tabindex="0">
     Next Anime
   </span>`).appendTo('.episode-menu #scrollArea');
 
@@ -8429,13 +8424,13 @@ if (isEpisode()) {
     getRelationData(animeSession, relationType).then((relationData) => {
       if (relationData === undefined) {
         hideSpinner(this, 2);
-        showMessage(`No ${relationType.toLowerCase()} found`);
+        showMessage(`No ${relationType} found`);
         $(this).remove();
         return;
       }
 
       const episodes = relationData.episodeList;
-      const episodeSession = relationType === 'Prequel' ? episodes[episodes.length-1].session : episodes[0].session;
+      const episodeSession = relationType === 'prequel' ? episodes[episodes.length-1].session : episodes[0].session;
 
       windowOpen(`/play/${relationData.session}/${episodeSession}`, '_self');
       hideSpinner(this, 2);
@@ -8443,41 +8438,43 @@ if (isEpisode()) {
 
   });
 
-  if (!$('.prequel').length) setRelationPoster('Prequel', 'prequel');
-  if (!$('.sequel').length) setRelationPoster('Sequel', 'sequel');
+  if (!$('.prequel').length) getRelationData(animeSession, 'prequel').then(async (relationData) => {
+    setRelationLink(relationData, 'prequel');
+
+    if (relationData && getStorage().settings.autoDelete) {
+      const pageData = await getPageDataFromSession(relationData.session);
+      deleteEpisodesFromTracker(pageData ? undefined : getEpisodeNum(), relationData.title, pageData?.id);
+    }
+  });
+  if (!$('.sequel').length) getRelationData(animeSession, 'sequel').then(relationData => {
+    setRelationLink(relationData, 'sequel');
+  });
 }
 
 if (isAnime()) {
   getTrackerDiv().attr('style', "max-width: 1100px;margin-left: auto;margin-right: auto;margin-bottom: 20px;").insertAfter('.anime-content');
 }
 
-async function setRelationPoster(name, type) {
-  const relationData = await getRelationData(animeSession, name);
+function setRelationLink(relationData, type) {
   const linkElem = $(`#anitracker-${type}-link`);
-  if (relationData === undefined) {
-    linkElem.remove();
-    return;
-  }
+  if (relationData === undefined) return linkElem.remove();
+  
   const index = type === 'prequel' ? relationData.episodeList.length - 1 : 0;
-  const relationLink = `/play/${relationData.session}/${relationData.episodeList[index].session}`;
+  const href = `/play/${relationData.session}/${relationData.episodeList[index].session}`;
   $(`
   <div class="${type} hidden-sm-down anitracker-thumbnail">
-    <a href="${relationLink}" title="Play ${type === 'prequel' ? 'Last Episode' : 'First Episode'} of ${toHtmlCodes(relationData.title)}">
+    <a href="${href}" title="Play ${type === 'prequel' ? 'Last Episode' : 'First Episode'} of ${toHtmlCodes(relationData.title)}">
       <img class="anitracker-relation-poster" src="${relationData.poster}" data-src="${relationData.poster}" alt="">
     </a>
     <i class="fa fa-chevron-${type === 'prequel' ? 'left' : 'right'}" aria-hidden="true"></i>
   </div>`).appendTo('.player');
 
-  linkElem.attr('href', relationLink);
-  linkElem.text(relationData.title);
-  linkElem.changeElementType('a');
+  linkElem.attr('href', href).text(relationData.title).changeElementType('a');
+}
 
-  // If auto-clear is on and the episode is a prequel, delete the episode from the tracker
-  if (type === 'prequel' && getStorage().settings.autoDelete === true) {
-    const page = await asyncGetPage(`/anime/${relationData.session}`);
-    const pageData = page ? await getAnimeDataFromPage(page, false) : undefined;
-    deleteEpisodesFromTracker(pageData ? undefined : getEpisodeNum(), relationData.title, pageData?.id);
-  }
+async function getPageDataFromSession(session, isEpisode = false) {
+  const page = await asyncGetPage(`/anime/${session}`);
+  return page ? getAnimeDataFromPage(page, isEpisode) : undefined;
 }
 
 if (isEpisode()) {
