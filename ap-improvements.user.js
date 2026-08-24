@@ -726,8 +726,9 @@ const _css = `
     const byRequest = await getValueByRequest('anidb_id');
     if (byRequest) return byRequest;
     const name = await getValueByRequest('name');
-    if (!name) return;
-    return await getAnidbIdFromTitle(name);
+    const byName1 = name && await getAnidbIdFromTitle(name);
+    if (byName1) return byName1;
+    return await getAnidbIdFromTitle(getVideoInfo().animeName);
   }
 
   function saveTimestampData(timestampData, storage) {
