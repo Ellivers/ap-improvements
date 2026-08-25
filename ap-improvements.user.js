@@ -2067,6 +2067,7 @@ const _css = `
 }
 .anitracker-storage-data, .anitracker-modal-list {
   padding: 8px 14px;
+  max-width: 100%;
 }
 .anitracker-modal-list {
   overflow: hidden;
@@ -10467,7 +10468,6 @@ function addGeneralButtons() {
         ${cleanButton}
       </div>
       `).appendTo(dataEntries);
-      if (!isMobileOrTablet()) elem.parent().find('.anitracker-modal-search').focus();
 
       elem.parent().find('.anitracker-modal-search').on('input', (e) => {
         setTimeout(() => {
@@ -10738,8 +10738,10 @@ function addGeneralButtons() {
         easing: 'linear',
         complete: function() {
           $(this).css('max-height','');
+          if (!isMobileOrTablet()) elem.parent().find('.anitracker-modal-search').focus();
         }
       });
+      else if (!isMobileOrTablet()) elem.parent().find('.anitracker-modal-search').focus();
     }
 
     function retractData(elem) {
