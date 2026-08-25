@@ -1799,6 +1799,7 @@ jQuery.anitrackerCachedScript = function(surl, success) {
 const animationTimes = {
   modalOpen: 0.2,
   fadeIn: 0.2,
+  flash: 0.2,
 };
 
 // MARKER:MAIN PAGE CSS
@@ -2050,7 +2051,7 @@ const _css = `
   position: relative;
   z-index: 1;
 }
-.anitracker-storage-data.anitracker-expanded:not(:active,:focus-visible)::before {
+.anitracker-storage-data.anitracker-expanded:not(:focus-visible)::before {
   content: "";
   background: var(--dark);
   position: absolute;
@@ -2059,7 +2060,7 @@ const _css = `
   height: 2px;
   width: 50%;
 }
-.anitracker-storage-data:active,.anitracker-storage-data:focus-visible {
+.anitracker-storage-data:focus-visible {
   outline: 2px solid #ddd;
 }
 .anitracker-storage-data span {
@@ -3083,6 +3084,14 @@ header.main-header nav .nav-search .search-results-wrap a {
   }
   to {
     transform: rotate(360deg);
+  }
+}
+@keyframes anitracker-flash {
+  from {
+    outline: 2px solid white;
+  }
+  to {
+    outline: 2px solid rgba(0,0,0,0);
   }
 }
 `;
@@ -10061,6 +10070,7 @@ function addGeneralButtons() {
     function toggleExpandData(elem) {
       if (elem.hasClass('anitracker-expanded')) retractData(elem);
       else expandData(elem);
+      playAnimation(elem, 'flash');
     }
 
     $('#anitracker-reset-data').on('click', function() {
