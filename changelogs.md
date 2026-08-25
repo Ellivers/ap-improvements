@@ -7,6 +7,10 @@
   - In most menus, the close/back button now shares space with the menu title
   - Menu titles and subtitles are now centered and always at the top of the modal
   - Most menus now have titles
+- Updated the manage Data menu
+  - Changed the layout of buttons at the bottom
+  - Added an animation for expanding/retracting storage entries
+  - Using Clean Up now shows how many entries will be cleaned up before confirming
 - The Edit/Add Bookmark menu is now a bit wider with shorter anime names
 - Made bookmark icons slightly larger with the grid layout on mobile, since there is now more space
 - The image for the link to the previous/next anime is now slightly blurred
