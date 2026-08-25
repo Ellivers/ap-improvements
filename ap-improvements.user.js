@@ -1798,7 +1798,7 @@ jQuery.anitrackerCachedScript = function(surl, success) {
 
 const animationTimes = {
   modalOpen: 0.2,
-  fadeIn: 0.2
+  fadeIn: 0.2,
 };
 
 // MARKER:MAIN PAGE CSS
@@ -1808,7 +1808,7 @@ const _css = `
   --anitracker-darker: rgb(14, 20, 23);
   --pahe-pink: #d5015b;
 }
-#anitracker {
+#anitracker, .anitracker-button-row {
   display: flex;
   gap: 7px 7px;
   align-items: center;
@@ -2049,8 +2049,17 @@ const _css = `
   position: relative;
   z-index: 1;
 }
-.anitracker-storage-data:focus {
-  outline: 2px solid #fff;
+.anitracker-storage-data.anitracker-expanded:not(:active,:focus-visible)::before {
+  content: "";
+  background: var(--dark);
+  position: absolute;
+  top: 100%;
+  left: 25%;
+  height: 2px;
+  width: 50%;
+}
+.anitracker-storage-data:active,.anitracker-storage-data:focus-visible {
+  outline: 2px solid #ddd;
 }
 .anitracker-storage-data span {
   display: inline-block;
@@ -2058,6 +2067,9 @@ const _css = `
 }
 .anitracker-storage-data, .anitracker-modal-list {
   padding: 8px 14px;
+}
+.anitracker-modal-list {
+  overflow: hidden;
 }
 .anitracker-modal-list.flex {
   display: flex;
@@ -2071,11 +2083,6 @@ const _css = `
   display: inline-block;
 }
 .anitracker-modal-list-entry:hover, .anitracker-modal-list-entry:focus-within {background-color: var(--anitracker-darker);\n}
-.anitracker-modal-bottom-buttons {
-  display: flex;
-  gap: 5px;
-  flex-wrap: wrap;
-}
 .anitracker-relation-link {
   text-overflow: ellipsis;
   overflow: hidden;
@@ -9999,40 +10006,44 @@ function addGeneralButtons() {
         <span>Video Playback Speed</span>
       </div>
     </div>
-    <button class="btn btn-secondary" id="anitracker-sync-data" title="Edit data sync settings" style="margin-bottom: 10px;">
-      <i class="fa fa-sync" aria-hidden="true"></i>
-      &nbsp;Sync Data...
-    </button>
-    <div class="anitracker-modal-bottom-buttons">
+    <div class="anitracker-button-row" style="margin-bottom: 10px;">
       <div class="btn-group">
-        <button class="btn btn-danger" id="anitracker-reset-data" title="Remove stored data and reset all settings">
-          <i class="fa fa-undo" aria-hidden="true"></i>
-          &nbsp;Reset Data
+        <button class="btn btn-secondary" id="anitracker-sync-data" title="Edit data sync settings">
+          <i class="fa fa-sync" aria-hidden="true"></i>
+          &nbsp;Sync Data...
         </button>
       </div>
+      <div class="btn-group">
+        <button class="btn btn-secondary" id="anitracker-export-data" title="Export and download the JSON data">
+          <i class="fa fa-download" aria-hidden="true"></i>
+          &nbsp;Export
+        </button>
+      </div>
+      <label class="btn btn-secondary" id="anitracker-import-data-label" tabindex="0" for="anitracker-import-data" style="margin-bottom:0;" title="Import a JSON file with AnimePahe Improvements data. This does not delete any existing data.">
+        <i class="fa fa-upload" aria-hidden="true"></i>
+        &nbsp;Import
+      </label>
       <div class="btn-group">
         <button class="btn btn-secondary" id="anitracker-raw-data" title="View data in JSON format">
           <i class="fa fa-code" aria-hidden="true"></i>
           &nbsp;Raw
         </button>
       </div>
+      <input type="file" id="anitracker-import-data" style="opacity: 0; width: 0px;" accept=".json">
+    </div>
+    <div class="anitracker-center-content" style="gap: 7px;">
       <div class="btn-group">
-        <button class="btn btn-secondary" id="anitracker-export-data" title="Export and download the JSON data">
-          <i class="fa fa-download" aria-hidden="true"></i>
-          &nbsp;Export Data
+        <button class="btn btn-danger anitracker-flat-button" id="anitracker-reset-data" title="Remove stored data and reset all settings">
+          <i class="fa fa-undo" aria-hidden="true"></i>
+          &nbsp;Reset Data
         </button>
       </div>
-      <label class="btn btn-secondary" id="anitracker-import-data-label" tabindex="0" for="anitracker-import-data" style="margin-bottom:0;" title="Import a JSON file with AnimePahe Improvements data. This does not delete any existing data.">
-        <i class="fa fa-upload" aria-hidden="true"></i>
-        &nbsp;Import Data
-      </label>
       <div class="btn-group">
-        <button class="btn btn-dark" id="anitracker-edit-data" title="Edit a data key">
+        <button class="btn btn-dark anitracker-flat-button" id="anitracker-edit-data" title="Edit a data key">
           <i class="fa fa-pencil" aria-hidden="true"></i>
           &nbsp;Edit...
         </button>
       </div>
-      <input type="file" id="anitracker-import-data" style="visibility: hidden; width: 0;" accept=".json">
     </div>
     `).appendTo('#anitracker-modal-body');
 
@@ -10047,12 +10058,8 @@ function addGeneralButtons() {
     });
 
     function toggleExpandData(elem) {
-      if (elem.hasClass('anitracker-expanded')) {
-        contractData(elem);
-      }
-      else {
-        expandData(elem);
-      }
+      if (elem.hasClass('anitracker-expanded')) retractData(elem);
+      else expandData(elem);
     }
 
     $('#anitracker-reset-data').on('click', function() {
@@ -10445,8 +10452,9 @@ function addGeneralButtons() {
       const storage = getStorage();
       const dataType = elem.attr('key');
 
+      const reduceMotion = storage.settings.reduceMotion;
       elem.find('.anitracker-expand-data-icon').replaceWith(contractIcon);
-      const dataEntries = $('<div class="anitracker-modal-list"></div>').appendTo(elem.parent());
+      const dataEntries = $(`<div class="anitracker-modal-list" ${!reduceMotion ? 'style="display:none;max-height:100vh;"' : ''}></div>`).appendTo(elem.parent());
 
       const cleanButton = ['linkList','videoTimes'].includes(dataType) ?
             `<button class="btn btn-secondary anitracker-clean-data-button anitracker-list-btn" style="text-wrap:nowrap;" title="${getCleanType(dataType)}">
@@ -10725,13 +10733,28 @@ function addGeneralButtons() {
       }
 
       elem.addClass('anitracker-expanded');
+      if (!reduceMotion) dataEntries.slideToggle({
+        duration: 100,
+        easing: 'linear',
+        complete: function() {
+          $(this).css('max-height','');
+        }
+      });
     }
 
-    function contractData(elem) {
+    function retractData(elem) {
       elem.find('.anitracker-expand-data-icon').replaceWith(expandIcon);
-      elem.parent().find('.anitracker-modal-list').remove();
       elem.removeClass('anitracker-expanded');
-      elem.blur();
+      if (!getStorage().settings.reduceMotion) {
+        elem.parent().find('.anitracker-modal-list').css('max-height','100vh').slideToggle({
+          duration: 100,
+          easing: 'linear',
+          complete: function() {
+            $(this).remove();
+          },
+        });
+      }
+      else elem.parent().find('.anitracker-modal-list').remove();
     }
 
     function openSyncDataModal() {
