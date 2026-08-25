@@ -2059,6 +2059,7 @@ const _css = `
   left: 25%;
   height: 2px;
   width: 50%;
+  animation: anitracker-fadeIn .3s forwards linear;
 }
 .anitracker-storage-data:focus-visible {
   outline: 2px solid #ddd;
