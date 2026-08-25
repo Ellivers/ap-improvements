@@ -3043,17 +3043,6 @@ header.main-header nav .nav-search .search-results-wrap a {
     transform: scale(1);
   }
 }
-@-webkit-keyframes anitracker-modalOpen {
-  0% {
-    transform: scale(0.5);
-  }
-  50% {
-    transform: scale(1.07);
-  }
-  100% {
-    transform: scale(1);
-  }
-}
 @keyframes anitracker-fadeIn {
   from {
     opacity: 0;
@@ -3062,23 +3051,7 @@ header.main-header nav .nav-search .search-results-wrap a {
     opacity: 1;
   }
 }
-@-webkit-keyframes anitracker-fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
 @keyframes anitracker-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
-}
-@-webkit-keyframes anitracker-spin {
   from {
     transform: rotate(0deg);
   }
