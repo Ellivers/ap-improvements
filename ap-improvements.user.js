@@ -3286,6 +3286,17 @@ function makePosterUrl(poster, format = '') {
   return `https://i.${window.location.host}/${poster}`;
 }
 
+// See if all data matches between data1 and data2
+function matchDataFull(data1, data2, keys) {
+  if (Array.isArray(keys)) for (const key of keys) { // If both object have the same key names
+    if (data1[key] !== data2[key]) return false;
+  }
+  else for (const [key1, key2] of Object.entries(keys)) { // If key pairs
+    if (data1[key1] !== data2[key2]) return false;
+  }
+  return true;
+}
+
 // See if any bit of data matches between data1 and data2, excluding undefined entries
 function matchDataPartial(data1, data2, keys) {
   if (Array.isArray(keys)) for (const key of keys) { // If both object have the same key names
@@ -10427,11 +10438,6 @@ function addGeneralButtons() {
       fileReader.readAsText(file);
     });
 
-    function getCleanType(type) {
-      if (type === 'linkList') return "Clean up older duplicate entries";
-      else if (type === 'videoTimes') return "Remove entries with no progress (0s)";
-    }
-
     function expandData(elem) {
       const storage = getStorage();
       const dataType = elem.attr('key');
@@ -10441,7 +10447,7 @@ function addGeneralButtons() {
       const dataEntries = $(`<div class="anitracker-modal-list" ${!reduceMotion ? 'style="display:none;max-height:100vh;"' : ''}></div>`).appendTo(elem.parent());
 
       const cleanButton = ['linkList','videoTimes'].includes(dataType) ?
-            `<button class="btn btn-secondary anitracker-clean-data-button anitracker-list-btn" style="text-wrap:nowrap;" title="${getCleanType(dataType)}">
+            `<button class="btn btn-secondary anitracker-clean-data-button anitracker-list-btn" style="text-wrap:nowrap;" title="Clean up unneeded entries">
               Clean Up
             </button>` : '';
       $(`
@@ -10465,43 +10471,13 @@ function addGeneralButtons() {
       });
 
       elem.parent().find('.anitracker-clean-data-button').on('click', () => {
-        if (!confirm("[AnimePahe Improvements]\n\n" + getCleanType(dataType) + '?')) return;
-
-        const updatedStorage = getStorage();
-
-        const removed = [];
-        if (dataType === 'linkList') {
-          for (let i = 0; i < updatedStorage.linkList.length; i++) {
-            const link = updatedStorage.linkList[i];
-
-            const similar = updatedStorage.linkList.filter(a => a.animeName === link.animeName && a.episodeNum === link.episodeNum);
-            if (similar[similar.length-1] !== link) {
-              removed.push(link);
-
-              if (isSyncEnabled(updatedStorage)) {
-                if (link.type === 'episode') updatedStorage.sync.temp.removedData.push({type: 'linkList', episodeSession: link.episodeSession});
-                else if (link.type === 'anime') updatedStorage.sync.temp.removedData.push({type: 'linkList', animeSession: link.animeSession});
-              }
-            }
-          }
-          updatedStorage.linkList = updatedStorage.linkList.filter(a => !removed.includes(a));
+        const toRemove = getCleanUpList(dataType);
+        if (!toRemove.length) {
+          alert("[AnimePahe Improvements] Found no entries to clean up.");
+          return;
         }
-        else if (dataType === 'videoTimes') {
-          for (const timeEntry of updatedStorage.videoTimes) {
-            if (timeEntry.time > 5) continue;
-            removed.push(timeEntry);
-
-            if (isSyncEnabled(updatedStorage)) {
-              updatedStorage.sync.temp.removedData.push({type: 'videoTimes', animeName: timeEntry.animeName, episodeNum: timeEntry.episodeNum});
-            }
-          }
-          updatedStorage.videoTimes = updatedStorage.videoTimes.filter(a => !removed.includes(a));
-        }
-
-        showMessage(`Cleaned up ${removed.length} ${removed.length === 1 ? "entry" : "entries"}.`, 3000);
-        saveData(updatedStorage);
-        dataEntries.remove();
-        expandData(elem);
+        if (!confirm("[AnimePahe Improvements]\n\n" + getCleanUpText(dataType, toRemove.length))) return;
+        cleanUpData(toRemove, dataType);
       });
 
       // When clicking the reverse order button
@@ -10527,6 +10503,44 @@ function addGeneralButtons() {
         }
         applyDeleteEvents();
       });
+
+      function cleanUpData(list, type) {
+        const storage = getStorage();
+        if (type === 'linkList') {
+          if (isSyncEnabled(storage)) storage.sync.temp.removedData.push(list.map(a => {
+            if (a.type === 'episode') return {type: 'linkList', episodeSession: a.episodeSession};
+            else if (a.type === 'anime') return {type: 'linkList', animeSession: a.animeSession};
+          }));
+          storage.linkList = storage.linkList.filter(a => !list.find(b => matchDataFull(a, b, ["animeSession","episodeSession","episodeNum"])));
+        }
+        else if (type === 'videoTimes') {
+          if (isSyncEnabled(storage)) storage.sync.temp.removedData.push(list.map(a => {return {type: 'videoTimes', animeName: a.animeName, episodeNum: a.episodeNum};}));
+          storage.videoTimes = storage.videoTimes.filter(a => !list.find(b => matchDataFull(a, b, ["animeName","episodeNum","time"])));
+        }
+        showMessage(`Cleaned up ${list.length} ${list.length === 1 ? "entry" : "entries"}.`, 3000);
+        saveData(storage);
+        dataEntries.remove();
+        expandData(elem);
+      }
+
+      function getCleanUpList(type) {
+        const toRemove  = [];
+        const storage = getStorage();
+        if (dataType === 'linkList') {
+          for (const entry of storage.linkList) {
+            const similar = storage.linkList.filter(a => a.animeName === entry.animeName && a.episodeNum === entry.episodeNum);
+            if (similar[similar.length-1] !== entry) toRemove.push(entry);
+          }
+        }
+        else if (dataType === 'videoTimes') toRemove.push(...storage.videoTimes.filter(a => a.time <= 5));
+
+        return toRemove;
+      }
+
+      function getCleanUpText(type, count) {
+        if (type === 'linkList') return `Clean up ${count} older duplicate ${count > 1 ? 'entries' : 'entry'}?`;
+        else if (type === 'videoTimes') return `Remove ${count} ${count > 1 ? 'entries' : 'entry'} with no progress?`;
+      }
 
       function applyDeleteEvents() {
         $('.anitracker-modal-list-entry .anitracker-delete-session-button').on('click', function() {
