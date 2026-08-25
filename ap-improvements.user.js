@@ -10478,172 +10478,57 @@ function addGeneralButtons() {
         }
         if (!confirm("[AnimePahe Improvements]\n\n" + getCleanUpText(dataType, toRemove.length))) return;
         cleanUpData(toRemove, dataType);
+        dataEntries.remove();
+        expandData(elem);
       });
 
       // When clicking the reverse order button
-      elem.parent().find('.anitracker-reverse-order-button').on('click', (e) => {
-        const btn = $(e.target);
-        if (btn.attr('dir') === 'down') {
-          btn.attr('dir', 'up');
-          btn.addClass('anitracker-up');
-        }
-        else {
-          btn.attr('dir', 'down');
-          btn.removeClass('anitracker-up');
-        }
+      elem.parent().find('.anitracker-reverse-order-button').on('click', function() {
+        const btn = $(this);
+        if (btn.attr('dir') === 'down') btn.attr('dir', 'up').addClass('anitracker-up');
+        else btn.attr('dir', 'down').removeClass('anitracker-up');
 
         const entries = [];
         for (const entry of elem.parent().find('.anitracker-modal-list-entry')) {
           entries.push(entry.outerHTML);
         }
-        entries.reverse();
         elem.parent().find('.anitracker-modal-list-entry').remove();
-        for (const entry of entries) {
+        for (const entry of entries.reverse()) {
           $(entry).appendTo(elem.parent().find('.anitracker-modal-list'));
         }
         applyDeleteEvents();
       });
 
-      function cleanUpData(list, type) {
-        const storage = getStorage();
-        if (type === 'linkList') {
-          if (isSyncEnabled(storage)) storage.sync.temp.removedData.push(list.map(a => {
-            if (a.type === 'episode') return {type: 'linkList', episodeSession: a.episodeSession};
-            else if (a.type === 'anime') return {type: 'linkList', animeSession: a.animeSession};
-          }));
-          storage.linkList = storage.linkList.filter(a => !list.find(b => matchDataFull(a, b, ["animeSession","episodeSession","episodeNum"])));
-        }
-        else if (type === 'videoTimes') {
-          if (isSyncEnabled(storage)) storage.sync.temp.removedData.push(list.map(a => {return {type: 'videoTimes', animeName: a.animeName, episodeNum: a.episodeNum};}));
-          storage.videoTimes = storage.videoTimes.filter(a => !list.find(b => matchDataFull(a, b, ["animeName","episodeNum","time"])));
-        }
-        showMessage(`Cleaned up ${list.length} ${list.length === 1 ? "entry" : "entries"}.`, 3000);
-        saveData(storage);
-        dataEntries.remove();
-        expandData(elem);
-      }
-
-      function getCleanUpList(type) {
-        const toRemove  = [];
-        const storage = getStorage();
-        if (dataType === 'linkList') {
-          for (const entry of storage.linkList) {
-            const similar = storage.linkList.filter(a => a.animeName === entry.animeName && a.episodeNum === entry.episodeNum);
-            if (similar[similar.length-1] !== entry) toRemove.push(entry);
-          }
-        }
-        else if (dataType === 'videoTimes') toRemove.push(...storage.videoTimes.filter(a => a.time <= 5));
-
-        return toRemove;
-      }
-
-      function getCleanUpText(type, count) {
-        if (type === 'linkList') return `Clean up ${count} older duplicate ${count > 1 ? 'entries' : 'entry'}?`;
-        else if (type === 'videoTimes') return `Remove ${count} ${count > 1 ? 'entries' : 'entry'} with no progress?`;
-      }
-
-      function applyDeleteEvents() {
-        $('.anitracker-modal-list-entry .anitracker-delete-session-button').on('click', function() {
-          const storage = getStorage();
-
-          const href = $(this).parent().find('a').attr('href');
-          const animeSession = getAnimeSessionFromUrl(href);
-
-          if (isEpisode(href)) {
-            const episodeSession = getEpisodeSessionFromUrl(href);
-            if (isSyncEnabled(storage)) {
-              storage.sync.temp.removedData.push({type: 'linkList', episodeSession: episodeSession});
-            }
-
-            storage.linkList = storage.linkList.filter(g => !(g.type === 'episode' && g.animeSession === animeSession && g.episodeSession === episodeSession));
-            saveData(storage);
-          }
-          else {
-            if (isSyncEnabled(storage)) {
-              storage.sync.temp.removedData.push({type: 'linkList', animeSession: animeSession});
-            }
-
-            storage.linkList = storage.linkList.filter(g => !(g.type === 'anime' && g.animeSession === animeSession));
-            saveData(storage);
-          }
-
-          $(this).parent().remove();
-        });
-        $('.anitracker-modal-list-entry .anitracker-delete-progress-button').on('click', function() {
-          const lookForPath = $(this).attr('lookForPath');
-
-          const storage = getStorage();
-          const found = storage.videoTimes.find(g => g.videoPaths.includes(lookForPath));
-          if (!found) {
-            $(this).parent().remove();
-            return;
-          }
-          if (isSyncEnabled(storage)) {
-            storage.sync.temp.removedData.push({type: 'videoTimes', animeName: found.animeName, episodeNum: found.episodeNum});
-          }
-
-          storage.videoTimes = storage.videoTimes.filter(g => !g.videoPaths.includes(lookForPath));
-          saveData(storage);
-          updateEpisodePages();
-
-          $(this).parent().remove();
-        });
-        $('.anitracker-modal-list-entry .anitracker-delete-watched-button').on('click', function() {
-          const id = +$(this).parent().attr('animeid');
-          removeWatchedAnime(id);
-          updateEpisodePages();
-
-          $(this).parent().remove();
-        });
-        $('.anitracker-modal-list-entry .anitracker-delete-speed-entry-button').on('click', function() {
-          const storage = getStorage();
-          const idString = $(this).attr('animeid');
-          if (idString) storage.videoSpeed = storage.videoSpeed.filter(g => g.animeId !== parseInt(idString));
-          else storage.videoSpeed = storage.videoSpeed.filter(g => g.animeName !== $(this).attr('animename'));
-          saveData(storage);
-
-          $(this).parent().remove();
-        });
-      }
-
-      if (dataType === 'linkList') {
-        [...storage.linkList].reverse().forEach(g => {
-          const name = g.animeName + (g.type === 'episode' ? (' - Episode ' + g.episodeNum) : '');
-          $(`
-          <div class="anitracker-modal-list-entry">
-            <a target="_blank" href="/${(g.type === 'episode' ? 'play/' : 'anime/') + g.animeSession + (g.type === 'episode' ? ('/' + g.episodeSession) : '')}" title="${toHtmlCodes(name)}">
-              ${toHtmlCodes(name)}
-            </a><br>
-            <button class="btn btn-danger anitracker-delete-session-button anitracker-flat-button" title="Delete this stored session">
-              <i class="fa fa-trash" aria-hidden="true"></i>
-              &nbsp;Delete
-            </button>
-          </div>`).appendTo(elem.parent().find('.anitracker-modal-list'));
-        });
-
-        applyDeleteEvents();
-      }
-      else if (dataType === 'videoTimes') {
-        [...storage.videoTimes].reverse().forEach(g => {
-          const linkListObj = storage.linkList.find(a => a.animeId === g.animeId || a.animeName === g.animeName);
-          const href = linkListObj ? `/anime/${linkListObj.animeSession}` : `/customlink?a=${encodeURIComponent(g.animeName)}`;
-          $(`
-          <div class="anitracker-modal-list-entry">
-            <span title="${toHtmlCodes(g.animeName)}">
-              <a href="${href}" target="_blank">${toHtmlCodes(g.animeName)}</a> - Episode ${g.episodeNum}
-            </span><br>
-            <span>
-              Current time: ${secondsToHMS(g.time)}
-            </span><br>
-            <button class="btn btn-danger anitracker-delete-progress-button anitracker-flat-button" lookForPath="${g.videoPaths[0]}" title="Delete this video progress">
-              <i class="fa fa-trash" aria-hidden="true"></i>
-              &nbsp;Delete
-            </button>
-          </div>`).appendTo(elem.parent().find('.anitracker-modal-list'));
-        });
-
-        applyDeleteEvents();
-      }
+      if (dataType === 'linkList') [...storage.linkList].reverse().forEach(g => {
+        const name = g.animeName + (g.type === 'episode' ? (' - Episode ' + g.episodeNum) : '');
+        $(`
+        <div class="anitracker-modal-list-entry">
+          <a target="_blank" href="/${(g.type === 'episode' ? 'play/' : 'anime/') + g.animeSession + (g.type === 'episode' ? ('/' + g.episodeSession) : '')}" title="${toHtmlCodes(name)}">
+            ${toHtmlCodes(name)}
+          </a><br>
+          <button class="btn btn-danger anitracker-delete-session-button anitracker-flat-button" title="Delete this stored session">
+            <i class="fa fa-trash" aria-hidden="true"></i>
+            &nbsp;Delete
+          </button>
+        </div>`).appendTo(elem.parent().find('.anitracker-modal-list'));
+      });
+      else if (dataType === 'videoTimes') [...storage.videoTimes].reverse().forEach(g => {
+        const linkListObj = storage.linkList.find(a => a.animeId === g.animeId || a.animeName === g.animeName);
+        const href = linkListObj ? `/anime/${linkListObj.animeSession}` : `/customlink?a=${encodeURIComponent(g.animeName)}`;
+        $(`
+        <div class="anitracker-modal-list-entry">
+          <span title="${toHtmlCodes(g.animeName)}">
+            <a href="${href}" target="_blank">${toHtmlCodes(g.animeName)}</a> - Episode ${g.episodeNum}
+          </span><br>
+          <span>
+            Current time: ${secondsToHMS(g.time)}
+          </span><br>
+          <button class="btn btn-danger anitracker-delete-progress-button anitracker-flat-button" lookForPath="${g.videoPaths[0]}" title="Delete this video progress">
+            <i class="fa fa-trash" aria-hidden="true"></i>
+            &nbsp;Delete
+          </button>
+        </div>`).appendTo(elem.parent().find('.anitracker-modal-list'));
+      });
       else if (dataType === 'watched') {
         decodeWatched(storage.watched).reverse().forEach(g => {
           const linkListObj = storage.linkList.find(a => a.animeId === g.animeId);
@@ -10668,66 +10553,59 @@ function addGeneralButtons() {
           </div>`).appendTo(elem.parent().find('.anitracker-modal-list'));
         });
 
-        applyDeleteEvents();
-
         $('.anitracker-get-name-button').on('click', function() {
           const id = +$(this).parent().attr('animeid');
-          const spinner = $(`
-          <div class="anitracker-get-name-spinner anitracker-spinner" style="display: inline;vertical-align: bottom;">
-              <div class="spinner-border" role="status" style="height: 24px; width: 24px;">
-                <span class="sr-only">Loading...</span>
-              </div>
-          </div>`).insertAfter(this);
-          // Get the anime name from its ID
+          showButtonSpinner(this);
           getAnimeData({id: id}, ["name","session"]).then(data => {
-            spinner.remove();
-            if (!data.name) alert("[AnimePahe Improvements]\n\nCouldn't get anime name");
-            else {
-              $(this).parent().find('.anitracker-watched-anime-id').text(data.name).attr('title', data.name);
-              if (!data.session) return;
-              const storage = getStorage();
-              if (isSyncEnabled(storage)) {
-                storage.sync.temp.addedData.push({type: 'linkList', animeSession: data.session});
-              }
-              storage.linkList.push({
-                type: 'anime',
-                animeSession: data.session,
-                animeName: data.name,
-                animeId: id
-              });
-              if (storage.linkList.length > getStorageLimits().linkList) {
-                storage.linkList.splice(0,1);
-              }
-              saveData(storage);
+            hideButtonSpinner(this);
+            if (!data.name) {
+              alert("[AnimePahe Improvements]\n\nCouldn't get anime name");
+              return $(this).remove();
             }
+
+            $(this).parent().find('.anitracker-watched-anime-id').text(data.name).attr('title', data.name);
+            if (!data.session) return;
+            const storage = getStorage();
+            if (isSyncEnabled(storage)) {
+              storage.sync.temp.addedData.push({type: 'linkList', animeSession: data.session});
+            }
+            storage.linkList.push({
+              type: 'anime',
+              animeSession: data.session,
+              animeName: data.name,
+              animeId: id
+            });
+            if (storage.linkList.length > getStorageLimits().linkList) {
+              storage.linkList.splice(0,1);
+            }
+            saveData(storage);
             $(this).remove();
           });
         });
       }
-      else if (dataType === 'videoSpeed') {
-        [...storage.videoSpeed].reverse().forEach(g => {
-          const identifier = (() => {
-            if (g.animeId) return `animeid="${g.animeId}"`;
-            else return `animename="${toHtmlCodes(g.animeName)}"`;
-          })();
-          const linkListObj = storage.linkList.find(a => a.animeId === g.animeId || a.animeName === g.animeName);
-          const href = linkListObj ? `/anime/${linkListObj.animeSession}` : `/customlink?a=${encodeURIComponent(g.animeName)}`;
-          $(`
-          <div class="anitracker-modal-list-entry">
-            <span title="${toHtmlCodes(g.animeName)}">
-              <a href="${href}" target="_blank">${toHtmlCodes(g.animeName)}</a>
-            </span><br>
-            <span>
-              Playback speed: ${g.speed}x
-            </span><br>
-            <button class="btn btn-danger anitracker-delete-speed-entry-button anitracker-flat-button" ${identifier} title="Delete this video speed entry">
-              <i class="fa fa-trash" aria-hidden="true"></i>
-              &nbsp;Delete
-            </button>
-          </div>`).appendTo(elem.parent().find('.anitracker-modal-list'));
-        });
-        applyDeleteEvents();
-      }
+      else if (dataType === 'videoSpeed') [...storage.videoSpeed].reverse().forEach(g => {
+        const identifier = (() => {
+          if (g.animeId) return `animeid="${g.animeId}"`;
+          else return `animename="${toHtmlCodes(g.animeName)}"`;
+        })();
+        const linkListObj = storage.linkList.find(a => a.animeId === g.animeId || a.animeName === g.animeName);
+        const href = linkListObj ? `/anime/${linkListObj.animeSession}` : `/customlink?a=${encodeURIComponent(g.animeName)}`;
+        $(`
+        <div class="anitracker-modal-list-entry">
+          <span title="${toHtmlCodes(g.animeName)}">
+            <a href="${href}" target="_blank">${toHtmlCodes(g.animeName)}</a>
+          </span><br>
+          <span>
+            Playback speed: ${g.speed}x
+          </span><br>
+          <button class="btn btn-danger anitracker-delete-speed-entry-button anitracker-flat-button" ${identifier} title="Delete this video speed entry">
+            <i class="fa fa-trash" aria-hidden="true"></i>
+            &nbsp;Delete
+          </button>
+        </div>`).appendTo(elem.parent().find('.anitracker-modal-list'));
+      });
+      
+      applyDeleteEvents();
 
       elem.addClass('anitracker-expanded');
       if (!reduceMotion) dataEntries.slideToggle({
@@ -10754,6 +10632,106 @@ function addGeneralButtons() {
         });
       }
       else elem.parent().find('.anitracker-modal-list').remove();
+    }
+
+    function cleanUpData(list, type) {
+      const storage = getStorage();
+      if (type === 'linkList') {
+        if (isSyncEnabled(storage)) storage.sync.temp.removedData.push(list.map(a => {
+          if (a.type === 'episode') return {type: 'linkList', episodeSession: a.episodeSession};
+          else if (a.type === 'anime') return {type: 'linkList', animeSession: a.animeSession};
+        }));
+        storage.linkList = storage.linkList.filter(a => !list.find(b => matchDataFull(a, b, ["animeSession","episodeSession","episodeNum"])));
+      }
+      else if (type === 'videoTimes') {
+        if (isSyncEnabled(storage)) storage.sync.temp.removedData.push(list.map(a => {return {type: 'videoTimes', animeName: a.animeName, episodeNum: a.episodeNum};}));
+        storage.videoTimes = storage.videoTimes.filter(a => !list.find(b => matchDataFull(a, b, ["animeName","episodeNum","time"])));
+      }
+      showMessage(`Cleaned up ${list.length} ${list.length === 1 ? "entry" : "entries"}.`, 3000);
+      saveData(storage);
+    }
+
+    function getCleanUpList(type) {
+      const toRemove  = [];
+      const storage = getStorage();
+      if (type === 'linkList') {
+        for (const entry of storage.linkList) {
+          const similar = storage.linkList.filter(a => a.animeName === entry.animeName && a.episodeNum === entry.episodeNum);
+          if (similar[similar.length-1] !== entry) toRemove.push(entry);
+        }
+      }
+      else if (type === 'videoTimes') toRemove.push(...storage.videoTimes.filter(a => a.time <= 5));
+
+      return toRemove;
+    }
+
+    function getCleanUpText(type, count) {
+      if (type === 'linkList') return `Clean up ${count} older duplicate ${count > 1 ? 'entries' : 'entry'}?`;
+      else if (type === 'videoTimes') return `Remove ${count} ${count > 1 ? 'entries' : 'entry'} with no progress?`;
+    }
+
+    function applyDeleteEvents() {
+      $('.anitracker-modal-list-entry .anitracker-delete-session-button').on('click', function() {
+        const storage = getStorage();
+
+        const href = $(this).parent().find('a').attr('href');
+        const animeSession = getAnimeSessionFromUrl(href);
+
+        if (isEpisode(href)) {
+          const episodeSession = getEpisodeSessionFromUrl(href);
+          if (isSyncEnabled(storage)) {
+            storage.sync.temp.removedData.push({type: 'linkList', episodeSession: episodeSession});
+          }
+
+          storage.linkList = storage.linkList.filter(g => !(g.type === 'episode' && g.animeSession === animeSession && g.episodeSession === episodeSession));
+          saveData(storage);
+        }
+        else {
+          if (isSyncEnabled(storage)) {
+            storage.sync.temp.removedData.push({type: 'linkList', animeSession: animeSession});
+          }
+
+          storage.linkList = storage.linkList.filter(g => !(g.type === 'anime' && g.animeSession === animeSession));
+          saveData(storage);
+        }
+
+        $(this).parent().remove();
+      });
+      $('.anitracker-modal-list-entry .anitracker-delete-progress-button').on('click', function() {
+        const lookForPath = $(this).attr('lookForPath');
+
+        const storage = getStorage();
+        const found = storage.videoTimes.find(g => g.videoPaths.includes(lookForPath));
+        if (!found) {
+          $(this).parent().remove();
+          return;
+        }
+        if (isSyncEnabled(storage)) {
+          storage.sync.temp.removedData.push({type: 'videoTimes', animeName: found.animeName, episodeNum: found.episodeNum});
+        }
+
+        storage.videoTimes = storage.videoTimes.filter(g => !g.videoPaths.includes(lookForPath));
+        saveData(storage);
+        updateEpisodePages();
+
+        $(this).parent().remove();
+      });
+      $('.anitracker-modal-list-entry .anitracker-delete-watched-button').on('click', function() {
+        const id = +$(this).parent().attr('animeid');
+        removeWatchedAnime(id);
+        updateEpisodePages();
+
+        $(this).parent().remove();
+      });
+      $('.anitracker-modal-list-entry .anitracker-delete-speed-entry-button').on('click', function() {
+        const storage = getStorage();
+        const idString = $(this).attr('animeid');
+        if (idString) storage.videoSpeed = storage.videoSpeed.filter(g => g.animeId !== parseInt(idString));
+        else storage.videoSpeed = storage.videoSpeed.filter(g => g.animeName !== $(this).attr('animename'));
+        saveData(storage);
+
+        $(this).parent().remove();
+      });
     }
 
     function openSyncDataModal() {
