@@ -1846,6 +1846,7 @@ const _css = `
 #anitracker-modal-content>div {
   display:flex;
   flex-direction:column;
+  max-width: 100%;
 }
 #anitracker-modal-close {
   font-size: 2.5em;
@@ -2067,7 +2068,6 @@ const _css = `
 }
 .anitracker-storage-data, .anitracker-modal-list {
   padding: 8px 14px;
-  max-width: 100%;
 }
 .anitracker-modal-list {
   overflow: hidden;
