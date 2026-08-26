@@ -1,0 +1,11 @@
+{
+  "name_en": "English (US)",
+  "name": "English (US)",
+
+  "default.title.site_search": "Search for anime",
+
+  "message.manage_data.clean_up.session": {
+    "=1": "Clean up %1 older duplicate entry?",
+    "else": "Clean up %1 older duplicate entries?"
+  }
+}

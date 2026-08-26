@@ -163,6 +163,10 @@ function getDefaultData() {
         watched: true,
         interval: 300
       }
+    },
+    translation: {
+      errors: [],
+      text: {},
     }
   };
 }
@@ -292,6 +296,117 @@ function getStorageLimits() {
     },
     videoSpeed: 1000,
   }
+}
+
+const translations = {
+  default: {
+    "name_en": "English (US)",
+    "name": "English (US)",
+
+    "default.title.site_search": "Search for anime",
+
+    "message.manage_data.clean_up.session": {
+      "=1": "Clean up %1 older duplicate entry?",
+      "else": "Clean up %1 older duplicate entries?"
+    }
+  },
+  active: {},
+};
+
+// Returns a list of errors
+function validateTranslations(obj) {
+  if (!isKeyValueObject(obj)) return ["Wrong object type"];
+  const errors = [];
+  for (const [key, value] of Object.entries(obj)) {
+    if (typeof value === 'string') continue;
+    if (!isKeyValueObject(value)) {
+      err(key, 'Needs to be a string or object');
+      continue;
+    }
+    const entries = Object.entries(value);
+    if (!entries.length) {
+      err(key, 'Cannot be an empty object');
+      continue;
+    }
+    for (const [qExpr, text] of entries) {
+      if (!/%1/.test(text)) {
+        err(key, `${qExpr}: Needs to contain %1`);
+        continue;
+      }
+      if (!/^(\(?else|[<>]=?\d+|=\d+|%\d+=\d+|[|&]\))+$/.test(qExpr)) {
+        err(key, `${qExpr}: Invalid quantity expression`);
+        continue;
+      }
+    }
+  }
+  return errors;
+
+  function err(key, error) {
+    errors.push(`${key}: ${error}`);
+  }
+}
+
+function getText(translationKey, vars = []) {
+  const val = translations.active[translationKey] || translations.default[translationKey];
+  if (!val) {
+    console.error(`[AnimePahe Improvements] Nonexistent translation key "${translationKey}" used. Falling back to key.`);
+    return translationKey;
+  }
+  if (typeof val === 'string') {
+    if (!vars.length) return val;
+    return insertTranslationVars(val, vars);
+  }
+  for (const [qExpr, text] of Object.entries(val)) {
+    if (matchesQuantityExpression(qExpr, vars[0])) return insertTranslationVars(text, vars);
+  }
+  const elseCase = val['else'];
+  if (!elseCase) {
+    console.error(`[AnimePahe Improvements] No "${translationKey}" quantity expression matched. Falling back to key.`);
+    return translationKey;
+  }
+  return insertTranslationVars(elseCase, vars);
+}
+
+function insertTranslationVars(raw, vars) {
+  for (let i = 0; i < vars.length; i++) {
+    raw.replace('%' + i + 1, vars[i]);
+  }
+  return raw;
+}
+
+function matchesQuantityExpression(qExpr, toMatch) {
+  const parsed = parseQuantityExpression(qExpr);
+  if (parsed.type === '=') return toMatch === parsed.matches;
+  if (parsed.type === '>') return toMatch > parsed.matches;
+  if (parsed.type === '<') return toMatch < parsed.matches;
+  if (parsed.type === '>=') return toMatch >= parsed.matches;
+  if (parsed.type === '<=') return toMatch <= parsed.matches;
+  if (parsed.type === '%') return toMatch % parsed.modulus === parsed.matches;
+}
+
+// Does not parse "else"
+// TODO: Support & and |, along with grouping
+function parseQuantityExpression(qExpr) {
+  let match;
+  match = /^([<>]?=?)(\d+)$/.exec(qExpr);
+  if (match) return {
+    type: match[1],
+    matches: +match[2],
+  }
+  match = /^%(\d+)=(\d+)$/.exec(qExpr);
+  if (match) return {
+    type: "%",
+    modulus: +match[1],
+    matches: +match[2],
+  }
+}
+
+function isKeyValueObject(obj) {
+  if (Array.isArray(obj)) return false;
+  try {Object.entries(obj);}
+  catch {return false;}
+
+  return true;
 }
 
 // Turns seconds into "hrs:minutes:seconds" or "minutes:seconds"
