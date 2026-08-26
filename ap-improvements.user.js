@@ -375,60 +375,64 @@ function insertTranslationVars(raw, vars) {
 }
 
 function matchesQuantityExpression(qExpr, toMatch) {
-  const parsed = parsePart(qExpr);
-  if (parsed.type === '=') return toMatch === parsed.matches;
-  if (parsed.type === '>') return toMatch > parsed.matches;
-  if (parsed.type === '<') return toMatch < parsed.matches;
-  if (parsed.type === '>=') return toMatch >= parsed.matches;
-  if (parsed.type === '<=') return toMatch <= parsed.matches;
-  if (parsed.type === '%') return toMatch % parsed.modulus === parsed.matches;
+  const parsed = parseQuantityExpression(qExpr);
+  if (!/[|&]/.test(parsed.type)) return matchPart(parsed);
+  return matchList(parsed);
+
+  function matchList(list) {
+    const matches = [];
+    for (const part of list.list) {
+      if (/[|&]/.test(part.type)) matches.push(matchList(part));
+      else matches.push(matchPart(part));
+    }
+    if (list.type === '|') return matches.includes(true);
+    else if (list.type === '&') return !matches.includes(false);
+  }
+
+  function matchPart(part) {
+    if (part.type === '=') return toMatch === part.matches;
+    if (part.type === '>') return toMatch > part.matches;
+    if (part.type === '<') return toMatch < part.matches;
+    if (part.type === '>=') return toMatch >= part.matches;
+    if (part.type === '<=') return toMatch <= part.matches;
+    if (part.type === '%') return toMatch % part.modulus === part.matches;
+  }
 }
 
 function parseQuantityExpression(qExpr) {
-  const groupStart = qExpr.startsWith('(');
-  const parts = qExpr.split(/[|&]/);
-  if (parts.length === 1) return parsePart(qExpr);
+  console.log(qExpr);
+  if (!/[|&]/.test(qExpr)) return parsePart(qExpr);
 
   const obj = {
     type: 'root',
     list: []
   };
-  const separators = [];
-  for (const char of qExpr) {
-    if (/[|&]/.test(char)) separators.push(char);
-  }
-  for (let i = 0; i < parts.length; i++) {
-    if (!parts[i]) {
-      parts.splice(0,1);
-      separators.splice(0,1);
-      i--;
-      continue;
-    }
-    const separator = separators[i] ?? separators[i-1];
-    if (!separator) return parsePart(parts[i]);
-    const separatorType = separator === '&' ? 'and' : 'or';
+  let separator;
+  while (qExpr.length) {
+    separator = /[^(]*([|&])/.exec(qExpr)?.at(1) || separator;
+    if (separator && obj.type === 'root') obj.type = separator;
+    if (/^[|&]/.test(qExpr)) qExpr = removeFromString(qExpr,0,1);
 
-    if (groupStart && parts[i].endsWith(')')) {
-      obj.list.push(parsePart(parts[i]));
-      break;
+    const part = /^([^|&]+)/.exec(qExpr)?.at(1);
+    if (!part) {
+      console.warn(`[AnimePahe Improvements] Expression ${qExpr} contains nonsensical syntax. It might not work as expected.`);
+      qExpr = removeFromString(qExpr,0,1);
+      continue;
     }
-    if (!['root',separatorType].includes(obj.type) || (parts[i].startsWith('(') && !groupStart)) {
-      const addedList = parseQuantityExpression(putTogetherString(parts.slice(i), separators.slice(i)));
+    const startGroup = part.startsWith('(');
+    if (!['root',separator].includes(obj.type) || startGroup) {
+      // Parse another group
+      const endIndex = /\)/.exec(qExpr)?.index;
+      const groupedPart = qExpr.split('').slice(startGroup ? 1 : 0, endIndex).join('');
+      const addedList = parseQuantityExpression(groupedPart);
       obj.list.push(addedList);
-      if (!addedList.list) continue;
-      parts.splice(i,addedList.list.length);
-      separators.splice(i,addedList.list.length);
+      qExpr = removeFromString(qExpr,0,groupedPart.length + (startGroup ? 2 : 0));
       continue;
     }
-    if (obj.type === separatorType) {
-      obj.list.push(parsePart(parts[i]));
-      continue;
-    }
-    if (obj.type === 'root') {
-      obj.type = separatorType;
-      obj.list.push(parsePart(parts[i]));
-      continue;
-    }
+    if (!separator) return parsePart(part);
+
+    obj.list.push(parsePart(part));
+    qExpr = removeFromString(qExpr,0,part.length);
   }
   return obj;
 
@@ -450,13 +454,10 @@ function parseQuantityExpression(qExpr) {
   }
 }
 
-function putTogetherString(strParts, separators) {
-  let str = '';
-  for (let i = 0; i < strParts.length; i++) {
-    str += strParts[i];
-    if (separators[i]) str += separators[i];
-  }
-  return str;
+function removeFromString(str, startIndex, endIndex) {
+  const arr = str.split('');
+  arr.splice(startIndex, endIndex);
+  return arr.join('');
 }
 
 function isKeyValueObject(obj) {
