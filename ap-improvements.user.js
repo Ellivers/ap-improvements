@@ -448,11 +448,6 @@ function parseQuantityExpression(qExpr) {
     if (separator && obj.type === 'root') obj.type = separator;
 
     const part = /^([^|&]+)/.exec(qExpr)?.at(1);
-    if (!part) {
-      warn();
-      qExpr = removeFromString(qExpr,0,1);
-      continue;
-    }
     const startGroup = part.startsWith('(');
     if (!['root',separator].includes(obj.type) || startGroup) {
       // Parse another group
@@ -471,7 +466,6 @@ function parseQuantityExpression(qExpr) {
             break;
           }
         }
-        if (endCount !== groupCount) warn();
       }
       const groupedPart = qExpr.split('').slice(startGroup ? 1 : 0, endIndex).join('');
       const addedList = parseQuantityExpression(groupedPart);
@@ -505,9 +499,6 @@ function parseQuantityExpression(qExpr) {
       modulus: +match[1],
       matches: +match[2],
     }
-  }
-  function warn() {
-    console.warn(`[AnimePahe Improvements] Quantity expression ${qExpr} contains nonsensical syntax. It might not work as expected.`);
   }
 }
 
