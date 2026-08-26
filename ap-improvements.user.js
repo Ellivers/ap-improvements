@@ -333,7 +333,7 @@ function validateTranslations(obj) {
         err(key, `${qExpr}: Needs to contain %1`);
         continue;
       }
-      if (!/^(\(?else|[<>]=?\d+|=\d+|%\d+=\d+|[|&]\))+$/.test(qExpr)) {
+      if (!/^((\(?[<>]=?\d+|=\d+|%\d+=\d+|[|&]\))+|else)$/.test(qExpr)) {
         err(key, `${qExpr}: Invalid quantity expression`);
         continue;
       }
@@ -375,6 +375,8 @@ function insertTranslationVars(raw, vars) {
 }
 
 function matchesQuantityExpression(qExpr, toMatch) {
+  if (qExpr === 'else') return false;
+
   const parsed = parseQuantityExpression(qExpr);
   if (!/[|&]/.test(parsed.type)) return matchPart(parsed);
   return matchList(parsed);
