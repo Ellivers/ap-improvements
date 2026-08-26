@@ -330,13 +330,10 @@ function validateTranslations(obj) {
     }
     for (const [qExpr, text] of entries) {
       if (!/%1/.test(text)) {
-        err(key, `${qExpr}: Needs to contain %1`);
-        continue;
+        err(key, `${qExpr}: Text needs to contain %1`);
       }
-      if (!/^((\(?[<>]=?\d+|=\d+|%\d+=\d+|[|&]\))+|else)$/.test(qExpr)) {
-        err(key, `${qExpr}: Invalid quantity expression`);
-        continue;
-      }
+      const qErrors = validateQuantityExpression(qExpr);
+      qErrors.forEach(e => {err(key, `${qExpr}: ${e}`)});
     }
   }
   return errors;
@@ -344,6 +341,37 @@ function validateTranslations(obj) {
   function err(key, error) {
     errors.push(`${key}: ${error}`);
   }
+}
+
+// Returns a list of errors
+// Does not validate the logic
+function validateQuantityExpression(qExpr) {
+  if (qExpr === 'else') return [];
+  if (!qExpr) return ["Empty expression"];
+  const errors = new Set();
+  let openBrackets = 0;
+  let closedBrackets = 0;
+  for (let i = 0; i < qExpr.length; i++) {
+    const char = qExpr[i];
+    if (char === ' ') errors.add("Spaces are not allowed");
+    if (char === '(') {
+      openBrackets++;
+      if (qExpr[i-1] && (qExpr[i-1] === ')' || !/[|&]/.test(qExpr[i-1]))) errors.add(`Invalid opening parenthesis in column ${i}`);
+    }
+    if (char === ')') {
+      closedBrackets++;
+      if (qExpr[i+1] && (qExpr[i+1] === '(' || !/[|&]/.test(qExpr[i+1]))) errors.add(`Invalid closing parenthesis in column ${i}`);
+    }
+    if (/[|&]/.test(char)) {
+      if (!qExpr[i-1] || /[|&(]/.test(qExpr[i-1])) errors.add(`Separator character ${char} in invalid position (column ${i+1})`);
+      if (!qExpr[i+1] || /[|&)]/.test(qExpr[i+1])) errors.add(`Separator character ${char} in invalid position (column ${i+1})`);
+    }
+  }
+  for (const part of qExpr.split(/[|&()]/)) {
+    if (!/^([<>]=?\d+|=\d+|%\d+=\d+|)$/.test(part)) errors.add(`Invalid expression part "${part}"`);
+  }
+  if (openBrackets !== closedBrackets) errors.add("Mismatched parentheses");
+  return Array.from(errors);
 }
 
 function getText(translationKey, vars = []) {
