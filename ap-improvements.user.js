@@ -347,13 +347,14 @@ function validateTranslations(obj) {
 // Does not validate the logic
 function validateQuantityExpression(qExpr) {
   if (qExpr === 'else') return [];
+  qExpr = qExpr.replaceAll(' ','');
   if (!qExpr) return ["Empty expression"];
+  if (qExpr === 'else') return ['"else" cannot contain spaces'];
   const errors = new Set();
   let openBrackets = 0;
   let closedBrackets = 0;
   for (let i = 0; i < qExpr.length; i++) {
     const char = qExpr[i];
-    if (char === ' ') errors.add("Spaces are not allowed");
     if (char === '(') {
       openBrackets++;
       if (qExpr[i-1] && (qExpr[i-1] === ')' || !/[|&]/.test(qExpr[i-1]))) errors.add(`Invalid opening parenthesis in column ${i}`);
@@ -368,6 +369,10 @@ function validateQuantityExpression(qExpr) {
     }
   }
   for (const part of qExpr.split(/[|&()]/)) {
+    if (part === 'else') {
+      errors.add('"else" cannot be mixed with other expression parts');
+      continue;
+    }
     if (!/^([<>]=?\d+|=\d+|%\d+=\d+|)$/.test(part)) errors.add(`Invalid expression part "${part}"`);
   }
   if (openBrackets !== closedBrackets) errors.add("Mismatched parentheses");
@@ -430,6 +435,7 @@ function matchesQuantityExpression(qExpr, toMatch) {
 }
 
 function parseQuantityExpression(qExpr) {
+  qExpr = qExpr.replaceAll(' ','');
   if (!/[|&]/.test(qExpr)) return parsePart(qExpr);
 
   const obj = {
