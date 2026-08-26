@@ -375,7 +375,7 @@ function insertTranslationVars(raw, vars) {
 }
 
 function matchesQuantityExpression(qExpr, toMatch) {
-  const parsed = parseQuantityExpression(qExpr);
+  const parsed = parsePart(qExpr);
   if (parsed.type === '=') return toMatch === parsed.matches;
   if (parsed.type === '>') return toMatch > parsed.matches;
   if (parsed.type === '<') return toMatch < parsed.matches;
@@ -384,21 +384,79 @@ function matchesQuantityExpression(qExpr, toMatch) {
   if (parsed.type === '%') return toMatch % parsed.modulus === parsed.matches;
 }
 
-// Does not parse "else"
-// TODO: Support & and |, along with grouping
 function parseQuantityExpression(qExpr) {
-  let match;
-  match = /^([<>]?=?)(\d+)$/.exec(qExpr);
-  if (match) return {
-    type: match[1],
-    matches: +match[2],
+  const groupStart = qExpr.startsWith('(');
+  const parts = qExpr.split(/[|&]/);
+  if (parts.length === 1) return parsePart(qExpr);
+
+  const obj = {
+    type: 'root',
+    list: []
+  };
+  const separators = [];
+  for (const char of qExpr) {
+    if (/[|&]/.test(char)) separators.push(char);
   }
-  match = /^%(\d+)=(\d+)$/.exec(qExpr);
-  if (match) return {
-    type: "%",
-    modulus: +match[1],
-    matches: +match[2],
+  for (let i = 0; i < parts.length; i++) {
+    if (!parts[i]) {
+      parts.splice(0,1);
+      separators.splice(0,1);
+      i--;
+      continue;
+    }
+    const separator = separators[i] ?? separators[i-1];
+    if (!separator) return parsePart(parts[i]);
+    const separatorType = separator === '&' ? 'and' : 'or';
+
+    if (groupStart && parts[i].endsWith(')')) {
+      obj.list.push(parsePart(parts[i]));
+      break;
+    }
+    if (!['root',separatorType].includes(obj.type) || (parts[i].startsWith('(') && !groupStart)) {
+      const addedList = parseQuantityExpression(putTogetherString(parts.slice(i), separators.slice(i)));
+      obj.list.push(addedList);
+      if (!addedList.list) continue;
+      parts.splice(i,addedList.list.length);
+      separators.splice(i,addedList.list.length);
+      continue;
+    }
+    if (obj.type === separatorType) {
+      obj.list.push(parsePart(parts[i]));
+      continue;
+    }
+    if (obj.type === 'root') {
+      obj.type = separatorType;
+      obj.list.push(parsePart(parts[i]));
+      continue;
+    }
   }
+  return obj;
+
+  // Does not parse "else"
+  function parsePart(qExpr) {
+    qExpr = /^[()]?([^()]+)[()]?$/.exec(qExpr)[1];
+    let match;
+    match = /^([<>]?=?)(\d+)$/.exec(qExpr);
+    if (match) return {
+      type: match[1],
+      matches: +match[2],
+    }
+    match = /^%(\d+)=(\d+)$/.exec(qExpr);
+    if (match) return {
+      type: "%",
+      modulus: +match[1],
+      matches: +match[2],
+    }
+  }
+}
+
+function putTogetherString(strParts, separators) {
+  let str = '';
+  for (let i = 0; i < strParts.length; i++) {
+    str += strParts[i];
+    if (separators[i]) str += separators[i];
+  }
+  return str;
 }
 
 function isKeyValueObject(obj) {
