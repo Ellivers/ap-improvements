@@ -378,7 +378,7 @@ function matchesQuantityExpression(qExpr, toMatch) {
   if (qExpr === 'else') return false;
 
   const parsed = parseQuantityExpression(qExpr);
-  if (!/[|&]/.test(parsed.type)) return matchPart(parsed);
+  if (!/[|&]|root/.test(parsed.type)) return matchPart(parsed);
   return matchList(parsed);
 
   function matchList(list) {
@@ -388,7 +388,7 @@ function matchesQuantityExpression(qExpr, toMatch) {
       else matches.push(matchPart(part));
     }
     if (list.type === '|') return matches.includes(true);
-    else if (list.type === '&') return !matches.includes(false);
+    else return !matches.includes(false);
   }
 
   function matchPart(part) {
@@ -402,7 +402,6 @@ function matchesQuantityExpression(qExpr, toMatch) {
 }
 
 function parseQuantityExpression(qExpr) {
-  console.log(qExpr);
   if (!/[|&]/.test(qExpr)) return parsePart(qExpr);
 
   const obj = {
@@ -411,30 +410,49 @@ function parseQuantityExpression(qExpr) {
   };
   let separator;
   while (qExpr.length) {
-    separator = /[^(]*([|&])/.exec(qExpr)?.at(1) || separator;
+    separator = /^[^(|&]*([|&])/.exec(qExpr)?.at(1) || separator;
     if (separator && obj.type === 'root') obj.type = separator;
-    if (/^[|&]/.test(qExpr)) qExpr = removeFromString(qExpr,0,1);
 
     const part = /^([^|&]+)/.exec(qExpr)?.at(1);
     if (!part) {
-      console.warn(`[AnimePahe Improvements] Expression ${qExpr} contains nonsensical syntax. It might not work as expected.`);
+      warn();
       qExpr = removeFromString(qExpr,0,1);
       continue;
     }
     const startGroup = part.startsWith('(');
     if (!['root',separator].includes(obj.type) || startGroup) {
       // Parse another group
-      const endIndex = /\)/.exec(qExpr)?.index;
+      let endIndex;
+      if (startGroup) {
+        let groupCount = 0;
+        for (const char of qExpr) {
+          if (char === '(') groupCount++;
+          if (char === ')') break;
+        }
+        let endCount = 0;
+        for (let i = 0; i < qExpr.length; i++) {
+          if (qExpr[i] === ')') endCount++;
+          if (endCount === groupCount) {
+            endIndex = i;
+            break;
+          }
+        }
+        if (endCount !== groupCount) warn();
+      }
       const groupedPart = qExpr.split('').slice(startGroup ? 1 : 0, endIndex).join('');
       const addedList = parseQuantityExpression(groupedPart);
       obj.list.push(addedList);
       qExpr = removeFromString(qExpr,0,groupedPart.length + (startGroup ? 2 : 0));
+      const newSeparator = /^[|&]/.exec(qExpr)?.at(0);
+      if (!newSeparator) continue;
+      separator = newSeparator;
+      qExpr = removeFromString(qExpr,0,1);  
       continue;
     }
     if (!separator) return parsePart(part);
 
     obj.list.push(parsePart(part));
-    qExpr = removeFromString(qExpr,0,part.length);
+    qExpr = removeFromString(qExpr,0,part.length+1);
   }
   return obj;
 
@@ -453,6 +471,9 @@ function parseQuantityExpression(qExpr) {
       modulus: +match[1],
       matches: +match[2],
     }
+  }
+  function warn() {
+    console.warn(`[AnimePahe Improvements] Quantity expression ${qExpr} contains nonsensical syntax. It might not work as expected.`);
   }
 }
 
