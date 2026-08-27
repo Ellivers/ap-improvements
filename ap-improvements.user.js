@@ -2944,10 +2944,17 @@ a.youtube-preview::before {
   border-width:3px;
 }
 #anitracker-continue-watching-progress {
-  align-self:center;
-  width:100%;
-  position:absolute;
-  z-index:2;
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  align-items: center;
+  z-index:10;
+  pointer-events: none;
+}
+#anitracker-continue-watching-progress>div {
+  background-color: rgba(0,0,0,0.5);
+  padding: 10px;
+  border-radius: 8px;
   flex-direction:column;
 }
 .anitracker-relation-poster {
@@ -7753,11 +7760,14 @@ async function addContinueWatchingEpisodes(storage, episodeCount, clearAll = fal
   if (clearAll) {
     $(`
     <div id="anitracker-continue-watching-progress" class="anitracker-center-content">
-      <div class="anitracker-spinner" style="margin: auto;">
-        <div class="spinner-border" role="status">
-          <span class="sr-only">Loading...</span>
+      <div>
+        <div class="anitracker-spinner" style="margin:auto;width:fit-content;">
+          <div class="spinner-border" role="status">
+            <span class="sr-only">Loading...</span>
+          </div>
         </div>
-      </div><div class="anitracker-progress-bar" style="width:12rem;margin: auto;"><div></div></div>
+        <div class="anitracker-progress-bar" style="width:12rem;"><div></div></div>
+      </div>
     </div>`).appendTo('.anitracker-episode-list-wrapper .episode-list.row');
   }
 
@@ -7824,13 +7834,6 @@ async function addContinueWatchingEpisodes(storage, episodeCount, clearAll = fal
     if (clearAll) $('#anitracker-continue-watching-progress .anitracker-progress-bar > div').width((processedAnime.length / episodeCount)*100 + '%');
   }
 
-  $('.anitracker-continue-watching-skeleton').remove();
-  for (const ep of finalEpisodes) {
-    addEpElem(ep);
-  }
-
-  applyEpisodeOptionsEvents($('.anitracker-episode-list-wrapper .episode-wrap'));
-
   function addEpisode(videoTimeEntry, episodeEntry, animeData, extra) {
     // Piece together anime data based on available info
     const episode = {
@@ -7863,6 +7866,8 @@ async function addContinueWatchingEpisodes(storage, episodeCount, clearAll = fal
     finalEpisodes.push(episode);
     processedAnime.push(videoTimeEntry.animeName);
     continueWatchingStatus.displayedEps.push({animeName: videoTimeEntry.animeName, episodeNum: videoTimeEntry.episodeNum});
+
+    addEpElem(episode);
   }
 
   function addEpElem(ep) {
@@ -7896,10 +7901,14 @@ async function addContinueWatchingEpisodes(storage, episodeCount, clearAll = fal
         </div>
         </div>
       </div>
-    </div>`).appendTo('.anitracker-episode-list-wrapper .episode-list.row')
+    </div>`)
     .data('ep', ep.episode).data('ep2', ep.episode2).data('firstEp', ep.firstEpisode)
     .data('videoTimeName',ep.videoTimeName).data('videoTimeEpisode',ep.videoTimeEpisode)
     .data('animeId', ep.animeId).data('duration', ep.duration);
+
+    const skeleton = $('.anitracker-continue-watching-skeleton')[0];
+    elem.insertBefore(skeleton);
+    skeleton.remove();
 
     if (ep.duration) setProgressBar(elem, false, ep.time, ep.duration);
 
@@ -7913,6 +7922,7 @@ async function addContinueWatchingEpisodes(storage, episodeCount, clearAll = fal
       title: ep.title,
       'anime-id': ep.animeId
     });
+    applyEpisodeOptionsEvents(elem);
   }
 
   $('#anitracker-continue-watching-progress').remove();
