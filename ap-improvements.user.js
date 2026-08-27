@@ -7321,7 +7321,7 @@ async function getResponse(qurl) {
       }
       if (!rateLimited && req.status === 429) {
         rateLimited = true;
-        waitTime(randint(2000, 10000)).then(() => {
+        waitTime(1000).then(() => {
           req.open('GET', qurl, true);
           req.send();
         });
@@ -7353,7 +7353,7 @@ function asyncGetResponseData(qurl) {
       }
       if (!rateLimited && req.status === 429) {
         rateLimited = true;
-        waitTime(randint(2000, 10000)).then(() => {
+        waitTime(1000).then(() => {
           req.open('GET', qurl, true);
           req.send();
         });
