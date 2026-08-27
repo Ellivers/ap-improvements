@@ -2943,6 +2943,13 @@ a.youtube-preview::before {
   vertical-align:center;
   border-width:3px;
 }
+#anitracker-continue-watching-progress {
+  align-self:center;
+  width:100%;
+  position:absolute;
+  z-index:2;
+  flex-direction:column;
+}
 .anitracker-relation-poster {
   filter: blur(5px) !important;
 }
@@ -3081,6 +3088,7 @@ const siteVars = {
   cached: {
     animeSearch: [],
     firstEpisode: {},
+    firstEpPage: {},
     animeId: {},
     animeSession: [],
     page: {},
@@ -3194,20 +3202,21 @@ function getEpisodeNum() {
 }
 
 async function getFirstEpisode(session) {
-  return new Promise(resolve => {
-    const cached = siteVars.cached.firstEpisode[session];
-    if (cached !== undefined) { // firstEpisode value can be 0 (falsy)
-      resolve(cached);
-      return;
-    }
+  const cached = siteVars.cached.firstEpisode[session];
+  if (cached !== undefined) { // firstEpisode value can be 0 (falsy)
+    return cached;
+  }
+  return undefined;
 
-    asyncGetResponseData(`/api?m=release&sort=episode_asc&id=${session}`).then(response => {
+  /*return new Promise(resolve => {
+    getFirstEpisodePage(session).then(response => {
+      if (!response) return console.error(`[AnimePahe Improvements] Failed getting first episode for anime with session ${session}`);
       const ep = response[0]?.episode;
       siteVars.cached.firstEpisode[session] = ep;
       resolve(ep);
       return;
     });
-  });
+  });*/
 }
 
 // Things that update when focusing this tab
@@ -3468,7 +3477,7 @@ const animeInfoFunctions = [
       const cached = siteVars.cached.animeId[iinfo.session];
       if (cached) return cached;
 
-      const response = await asyncGetResponseData(`/api?m=release&id=${iinfo.session}`);
+      const response = await getFirstEpisodePage(iinfo.session);
       if (!response) return undefined;
       siteVars.cached.animeId[iinfo.session] = response[0].anime_id;
       return {
@@ -3580,6 +3589,7 @@ async function getAnimeData(_iinfo = {}, _reqinfo = [], config = {}) {
       if (!result) continue;
       dontUseAgain.push(chosenFunction.id)
       for (const [key, value] of Object.entries(result.new)) {
+        if (!value) continue;
         if (!oinfo.new[key]) oinfo.new[key] = value;
         iinfo[key] = value;
         if (value) reqinfo = reqinfo.filter(a => a !== key);
@@ -3588,6 +3598,7 @@ async function getAnimeData(_iinfo = {}, _reqinfo = [], config = {}) {
       
       if (config.requireNew) continue;
       for (const [key, value] of Object.entries(result.old)) {
+        if (!value) continue;
         if (!oinfo.old[key]) oinfo.old[key] = value;
         if (!iinfo[key]) iinfo[key] = value;
         if (value) reqinfo = reqinfo.filter(a => a !== key);
@@ -7287,60 +7298,79 @@ async function asyncGetPage(qurl) {
   }
 }
 
+async function getFirstEpisodePage(session) {
+  const cached = siteVars.cached.firstEpPage[session];
+  if (cached) return cached;
+
+  const page = await asyncGetResponseData(`/api?m=release&sort=episode_asc&id=${session}`);
+  if (!page) return undefined;
+  siteVars.cached.firstEpPage[session] = page;
+
+  return page;
+}
+
 async function getResponse(qurl) {
-  const req = new XMLHttpRequest();
-  req.open('GET', qurl, true);
-  return new Promise(resolve => {
+  return new Promise((resolve, reject) => {
+    let rateLimited = false;
+    const req = new XMLHttpRequest();
+    req.open('GET', qurl, true);
     req.onload = () => {
       if (req.status === 200) {
         resolve(JSON.parse(req.response));
         return;
       }
+      if (!rateLimited && req.status === 429) {
+        rateLimited = true;
+        waitTime(randint(2000, 10000)).then(() => {
+          req.open('GET', qurl, true);
+          req.send();
+        });
+        return;
+      }
 
+      console.error("Request failed with request URL " + qurl);
       resolve(undefined);
-    }
-    req.send();
+    };
+    req.onerror = (err) => {
+      reject("Request failed with request URL " + qurl);
+    };
+    req.ontimeout = req.onerror;
+    waitTime(200).then(() => {
+      req.send();
+    });
   });
 }
 
 function asyncGetResponseData(qurl) {
   return new Promise((resolve, reject) => {
-    let req = new XMLHttpRequest();
+    let rateLimited = false;
+    const req = new XMLHttpRequest();
     req.open('GET', qurl, true);
     req.onload = () => {
       if (req.status === 200) {
         resolve(JSON.parse(req.response).data);
         return;
       }
+      if (!rateLimited && req.status === 429) {
+        rateLimited = true;
+        waitTime(randint(2000, 10000)).then(() => {
+          req.open('GET', qurl, true);
+          req.send();
+        });
+        return;
+      }
 
-      reject(undefined);
-    };
-    try {
-      req.send();
-    }
-    catch (err) {
-      console.error(err);
+      console.error("Request failed with request URL " + qurl);
       resolve(undefined);
-    }
+    };
+    req.onerror = (err) => {
+      reject("Request failed with request URL " + qurl);
+    };
+    req.ontimeout = req.onerror;
+    waitTime(200).then(() => {
+      req.send();
+    });
   });
-}
-
-function getResponseData(qurl) {
-  let req = new XMLHttpRequest();
-  req.open('GET', qurl, false);
-  try {
-    req.send();
-  }
-  catch (err) {
-    console.error(err);
-    return(undefined);
-  }
-
-  if (req.status === 200) {
-    return(JSON.parse(req.response).data);
-  }
-
-  return(undefined);
 }
 
 function getAnimeSessionFromUrl(url = window.location.toString()) {
@@ -7709,7 +7739,7 @@ async function addContinueWatchingEpisodes(storage, episodeCount, clearAll = fal
 
   if (clearAll) {
     $(`
-    <div id="anitracker-continue-watching-progress" class="anitracker-center-content" style="align-self:center;width:100%;position:absolute;z-index:2;flex-direction:column;">
+    <div id="anitracker-continue-watching-progress" class="anitracker-center-content">
       <div class="anitracker-spinner" style="margin: auto;">
         <div class="spinner-border" role="status">
           <span class="sr-only">Loading...</span>
@@ -7750,10 +7780,10 @@ async function addContinueWatchingEpisodes(storage, episodeCount, clearAll = fal
       id: entry.animeId,
       videoPaths: entry.videoPaths,
       episode: entry.episodeNum,
-    }, ["session","name","id","episode_session"], {ignored: ['storage_video']});
+    }, ["session","name","id","episode_session","poster"], {ignored: ['storage_video'], requireInstant: true});
     if (data.id && isWatched(data.id, entry.episodeNum)) continue;
 
-    if (data.session) {
+    /*if (data.session) {
       const sessionResponse = await getPageResponse('/anime/' + data.session);
       if (sessionResponse.status !== 200) {
         // If the anime session is expired, try to get a new one
@@ -7770,9 +7800,10 @@ async function addContinueWatchingEpisodes(storage, episodeCount, clearAll = fal
     if (!data.session) {
       addEpisode(entry, undefined, data, undefined);
       continue;
-    }
+    }*/
 
-    const episodeData = await getEpisodeData(data.session, entry.episodeNum);
+    //const episodeData = await getEpisodeData(data.session, entry.episodeNum);
+    const episodeData = undefined;
     const firstEpisode = siteVars.cached.firstEpisode[data.session]; // If not cached, it will be undefined
     addEpisode(entry, episodeData, data, {firstEpisode: firstEpisode});
 
@@ -7780,8 +7811,47 @@ async function addContinueWatchingEpisodes(storage, episodeCount, clearAll = fal
   }
 
   $('.anitracker-continue-watching-skeleton').remove();
-
   for (const ep of finalEpisodes) {
+    addEpElem(ep);
+  }
+
+  applyEpisodeOptionsEvents($('.anitracker-episode-list-wrapper .episode-wrap'));
+
+  function addEpisode(videoTimeEntry, episodeEntry, animeData, extra) {
+    // Piece together anime data based on available info
+    const episode = {
+      time: videoTimeEntry.time,
+      episode2: episodeEntry?.episode2,
+      duration: episodeEntry?.duration ? HMStoSeconds(episodeEntry.duration) : videoTimeEntry.duration,
+      firstEpisode: extra?.firstEpisode,
+      videoTimeName: videoTimeEntry.animeName,
+      videoTimeEpisode: videoTimeEntry.episodeNum,
+      animeSession: animeData.session,
+    };
+
+    if (episodeEntry) episode.session = episodeEntry.session;
+    else if (animeData.episode_session) episode.session = animeData.episode_session;
+
+    if (animeData.id) episode.animeId = animeData.id;
+    else if (videoTimeEntry.animeId) episode.animeId = videoTimeEntry.animeId;
+
+    if (animeData.name) episode.title = animeData.name;
+    else episode.title = videoTimeEntry.animeName;
+
+    if (episodeEntry) episode.episode = episodeEntry.episode;
+    else episode.episode = videoTimeEntry.episodeNum;
+
+    if (episodeEntry) episode.snapshot = episodeEntry.snapshot;
+    else episode.snapshot = makePosterUrl(animeData.poster, 'md');
+
+    if (!episode.animeSession && !episode.animeId) return;
+
+    finalEpisodes.push(episode);
+    processedAnime.push(videoTimeEntry.animeName);
+    continueWatchingStatus.displayedEps.push({animeName: videoTimeEntry.animeName, episodeNum: videoTimeEntry.episodeNum});
+  }
+
+  function addEpElem(ep) {
     const img = ep.snapshot ?? 'data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==';
     const epValue = getEpisodeValue(ep.episode, ep.episode2, storage.settings.relativeEpNums ? ep.firstEpisode : undefined);
     const href = (() => {
@@ -7830,39 +7900,6 @@ async function addContinueWatchingEpisodes(storage, episodeCount, clearAll = fal
       'anime-id': ep.animeId
     });
   }
-  applyEpisodeOptionsEvents($('.anitracker-episode-list-wrapper .episode-wrap'));
-
-  function addEpisode(videoTimeEntry, episodeEntry, animeData, extra) {
-    // Piece together anime data based on available info
-    const episode = {
-      time: videoTimeEntry.time,
-      snapshot: episodeEntry?.snapshot,
-      episode2: episodeEntry?.episode2,
-      duration: episodeEntry?.duration ? HMStoSeconds(episodeEntry.duration) : videoTimeEntry.duration,
-      firstEpisode: extra?.firstEpisode,
-      videoTimeName: videoTimeEntry.animeName,
-      videoTimeEpisode: videoTimeEntry.episodeNum,
-      animeSession: animeData.session,
-    };
-
-    if (episodeEntry) episode.session = episodeEntry.session;
-    else if (animeData.episode_session) episode.session = animeData.episode_session;
-
-    if (animeData.id) episode.animeId = animeData.id;
-    else if (videoTimeEntry.animeId) episode.animeId = videoTimeEntry.animeId;
-
-    if (animeData.name) episode.title = animeData.name;
-    else episode.title = videoTimeEntry.animeName;
-
-    if (episodeEntry) episode.episode = episodeEntry.episode;
-    else episode.episode = videoTimeEntry.episodeNum;
-
-    if (!episode.animeSession && !episode.animeId) return;
-
-    finalEpisodes.push(episode);
-    processedAnime.push(videoTimeEntry.animeName);
-    continueWatchingStatus.displayedEps.push({animeName: videoTimeEntry.animeName, episodeNum: videoTimeEntry.episodeNum});
-  }
 
   $('#anitracker-continue-watching-progress').remove();
 
@@ -7893,11 +7930,15 @@ if (isEpisode()) {
 }
 
 async function getEpisodeData(aSession, episodeNum) {
+  const cached = siteVars.cached.firstEpPage[aSession]?.find(a => a.episode === episodeNum);
+  if (cached) return cached;
+
   let episodes = await getResponse(`/api?m=release&sort=episode_asc&id=${aSession}`);
   if (!episodes) return undefined;
 
   const firstEpisode = episodes.data[0].episode;
   siteVars.cached.firstEpisode[aSession] = firstEpisode;
+  siteVars.cached.firstEpPage[aSession] = episodes.data;
   let data = episodes.data.find(a => a.episode === episodeNum);
   if (data) return data;
   // If the episode wasn't found on the first page, find the page where the episode is
@@ -8896,14 +8937,14 @@ function updateEpisodePages(allowCache = true) {
 }
 
 // MARKER:EPISODE PAGE CHANGES
-function updateEpisodePage(entry, allowCache = true) {
+async function updateEpisodePage(entry, allowCache = true) {
   const animeSession = entry.animeSession;
   const pageNum = getPageNum();
   const episodeSort = $('.episode-bar .btn-group-toggle .active').text().trim();
 
   // Only situation where cache isn't allowed is when the page has changed
   const cachedList = allowCache ? entry.cachedList : undefined;
-  const episodes = cachedList ?? getResponseData(entry.apiLink.replace('{page_num}', pageNum).replace('{anime_session}', animeSession).replace('{sort_dir}', episodeSort));
+  const episodes = cachedList ?? await asyncGetResponseData(entry.apiLink.replace('{page_num}', pageNum).replace('{anime_session}', animeSession).replace('{sort_dir}', episodeSort));
   if (episodes === undefined) return undefined;
   entry.cachedList = episodes;
   if (!episodes.length) return undefined;
@@ -9003,24 +9044,22 @@ function updateEpisodePage(entry, allowCache = true) {
 
   applyEpisodeOptionsEvents(episodeElements);
 
+  /*
   // Second loop for episode number correction, because otherwise the await could slow down the other visuals
-  // Run as another function to make sure that everything else in this function is synchronous
-  (async () => {
-    let firstEpisode = (entry.mode === 'multi' || !storage.settings.relativeEpNums) ? undefined : await getFirstEpisode(animeSession);
+  let firstEpisode = (entry.mode === 'multi' || !storage.settings.relativeEpNums) ? undefined : await getFirstEpisode(animeSession);
 
-    for (let i = 0; i < episodeElements.length; i++) {
-      if (entry.mode === 'multi' && storage.settings.relativeEpNums) firstEpisode = await getFirstEpisode(episodes[i].anime_session);
+  for (let i = 0; i < episodeElements.length; i++) {
+    if (entry.mode === 'multi' && storage.settings.relativeEpNums) firstEpisode = await getFirstEpisode(episodes[i].anime_session);
 
-      if (pageNum !== getPageNum()) break; // If the page has been changed
+    if (pageNum !== getPageNum()) break; // If the page has been changed
 
-      const ep = episodes[i].episode;
-      const ep2 = episodes[i].episode2;
+    const ep = episodes[i].episode;
+    const ep2 = episodes[i].episode2;
 
-      $(episodeElements[i]).find('.episode-number:not(.text-success)').contents().filter(function(){
-        return this.nodeType === 3;
-      })[0].textContent = getEpisodeValue(ep, ep2, firstEpisode);
-    }
-  })();
+    $(episodeElements[i]).find('.episode-number:not(.text-success)').contents().filter(function(){
+      return this.nodeType === 3;
+    })[0].textContent = getEpisodeValue(ep, ep2, firstEpisode);
+  }*/
 }
 
 function addTitleIcons(animeid) {
@@ -9604,7 +9643,7 @@ function addGeneralButtons() {
 
     $('<div class="anitracker-dark-area" id="anitracker-site-options" style="margin-top:10px;"><strong style="display:block;">Site:</strong></div>').appendTo('#anitracker-modal-body');
     addOptionSwitch('hideThumbnails', 'Hide Thumbnails', 'Hide thumbnails and preview images.', '#anitracker-site-options');
-    addOptionSwitch('relativeEpNums', 'Relative Episode Numbers', 'Don\'t continue episode numbers through sequels.', '#anitracker-site-options');
+    //addOptionSwitch('relativeEpNums', 'Relative Episode Numbers', 'Don\'t continue episode numbers through sequels.', '#anitracker-site-options');
     addOptionSwitch('autoDelete', 'Auto-Clear Episodes', 'Only one episode of a series is stored in the tracker at a time.', '#anitracker-site-options');
     addOptionSwitch('autoDownload', 'Automatic Download', 'Automatically download the episode when visiting a download page.', '#anitracker-site-options');
     addOptionSwitch('showContinueWatching', 'Watching Section', 'Show the "Continue Watching" section on the homepage.', '#anitracker-site-options');
