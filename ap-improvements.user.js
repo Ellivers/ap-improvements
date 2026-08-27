@@ -7354,9 +7354,7 @@ async function getResponse(qurl) {
       reject("Request failed with request URL " + qurl);
     };
     req.ontimeout = req.onerror;
-    waitTime(200).then(() => {
-      req.send();
-    });
+    req.send();
   });
 }
 
@@ -7386,9 +7384,7 @@ function asyncGetResponseData(qurl) {
       reject("Request failed with request URL " + qurl);
     };
     req.ontimeout = req.onerror;
-    waitTime(200).then(() => {
-      req.send();
-    });
+    req.send();
   });
 }
 
@@ -7784,6 +7780,7 @@ async function addContinueWatchingEpisodes(storage, episodeCount, clearAll = fal
       </div>
     </div>`).appendTo('.anitracker-episode-list-wrapper .episode-list.row');
   }
+  await waitTime(200); // To not disturb main page loading
 
   const processedAnime = [];
   const videoTimes = [...storage.videoTimes].reverse();
