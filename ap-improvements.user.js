@@ -7780,7 +7780,7 @@ async function addContinueWatchingEpisodes(storage, episodeCount, clearAll = fal
       id: entry.animeId,
       videoPaths: entry.videoPaths,
       episode: entry.episodeNum,
-    }, ["session","name","id","episode_session","poster"], {ignored: ['storage_video'], requireInstant: true});
+    }, ["session","name","id","episode_session","poster"], {ignored: ['storage_video']});
     if (data.id && isWatched(data.id, entry.episodeNum)) continue;
 
     /*if (data.session) {
