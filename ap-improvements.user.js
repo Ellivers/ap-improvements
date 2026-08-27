@@ -450,11 +450,12 @@ function validateQuantityExpression(qExpr) {
     const char = qExpr[i];
     if (char === '(') {
       openBrackets++;
-      if (qExpr[i-1] && (qExpr[i-1] === ')' || !/[|&]/.test(qExpr[i-1]))) errors.add(`Invalid opening parenthesis in column ${i}`);
+      if (qExpr[i+1] === ')') errors.add(`Cannot have empty group (column ${i+1})`);
+      if (!qExpr[i+1] || (qExpr[i-1] && (qExpr[i-1] === ')' || !/[|&(]/.test(qExpr[i-1])))) errors.add(`Invalid opening parenthesis in column ${i+1}`);
     }
     if (char === ')') {
       closedBrackets++;
-      if (qExpr[i+1] && (qExpr[i+1] === '(' || !/[|&]/.test(qExpr[i+1]))) errors.add(`Invalid closing parenthesis in column ${i}`);
+      if (!qExpr[i-1] || (qExpr[i+1] && (qExpr[i+1] === '(' || !/[|&)]/.test(qExpr[i+1])))) errors.add(`Invalid closing parenthesis in column ${i+1}`);
     }
     if (/[|&]/.test(char)) {
       if (!qExpr[i-1] || /[|&(]/.test(qExpr[i-1])) errors.add(`Separator character ${char} in invalid position (column ${i+1})`);
@@ -546,6 +547,7 @@ function parseQuantityExpression(qExpr) {
   let separator;
   while (qExpr.length) {
     separator = /^[^(|&]*([|&])/.exec(qExpr)?.at(1) || separator;
+    if (/^[|&]/.test(qExpr)) qExpr = removeFromString(qExpr,0,1); 
     if (separator && obj.type === 'root') obj.type = separator;
 
     const part = /^([^|&]+)/.exec(qExpr)?.at(1);
@@ -572,22 +574,18 @@ function parseQuantityExpression(qExpr) {
       const addedList = parseQuantityExpression(groupedPart);
       obj.list.push(addedList);
       qExpr = removeFromString(qExpr,0,groupedPart.length + (startGroup ? 2 : 0));
-      const newSeparator = /^[|&]/.exec(qExpr)?.at(0);
-      if (!newSeparator) continue;
-      separator = newSeparator;
-      qExpr = removeFromString(qExpr,0,1);  
       continue;
     }
     if (!separator) return parsePart(part);
 
     obj.list.push(parsePart(part));
-    qExpr = removeFromString(qExpr,0,part.length+1);
+    qExpr = removeFromString(qExpr,0,part.length);
   }
   return obj;
 
   // Does not parse "else"
   function parsePart(qExpr) {
-    qExpr = /^[()]?([^()]+)[()]?$/.exec(qExpr)[1];
+    qExpr = /^\(*([^()]+)\)*$/.exec(qExpr)[1];
     let match;
     match = /^([<>]?=?)(\d+)$/.exec(qExpr);
     if (match) return {
