@@ -5223,7 +5223,8 @@ function openNotificationsModal() {
     const anime = queue.shift();
     const data = await updateNotifications(anime.name);
 
-    if (data === -1) {
+    if (typeof data !== 'object' && data !== 3) {
+      console.error(`[AnimePahe Improvements] Received response ${data} with anime`);
       $('#anitracker-notifications-list-spinner').remove();
       $(`<span class="text-danger">An error occurred with the following anime:</span><br>
         <span class="text-danger">${toHtmlCodes(anime.name)}</span>`).appendTo('#anitracker-modal-body .anitracker-modal-list');
@@ -6029,25 +6030,30 @@ function toggleNotifications(name, id = undefined) {
   return true;
 }
 
+// Return values:
+// Object - success
+// 0 - anime was not in notifications storage (impossible?)
+// 1 - anime data request failed
+// 2 - episode list request failed
+// 3 - no episodes available (success)
 async function updateNotifications(animeName, storage = getStorage()) {
   let nobj = storage.notifications.anime.find(g => g.name === animeName);
   if (nobj === undefined) {
     toggleNotifications(animeName);
-    return;
+    return 0;
   }
   const data = await getAnimeData({
     name: animeName,
     id: nobj.id
   },['session','poster','name'],{ignored:['storage_notification_anime']});
-  if (!data.session || !data.name) return -1;
+  if (!data.session || !data.name) return 1;
   const episodes = await getAllEpisodes(data.session, 'desc');
-  if (episodes === undefined) return 0;
+  if (episodes === undefined) return 2;
+  if (!episodes.length) return 3;
 
   storage = getStorage();
   nobj = storage.notifications.anime.find(g => g.name === animeName); // Refresh the reference
   return new Promise(resolve => {
-    if (!episodes.length) resolve(undefined);
-
     if (storage.settings.relativeEpNums) {
       siteVars.cached.firstEpisode[data.session] = episodes[episodes.length - 1].episode;
     }
