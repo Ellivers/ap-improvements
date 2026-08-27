@@ -3270,6 +3270,20 @@ a.youtube-preview::before {
   vertical-align:center;
   border-width:3px;
 }
+#anitracker-continue-watching-progress {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  align-items: center;
+  z-index:10;
+  pointer-events: none;
+}
+#anitracker-continue-watching-progress>div {
+  background-color: rgba(0,0,0,0.5);
+  padding: 10px;
+  border-radius: 8px;
+  flex-direction:column;
+}
 .anitracker-relation-poster {
   filter: blur(5px) !important;
 }
@@ -3401,13 +3415,15 @@ applyCssSheet(_css);
 
 const siteVars = {
   prevDocumentTitle: undefined,
-  episodePages: [], // element, apiLink, cachedList, mode, features
+  episodePages: [], // element, apiFunction, cachedList, mode, features
   syncErrorCooldown: 0,
   modalEvents: [],
   messageTimeout: undefined,
+  ongoingRequests: [],
   cached: {
     animeSearch: [],
     firstEpisode: {},
+    firstEpPage: [],
     animeId: {},
     animeSession: [],
     page: {},
@@ -3521,15 +3537,15 @@ function getEpisodeNum() {
 }
 
 async function getFirstEpisode(session) {
-  return new Promise(resolve => {
-    const cached = siteVars.cached.firstEpisode[session];
-    if (cached !== undefined) { // firstEpisode value can be 0 (falsy)
-      resolve(cached);
-      return;
-    }
+  const cached = siteVars.cached.firstEpisode[session];
+  if (cached !== undefined) { // firstEpisode value can be 0 (falsy)
+    return cached;
+  }
 
-    asyncGetResponseData(`/api?m=release&sort=episode_asc&id=${session}`).then(response => {
-      const ep = response[0]?.episode;
+  return new Promise(resolve => {
+    getEpisodePageResponse(session).then(response => {
+      if (!response) return console.error(`[AnimePahe Improvements] Failed getting first episode for anime with session ${session}`);
+      const ep = response.data[0]?.episode;
       siteVars.cached.firstEpisode[session] = ep;
       resolve(ep);
       return;
@@ -3795,9 +3811,9 @@ const animeInfoFunctions = [
       const cached = siteVars.cached.animeId[iinfo.session];
       if (cached) return cached;
 
-      const response = await asyncGetResponseData(`/api?m=release&id=${iinfo.session}`);
+      const response = await getEpisodePageResponse(iinfo.session);
       if (!response) return undefined;
-      siteVars.cached.animeId[iinfo.session] = response[0].anime_id;
+      siteVars.cached.animeId[iinfo.session] = response.data[0].anime_id;
       return {
         old: {},
         new: {
@@ -3907,6 +3923,7 @@ async function getAnimeData(_iinfo = {}, _reqinfo = [], config = {}) {
       if (!result) continue;
       dontUseAgain.push(chosenFunction.id)
       for (const [key, value] of Object.entries(result.new)) {
+        if (!value) continue;
         if (!oinfo.new[key]) oinfo.new[key] = value;
         iinfo[key] = value;
         if (value) reqinfo = reqinfo.filter(a => a !== key);
@@ -3915,6 +3932,7 @@ async function getAnimeData(_iinfo = {}, _reqinfo = [], config = {}) {
       
       if (config.requireNew) continue;
       for (const [key, value] of Object.entries(result.old)) {
+        if (!value) continue;
         if (!oinfo.old[key]) oinfo.old[key] = value;
         if (!iinfo[key]) iinfo[key] = value;
         if (value) reqinfo = reqinfo.filter(a => a !== key);
@@ -7657,60 +7675,90 @@ async function asyncGetPage(qurl) {
   }
 }
 
+async function getEpisodePageResponse(session, pageNum = 1, sort = 'episode_asc', options = {}) {
+  const cached = siteVars.cached.firstEpPage.find(r => r.session === session && r.page === pageNum && r.sort === sort);
+  if (cached && !options.noCache) return cached.value;
+
+  const foundReq = siteVars.ongoingRequests.find(r => r.type === 'firstEpPage' && r.session === session && r.page === pageNum && r.sort === sort);
+  if (foundReq) return foundReq.promise;
+
+  const entry = {
+    type: 'firstEpPage',
+    session: session,
+    page: pageNum,
+    sort: sort,
+  }
+  entry.promise = new Promise(resolve => {
+    getResponse(`/api?m=release&sort=${sort}&id=${session}&page=${pageNum}`).then(data => {
+      siteVars.ongoingRequests = siteVars.ongoingRequests.filter(r => !(r.type === 'firstEpPage' && r.session === session && r.page === pageNum && r.sort === sort));
+      if (data && !cached) siteVars.cached.firstEpPage.push({
+        session: session,
+        page: pageNum,
+        sort: sort,
+        value: data,
+      });
+      resolve(data);
+    });
+  });
+  siteVars.ongoingRequests.push(entry);
+
+  return entry.promise;
+}
+
 async function getResponse(qurl) {
-  const req = new XMLHttpRequest();
-  req.open('GET', qurl, true);
-  return new Promise(resolve => {
+  return new Promise((resolve, reject) => {
+    const req = new XMLHttpRequest();
+    req.open('GET', qurl, true);
     req.onload = () => {
       if (req.status === 200) {
         resolve(JSON.parse(req.response));
         return;
       }
+      if (req.status === 429) {
+        waitTime(1000).then(() => {
+          req.open('GET', qurl, true);
+          req.send();
+        });
+        return;
+      }
 
+      console.error("Request failed with request URL " + qurl);
       resolve(undefined);
-    }
+    };
+    req.onerror = (err) => {
+      reject("Request failed with request URL " + qurl);
+    };
+    req.ontimeout = req.onerror;
     req.send();
   });
 }
 
 function asyncGetResponseData(qurl) {
   return new Promise((resolve, reject) => {
-    let req = new XMLHttpRequest();
+    const req = new XMLHttpRequest();
     req.open('GET', qurl, true);
     req.onload = () => {
       if (req.status === 200) {
         resolve(JSON.parse(req.response).data);
         return;
       }
+      if (req.status === 429) {
+        waitTime(1000).then(() => {
+          req.open('GET', qurl, true);
+          req.send();
+        });
+        return;
+      }
 
-      reject(undefined);
-    };
-    try {
-      req.send();
-    }
-    catch (err) {
-      console.error(err);
+      console.error("Request failed with request URL " + qurl);
       resolve(undefined);
-    }
-  });
-}
-
-function getResponseData(qurl) {
-  let req = new XMLHttpRequest();
-  req.open('GET', qurl, false);
-  try {
+    };
+    req.onerror = (err) => {
+      reject("Request failed with request URL " + qurl);
+    };
+    req.ontimeout = req.onerror;
     req.send();
-  }
-  catch (err) {
-    console.error(err);
-    return(undefined);
-  }
-
-  if (req.status === 200) {
-    return(JSON.parse(req.response).data);
-  }
-
-  return(undefined);
+  });
 }
 
 function getAnimeSessionFromUrl(url = window.location.toString()) {
@@ -7834,7 +7882,9 @@ if (isHome()) {
 
   siteVars.episodePages.push({
     element: $('.episode-list-wrapper'),
-    apiLink: '/api?m=airing&page={page_num}',
+    apiFunction: (pageNum) => {
+      return asyncGetResponseData(`/api?m=airing&page=${pageNum}`);
+    },
     mode: 'multi',
     features: {
       date: {
@@ -8079,12 +8129,15 @@ async function addContinueWatchingEpisodes(storage, episodeCount, clearAll = fal
 
   if (clearAll) {
     $(`
-    <div id="anitracker-continue-watching-progress" class="anitracker-center-content" style="align-self:center;width:100%;position:absolute;z-index:2;flex-direction:column;">
-      <div class="anitracker-spinner" style="margin: auto;">
-        <div class="spinner-border" role="status">
-          <span class="sr-only">Loading...</span>
+    <div id="anitracker-continue-watching-progress" class="anitracker-center-content">
+      <div>
+        <div class="anitracker-spinner" style="margin:auto;width:fit-content;">
+          <div class="spinner-border" role="status">
+            <span class="sr-only">Loading...</span>
+          </div>
         </div>
-      </div><div class="anitracker-progress-bar" style="width:12rem;margin: auto;"><div></div></div>
+        <div class="anitracker-progress-bar" style="width:12rem;"><div></div></div>
+      </div>
     </div>`).appendTo('.anitracker-episode-list-wrapper .episode-list.row');
   }
 
@@ -8103,6 +8156,7 @@ async function addContinueWatchingEpisodes(storage, episodeCount, clearAll = fal
       </div>
     </div>`).appendTo('.anitracker-episode-list-wrapper .episode-list.row');
   }
+  await waitTime(200); // To not disturb main page loading
 
   const processedAnime = [];
   const videoTimes = [...storage.videoTimes].reverse();
@@ -8120,10 +8174,10 @@ async function addContinueWatchingEpisodes(storage, episodeCount, clearAll = fal
       id: entry.animeId,
       videoPaths: entry.videoPaths,
       episode: entry.episodeNum,
-    }, ["session","name","id","episode_session"], {ignored: ['storage_video']});
+    }, ["session","name","id","episode_session","poster"], {ignored: ['storage_video']});
     if (data.id && isWatched(data.id, entry.episodeNum)) continue;
 
-    if (data.session) {
+    /*if (data.session) {
       const sessionResponse = await getPageResponse('/anime/' + data.session);
       if (sessionResponse.status !== 200) {
         // If the anime session is expired, try to get a new one
@@ -8140,18 +8194,53 @@ async function addContinueWatchingEpisodes(storage, episodeCount, clearAll = fal
     if (!data.session) {
       addEpisode(entry, undefined, data, undefined);
       continue;
-    }
+    }*/
 
-    const episodeData = await getEpisodeData(data.session, entry.episodeNum);
+    //const episodeData = await getEpisodeData(data.session, entry.episodeNum);
+    const episodeData = undefined;
     const firstEpisode = siteVars.cached.firstEpisode[data.session]; // If not cached, it will be undefined
     addEpisode(entry, episodeData, data, {firstEpisode: firstEpisode});
 
     if (clearAll) $('#anitracker-continue-watching-progress .anitracker-progress-bar > div').width((processedAnime.length / episodeCount)*100 + '%');
   }
 
-  $('.anitracker-continue-watching-skeleton').remove();
+  function addEpisode(videoTimeEntry, episodeEntry, animeData, extra) {
+    // Piece together anime data based on available info
+    const episode = {
+      time: videoTimeEntry.time,
+      episode2: episodeEntry?.episode2,
+      duration: episodeEntry?.duration ? HMStoSeconds(episodeEntry.duration) : videoTimeEntry.duration,
+      firstEpisode: extra?.firstEpisode,
+      videoTimeName: videoTimeEntry.animeName,
+      videoTimeEpisode: videoTimeEntry.episodeNum,
+      animeSession: animeData.session,
+    };
 
-  for (const ep of finalEpisodes) {
+    if (episodeEntry) episode.session = episodeEntry.session;
+    else if (animeData.episode_session) episode.session = animeData.episode_session;
+
+    if (animeData.id) episode.animeId = animeData.id;
+    else if (videoTimeEntry.animeId) episode.animeId = videoTimeEntry.animeId;
+
+    if (animeData.name) episode.title = animeData.name;
+    else episode.title = videoTimeEntry.animeName;
+
+    if (episodeEntry) episode.episode = episodeEntry.episode;
+    else episode.episode = videoTimeEntry.episodeNum;
+
+    if (episodeEntry) episode.snapshot = episodeEntry.snapshot;
+    else episode.snapshot = makePosterUrl(animeData.poster, 'md');
+
+    if (!episode.animeSession && !episode.animeId) return;
+
+    finalEpisodes.push(episode);
+    processedAnime.push(videoTimeEntry.animeName);
+    continueWatchingStatus.displayedEps.push({animeName: videoTimeEntry.animeName, episodeNum: videoTimeEntry.episodeNum});
+
+    addEpElem(episode);
+  }
+
+  function addEpElem(ep) {
     const img = ep.snapshot ?? 'data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==';
     const epValue = getEpisodeValue(ep.episode, ep.episode2, storage.settings.relativeEpNums ? ep.firstEpisode : undefined);
     const href = (() => {
@@ -8182,10 +8271,14 @@ async function addContinueWatchingEpisodes(storage, episodeCount, clearAll = fal
         </div>
         </div>
       </div>
-    </div>`).appendTo('.anitracker-episode-list-wrapper .episode-list.row')
+    </div>`)
     .data('ep', ep.episode).data('ep2', ep.episode2).data('firstEp', ep.firstEpisode)
     .data('videoTimeName',ep.videoTimeName).data('videoTimeEpisode',ep.videoTimeEpisode)
     .data('animeId', ep.animeId).data('duration', ep.duration);
+
+    const skeleton = $('.anitracker-continue-watching-skeleton')[0];
+    elem.insertBefore(skeleton);
+    skeleton.remove();
 
     if (ep.duration) setProgressBar(elem, false, ep.time, ep.duration);
 
@@ -8199,39 +8292,7 @@ async function addContinueWatchingEpisodes(storage, episodeCount, clearAll = fal
       title: ep.title,
       'anime-id': ep.animeId
     });
-  }
-  applyEpisodeOptionsEvents($('.anitracker-episode-list-wrapper .episode-wrap'));
-
-  function addEpisode(videoTimeEntry, episodeEntry, animeData, extra) {
-    // Piece together anime data based on available info
-    const episode = {
-      time: videoTimeEntry.time,
-      snapshot: episodeEntry?.snapshot,
-      episode2: episodeEntry?.episode2,
-      duration: episodeEntry?.duration ? HMStoSeconds(episodeEntry.duration) : videoTimeEntry.duration,
-      firstEpisode: extra?.firstEpisode,
-      videoTimeName: videoTimeEntry.animeName,
-      videoTimeEpisode: videoTimeEntry.episodeNum,
-      animeSession: animeData.session,
-    };
-
-    if (episodeEntry) episode.session = episodeEntry.session;
-    else if (animeData.episode_session) episode.session = animeData.episode_session;
-
-    if (animeData.id) episode.animeId = animeData.id;
-    else if (videoTimeEntry.animeId) episode.animeId = videoTimeEntry.animeId;
-
-    if (animeData.name) episode.title = animeData.name;
-    else episode.title = videoTimeEntry.animeName;
-
-    if (episodeEntry) episode.episode = episodeEntry.episode;
-    else episode.episode = videoTimeEntry.episodeNum;
-
-    if (!episode.animeSession && !episode.animeId) return;
-
-    finalEpisodes.push(episode);
-    processedAnime.push(videoTimeEntry.animeName);
-    continueWatchingStatus.displayedEps.push({animeName: videoTimeEntry.animeName, episodeNum: videoTimeEntry.episodeNum});
+    applyEpisodeOptionsEvents(elem);
   }
 
   $('#anitracker-continue-watching-progress').remove();
@@ -8263,17 +8324,18 @@ if (isEpisode()) {
 }
 
 async function getEpisodeData(aSession, episodeNum) {
-  let episodes = await getResponse(`/api?m=release&sort=episode_asc&id=${aSession}`);
+  let episodes = await getEpisodePageResponse(aSession);
   if (!episodes) return undefined;
 
   const firstEpisode = episodes.data[0].episode;
   siteVars.cached.firstEpisode[aSession] = firstEpisode;
+  siteVars.cached.firstEpPage[aSession] = episodes.data;
   let data = episodes.data.find(a => a.episode === episodeNum);
   if (data) return data;
   // If the episode wasn't found on the first page, find the page where the episode is
   const episodeOffset = firstEpisode - 1;
   const page = Math.min(episodes.last_page, Math.ceil((episodeNum - episodeOffset) / episodes.per_page));
-  episodes = await getResponse(`/api?m=release&sort=episode_asc&id=${aSession}&page=${page}`);
+  episodes = await getEpisodePageResponse(aSession, page);
   data = episodes.data.find(a => a.episode === episodeNum);
 
   return data;
@@ -8356,7 +8418,7 @@ if (isEpisode() && !is404) {
   $('#downloadMenu').attr('title','Download video');
 }
 else if (isAnime() && !is404) {
-  getFirstEpisode(animeSession); // Hopefully pre-cache the API call
+  getFirstEpisode(animeSession); // Start the request so subsequent calls can get it easier
 }
 
 console.log('[AnimePahe Improvements]', obj, animeSession, episodeSession);
@@ -8705,29 +8767,18 @@ function getTrackerDiv() {
 
 async function getAllEpisodes(session, sort = "asc") {
   const episodeList = [];
-  const request = new XMLHttpRequest();
-  request.open('GET', `/api?m=release&sort=episode_${sort}&id=` + session, true);
+  const response = await getEpisodePageResponse(session, 1, `episode_${sort}`, {noCache: true});
+  if (!response) return undefined;
 
-  return new Promise((resolve, reject) => {
-    request.onload = async function() {
-      if (request.status !== 200) {
-        reject("Received response code " + request.status);
-        return;
-      }
-
-      const response = JSON.parse(request.response);
-      if (response.current_page === response.last_page) {
-        episodeList.push(...response.data || []);
-      }
-      else for (let i = 1; i <= response.last_page; i++) {
-        const episodes = await asyncGetResponseData(`/api?m=release&sort=episode_${sort}&page=${i}&id=${session}`);
-        if (!episodes || !episodes.length) continue;
-        episodeList.push(...episodes);
-      }
-      resolve(episodeList);
-    };
-    request.send();
-  });
+  if (response.current_page === response.last_page) {
+    episodeList.push(...response.data || []);
+  }
+  else for (let i = 1; i <= response.last_page; i++) {
+    const episodes = await getEpisodePageResponse(session, i, `episode_${sort}`, {noCache: true});
+    if (!episodes || !episodes.data.length) continue;
+    episodeList.push(...episodes.data);
+  }
+  return episodeList;
 }
 
 // "Relation data" is what the relation list entry contains + the full episode list
@@ -9266,14 +9317,14 @@ function updateEpisodePages(allowCache = true) {
 }
 
 // MARKER:EPISODE PAGE CHANGES
-function updateEpisodePage(entry, allowCache = true) {
+async function updateEpisodePage(entry, allowCache = true) {
   const animeSession = entry.animeSession;
   const pageNum = getPageNum();
   const episodeSort = $('.episode-bar .btn-group-toggle .active').text().trim();
 
   // Only situation where cache isn't allowed is when the page has changed
   const cachedList = allowCache ? entry.cachedList : undefined;
-  const episodes = cachedList ?? getResponseData(entry.apiLink.replace('{page_num}', pageNum).replace('{anime_session}', animeSession).replace('{sort_dir}', episodeSort));
+  const episodes = cachedList ?? await entry.apiFunction(pageNum, animeSession, episodeSort);
   if (episodes === undefined) return undefined;
   entry.cachedList = episodes;
   if (!episodes.length) return undefined;
@@ -9374,23 +9425,20 @@ function updateEpisodePage(entry, allowCache = true) {
   applyEpisodeOptionsEvents(episodeElements);
 
   // Second loop for episode number correction, because otherwise the await could slow down the other visuals
-  // Run as another function to make sure that everything else in this function is synchronous
-  (async () => {
-    let firstEpisode = (entry.mode === 'multi' || !storage.settings.relativeEpNums) ? undefined : await getFirstEpisode(animeSession);
+  let firstEpisode = (entry.mode === 'multi' || !storage.settings.relativeEpNums) ? undefined : await getFirstEpisode(animeSession);
 
-    for (let i = 0; i < episodeElements.length; i++) {
-      if (entry.mode === 'multi' && storage.settings.relativeEpNums) firstEpisode = await getFirstEpisode(episodes[i].anime_session);
+  for (let i = 0; i < episodeElements.length; i++) {
+    //if (entry.mode === 'multi' && storage.settings.relativeEpNums) firstEpisode = await getFirstEpisode(episodes[i].anime_session);
 
-      if (pageNum !== getPageNum()) break; // If the page has been changed
+    if (pageNum !== getPageNum()) break; // If the page has been changed
 
-      const ep = episodes[i].episode;
-      const ep2 = episodes[i].episode2;
+    const ep = episodes[i].episode;
+    const ep2 = episodes[i].episode2;
 
-      $(episodeElements[i]).find('.episode-number:not(.text-success)').contents().filter(function(){
-        return this.nodeType === 3;
-      })[0].textContent = getEpisodeValue(ep, ep2, firstEpisode);
-    }
-  })();
+    $(episodeElements[i]).find('.episode-number:not(.text-success)').contents().filter(function(){
+      return this.nodeType === 3;
+    })[0].textContent = getEpisodeValue(ep, ep2, firstEpisode);
+  }
 }
 
 function addTitleIcons(animeid) {
@@ -9572,7 +9620,10 @@ if (isAnime()) {
 
   siteVars.episodePages.push({
     element: $('.episode-list-wrapper'),
-    apiLink: '/api?m=release&sort=episode_{sort_dir}&id={anime_session}&page={page_num}',
+    apiFunction: async (pageNum, animeSession, sortDir) => {
+      const response = await getEpisodePageResponse(animeSession, pageNum, `episode_${sortDir}`);
+      return response?.data;
+    },
     mode: 'single',
     features: {
       date: {
