@@ -375,28 +375,28 @@ const translations = {
     "day.friday": "Friday",
     "day.saturday": "Saturday",
     "time_since.second": {
-      "=1": "%1 seconds ago",
-      "else": "%1 second ago"
+      "=1": "%1 second ago",
+      "else": "%1 seconds ago"
     },
     "time_since.minute": {
-      "=1": "%1 minutes ago",
-      "else": "%1 minute ago"
+      "=1": "%1 minute ago",
+      "else": "%1 minutes ago"
     },
     "time_since.hour": {
-      "=1": "%1 hours ago",
-      "else": "%1 hour ago"
+      "=1": "%1 hour ago",
+      "else": "%1 hours ago"
     },
     "time_since.day": {
-      "=1": "%1 days ago",
-      "else": "%1 day ago"
+      "=1": "%1 day ago",
+      "else": "%1 days ago"
     },
     "time_since.month": {
-      "=1": "%1 months ago",
-      "else": "%1 month ago"
+      "=1": "%1 month ago",
+      "else": "%1 months ago"
     },
     "time_since.year": {
-      "=1": "%1 years ago",
-      "else": "%1 year ago"
+      "=1": "%1 year ago",
+      "else": "%1 years ago"
     }
   },
   active: {},
@@ -503,7 +503,7 @@ function makeTranslatedText(translationKey, vars = []) {
 
 function insertTranslationVars(raw, vars) {
   for (let i = 0; i < vars.length; i++) {
-    raw.replace('%' + i + 1, vars[i]);
+    raw = raw.replace(`%${i+1}`, vars[i]);
   }
   return raw;
 }
