@@ -7330,7 +7330,6 @@ async function getEpisodePageResponse(session, pageNum = 1, sort = 'episode_asc'
 
 async function getResponse(qurl) {
   return new Promise((resolve, reject) => {
-    let rateLimited = false;
     const req = new XMLHttpRequest();
     req.open('GET', qurl, true);
     req.onload = () => {
@@ -7338,8 +7337,7 @@ async function getResponse(qurl) {
         resolve(JSON.parse(req.response));
         return;
       }
-      if (!rateLimited && req.status === 429) {
-        rateLimited = true;
+      if (req.status === 429) {
         waitTime(1000).then(() => {
           req.open('GET', qurl, true);
           req.send();
@@ -7360,7 +7358,6 @@ async function getResponse(qurl) {
 
 function asyncGetResponseData(qurl) {
   return new Promise((resolve, reject) => {
-    let rateLimited = false;
     const req = new XMLHttpRequest();
     req.open('GET', qurl, true);
     req.onload = () => {
@@ -7368,8 +7365,7 @@ function asyncGetResponseData(qurl) {
         resolve(JSON.parse(req.response).data);
         return;
       }
-      if (!rateLimited && req.status === 429) {
-        rateLimited = true;
+      if (req.status === 429) {
         waitTime(1000).then(() => {
           req.open('GET', qurl, true);
           req.send();
