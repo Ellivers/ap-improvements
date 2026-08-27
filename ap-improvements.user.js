@@ -303,11 +303,100 @@ const translations = {
     "name_en": "English (US)",
     "name": "English (US)",
 
-    "default.title.site_search": "Search for anime",
+    "default.status.currently_airing": "Currently Airing",
+    "default.status.finished_airing": "Finished Airing",
+    "default.status.not_yet_aired": "Not yet aired",
 
+    "generic.episode": "Episode %1",
+    "modal_title.timestamp_edit_done": "Timestamp Results",
+    "modal_title.collection": "Collection - %1 Entries",
+    "modal_title.episode_feed": "Episode Feed",
+    "button.remove": "Remove",
+    "button.manage_feed": "Manage Feed...",
+    "button.manage_feed.get_all": "Get All",
+    "result_type.collection": "Collection",
+    "result_info.collection_entries": "%1 Entries",
+    "list_info.episodes": {
+      "=1": "%1 Ep",
+      "else": "%1 Eps"
+    },
+    "page_status.redirecting": "Redirecting...",
+    "page_status.redirect_failed": "Failed: Couldn't find anime",
+    "tab_title.redirect_failed": "Couldn't find anime",
+    "alt.thumbnail": "[Thumbnail of %1]",
+    "title.modal.close": "Close modal",
+    "title.modal.back": "Go back to previous menu",
+    "title.mark_episode.watched": "Mark this episode as watched",
+    "title.mark_episode.unwatched": "Mark this episode as unwatched",
+    "title.site_search": "Search for anime",
+    "title.collection": "%1 - Collection",
+    "title.header_button.episode_feed": "View episode feed",
+    "title.header_button.bookmarks": "View bookmarks",
+    "title.button.manage_feed": "View schedule and remove anime from the feed",
+    "title.button.feed_schedule.starting_day": "Select which day the schedule should start",
+    "title.button.manage_feed.remove": "Remove this anime from the episode feed",
+    "title.button.manage_feed.get_all": "Add all episodes to the feed",
+    "label.feed_schedule.starting_day": "Start from:",
+    "info.timestamp_edit_done": "You can open an issue %1 to get these added.",
+    "info.episode_feed.no_entries": "Use the %1 button on an ongoing anime to add it to the feed.",
+    "info.episode_feed.latest_episode": "Latest episode: %1",
+    "info.episode_feed.latest_episode.none_found": "None found",
+    "info.episode_feed.error": "An error occurred with the following anime:",
+    "info.episode_feed.empty": "Nothing here yet!",
+    "link.timestamp_edit_done.open_issue": "here",
+    "toast.removed_anime": "Removed \"%1\"",
+    "toast.sync.major_deletion": "Potential sync issue. Check the log!",
+    "toast.sync.major_deletion.restored": "Restored data",
+    "toast.manage_data.get_all": "Added all episodes to feed",
+    "toast.episode_feed.removed_old": "Removed from feed",
+    "message.sync.major_deletion.header": "Potential sync issue! The latest sync deleted the following amounts of data:",
+    "message.sync.major_deletion.data.session": "Session entries: %1",
+    "message.sync.major_deletion.data.video_progress": "Video progress entries: %1",
+    "message.sync.major_deletion.data.bookmarks": "Bookmarks: %1",
+    "message.sync.major_deletion.data.notification_anime": "Episode feed entries: %1",
+    "message.sync.major_deletion.data.watched": "Watched anime: %1",
+    "message.sync.major_deletion.footer": "If you believe this is an error, click OK to restore the removed data.",
+    "message.index.page_fail": "Page loading failed.",
+    "message.redirect.name_not_found": "Couldn't find any anime with name \"%1\".\nGo to \"%2\" instead?",
+    "message.episode_feed.remove_old": "The latest episode for \"%1\" was more than 2 weeks ago. Remove it from the feed?\n\nThis prompt will not be shown again.",
     "message.manage_data.clean_up.session": {
       "=1": "Clean up %1 older duplicate entry?",
       "else": "Clean up %1 older duplicate entries?"
+    },
+    "season.winter": "Winter",
+    "season.spring": "Spring",
+    "season.summer": "Summer",
+    "season.fall": "Fall",
+    "day.sunday": "Sunday",
+    "day.monday": "Monday",
+    "day.tuesday": "Tuesday",
+    "day.wednesday": "Wednesday",
+    "day.thursday": "Thursday",
+    "day.friday": "Friday",
+    "day.saturday": "Saturday",
+    "time_since.second": {
+      "=1": "%1 seconds ago",
+      "else": "%1 second ago"
+    },
+    "time_since.minute": {
+      "=1": "%1 minutes ago",
+      "else": "%1 minute ago"
+    },
+    "time_since.hour": {
+      "=1": "%1 hours ago",
+      "else": "%1 hour ago"
+    },
+    "time_since.day": {
+      "=1": "%1 days ago",
+      "else": "%1 day ago"
+    },
+    "time_since.month": {
+      "=1": "%1 months ago",
+      "else": "%1 month ago"
+    },
+    "time_since.year": {
+      "=1": "%1 years ago",
+      "else": "%1 year ago"
     }
   },
   active: {},
@@ -318,7 +407,10 @@ function validateTranslations(obj) {
   if (!isKeyValueObject(obj)) return ["Wrong object type"];
   const errors = [];
   for (const [key, value] of Object.entries(obj)) {
-    if (typeof value === 'string') continue;
+    if (typeof value === 'string') {
+      if (value.includes('HTML')) err(key, 'Cannot contain "HTML"');
+      continue;
+    }
     if (!isKeyValueObject(value)) {
       err(key, 'Needs to be a string or object');
       continue;
@@ -329,6 +421,7 @@ function validateTranslations(obj) {
       continue;
     }
     for (const [qExpr, text] of entries) {
+      if (text.includes('HTML')) err(key, `${qExpr}: Cannot contain "HTML"`);
       if (!/%1/.test(text)) {
         err(key, `${qExpr}: Text needs to contain %1`);
       }
@@ -379,7 +472,15 @@ function validateQuantityExpression(qExpr) {
   return Array.from(errors);
 }
 
-function getText(translationKey, vars = []) {
+function getText(translationKey, vars = [], options = {}) {
+  if (options.default) {
+    const val = translations.active[translationKey] || translations.default[translationKey];
+    if (val) return val;
+  }
+  return makeTranslatedText(translationKey, vars);
+}
+
+function makeTranslatedText(translationKey, vars = []) {
   const val = translations.active[translationKey] || translations.default[translationKey];
   if (!val) {
     console.error(`[AnimePahe Improvements] Nonexistent translation key "${translationKey}" used. Falling back to key.`);
@@ -506,6 +607,10 @@ function removeFromString(str, startIndex, endIndex) {
   const arr = str.split('');
   arr.splice(startIndex, endIndex);
   return arr.join('');
+}
+
+function toHtmlCodes(string) {
+  return $('<div>').text(string).html().replace(/"/g, "&quot;").replace(/'/g, "&#039;");
 }
 
 function isKeyValueObject(obj) {
@@ -3867,8 +3972,8 @@ function openModal(title = '', backFunction, options = {}) {
   $('#anitracker-modal').trigger('anitracker:open');
 
   const close = $('#anitracker-modal-close');
-  if (backFunction) close.replaceClass('fa-close', 'fa-arrow-left').attr('title', 'Go back to previous menu');
-  else close.replaceClass('fa-arrow-left', 'fa-close').attr('title', 'Close modal');
+  if (backFunction) close.replaceClass('fa-close', 'fa-arrow-left').attr('title', getText('title.modal.back'));
+  else close.replaceClass('fa-arrow-left', 'fa-close').attr('title', getText('title.modal.close'));
   $('#anitracker-modal-title').text(title);
   setModalSubtitle(options.subtitle ?? '');
   
@@ -4029,14 +4134,20 @@ if (isEpisode()) {
         if (timestamp.end !== undefined) timestamps[timestamp.type].end = timestamp.end;
       }
 
+      const infoText = toHtmlCodes(getText('info.timestamp_edit_done', ['HTML']))
+      .replace('HTML',
+        `<a href="https://github.com/Ellivers/open-anime-timestamps" target="_blank" style="text-decoration:underline;">
+        ${toHtmlCodes(getText('link.timestamp_edit_done.open_issue', []))}
+        </a>`);
+
       $(`
       <textarea style="padding:10px;background-color: rgb(30, 35, 40);border-radius: 5px;font-family:monospace;color:white;height:20rem;width:100%;"
                    >${JSON.stringify(timestamps, null, 2)}</textarea>
-      <p class="anitracker-secondary-info">You can open an issue
-        <a href="https://github.com/Ellivers/open-anime-timestamps" target="_blank" style="text-decoration:underline;">here</a>
-        to get these added.</p>`).appendTo('#anitracker-modal-body');
+      <p class="anitracker-secondary-info">
+        ${infoText}
+      </p>`).appendTo('#anitracker-modal-body');
 
-      openModal('Timestamp Results');
+      openModal(getText('modal_title.timestamp_edit_done'));
     }
     else if (action === 'key') {
       $(document).trigger('keydown', {event: data.event});
@@ -4424,22 +4535,22 @@ function receiveTabMessage(e) {
   const key = e.originalEvent.key;
 
   if (key === 'anitracker_sync_deletion_confirmation') {
-    showMessage('Potential sync issue. Check the log!');
+    showMessage(getText('toast.sync.major_deletion'), 10000);
 
     const removed = JSON.parse(message);
-    const restore = confirm(`[AnimePahe Improvements]\n\nPotential sync issue! The latest sync deleted the following amounts of data:
-    Session entries: ${removed.linkList.length}
-    Video progress entries: ${removed.videoTimes.length}
-    Bookmarks: ${removed.bookmarks.length}
-    Episode feed entries: ${removed.notifications.anime.length}
-    Watched anime: ${removed.watched.length}
-    \nIf you believe this is an error, click OK to restore the removed data.`);
+    const restore = confirm(`[AnimePahe Improvements]\n\n${getText('message.sync.major_deletion.header')}
+    ${getText('message.sync.major_deletion.data.session',[removed.linkList.length])}
+    ${getText('message.sync.major_deletion.data.video_progress',[removed.videoTimes.length])}
+    ${getText('message.sync.major_deletion.data.bookmarks',[removed.bookmarks.length])}
+    ${getText('message.sync.major_deletion.data.notification_anime',[removed.notifications.anime.length])}
+    ${getText('message.sync.major_deletion.data.watched',[removed.watched.length])}
+    \n${getText('message.sync.major_deletion.footer')}`);
 
     if (!restore) return;
 
     removed.watched = encodeWatched(removed.watched);
     importData(getStorage(), removed);
-    showMessage('Restored data');
+    showMessage(getText('toast.sync.major_deletion.restored'));
     return;
   }
 
@@ -4457,7 +4568,7 @@ function receiveTabMessage(e) {
 
     const syncSinceText = $('.anitracker-time-since-sync');
     if (syncSinceText && msg?.lastSynced) {
-      syncSinceText.text(timeSince(+msg.lastSynced) + ' ago');
+      syncSinceText.text(timeAgoText(+msg.lastSynced));
       syncSinceText.parent().attr('title', new Date(+msg.lastSynced).toLocaleString());
     }
 
@@ -4621,7 +4732,7 @@ function searchComplete() {
 function displayCollection(seriesList, elem) {
   elem.empty().css('padding', '');
   $(`
-  <a title="${toHtmlCodes(seriesList[0].title + " - Collection")}" href="javascript:;">
+  <a title="${toHtmlCodes(getText('title.collection', [seriesList[0].title]))}" href="javascript:;">
     <div class="result-thumbnail">
       <div class="anitracker-collection-image-wrapper">
         <img src="${makePosterUrl(seriesList[0].poster,'th')}" referrerpolicy="no-referrer" style="pointer-events: all !important;max-width: 30px;">
@@ -4632,7 +4743,10 @@ function displayCollection(seriesList, elem) {
     </div>
     <div class="result-metadata">
       <div class="result-title">${toHtmlCodes(seriesList[0].title)}</div>
-      <div class="result-status"><strong>Collection</strong> ∙ ${seriesList.length} Entries</div>
+      <div class="result-status">
+        <strong>${toHtmlCodes(getText('result_type.collection'))}</strong>
+        ∙ ${toHtmlCodes(getText('result_info.collection_entries', [seriesList.length]))}
+      </div>
     </div>
   </a>`).appendTo(elem);
 
@@ -4644,34 +4758,47 @@ function displayCollection(seriesList, elem) {
     </div>`).appendTo('#anitracker-modal-body');
 
     for (const anime of seriesList) {
+      const alt = toHtmlCodes(getText('alt.thumbnail', [anime.title]));
+      const type = toHtmlCodes(getText(`default.anime_type.${anime.type.toLowerCase()}`, [], {
+        default: anime.type
+      }));
+      const episodeCount = anime.episodes ? toHtmlCodes(getText('list_info.episodes', [anime.episodes])) : '?';
+      const season = toHtmlCodes(getText(`season.${anime.season.toLowerCase()}`));
+      const status = toHtmlCodes(getText(`default.status.${getFlattenedStatus(anime.status)}`, [], {
+        default: anime.status
+      }));
       $(`
       <div class="anitracker-big-list-item">
         <a href="/anime/${anime.session}" title="${toHtmlCodes(anime.title)}" style="display: flex; gap: 16px;">
           <div class="anitracker-image-wrapper" style="height: 60px; width: 60px; min-width: 60px;">
-            <img src="${makePosterUrl(anime.poster,'th')}" referrerpolicy="no-referrer" alt="[Thumbnail of ${toHtmlCodes(anime.title)}]">
+            <img src="${makePosterUrl(anime.poster,'th')}" referrerpolicy="no-referrer" alt="${alt}">
           </div>
           <div>
             <div class="anitracker-main-text">${toHtmlCodes(anime.title)}</div>
             <div class="anitracker-subtext">
-              <strong>${anime.type}</strong> ∙ ${anime.episodes ? anime.episodes : '?'} Ep${anime.episodes === 1 ? '' : 's'} ∙ ${anime.season} ${anime.year}
+              <strong>${type}</strong> ∙ ${episodeCount} ∙ ${season} ${anime.year}
             </div>
-            ${anime.status !== 'Finished Airing' ? `<div class="anitracker-subtext">${anime.status}</div>` : ''}
+            ${anime.status !== 'Finished Airing' ? `<div class="anitracker-subtext">${toHtmlCodes(status)}</div>` : ''}
           </div>
         </a>
       </div>`).appendTo('#anitracker-modal-body .anitracker-modal-list');
     }
 
-    openModal(`Collection - ${seriesList.length} Entries`, undefined, {subtitle: 'May not be entirely accurate'});
+    openModal(getText('modal_title.collection', [seriesList.length]), undefined, {subtitle: 'May not be entirely accurate'});
     scrollModalToTop();
   });
 }
 
-$('.input-search').attr('title','Search for anime');
+$('.input-search').attr('title',getText('title.site_search'));
 $('.input-search').on('keyup', (e) => {
   const collectionElem = $('.search-results').find('.anitracker-collection');
   if (collectionElem.length && e.key === "Enter" && collectionElem.hasClass('selected')) collectionElem.trigger('click');
   if ($(e.currentTarget).val() === '') $('.search-results-wrap').empty();
 });
+
+function getFlattenedStatus(status) {
+  return status.toLowerCase().replace(' ','_');
+}
 
 function getSeasonTimeframe(from, to) {
   const filters = [];
@@ -4949,7 +5076,7 @@ function getFilteredList(filtersInput) {
     if (filters.length === 0) {
       getPage('/anime').then((response) => {
         if (response === undefined) {
-          alert('Page loading failed.');
+          alert(getText('message.index.page_fail'));
           reject('Anime index page not reachable.');
           return;
         }
@@ -5063,37 +5190,51 @@ function searchList(fuseClass, list, query, limit = 80) {
   return [...includesMatch, ...other].splice(0,limit);
 }
 
-function timeSince(date) {
-  const seconds = Math.floor((new Date() - date) / 1000);
+function timeSince(time) {
+  const seconds = Math.floor((new Date() - time) / 1000);
 
   let interval = Math.floor(seconds / 31536000);
 
-  if (interval >= 1) {
-    return interval + " year" + (interval !== 1 ? 's' : '');
-  }
+  if (interval >= 1) return {
+    num: interval,
+    type: 'year',
+  };
   interval = Math.floor(seconds / 2592000);
-  if (interval >= 1) {
-    return interval + " month" + (interval !== 1 ? 's' : '');
-  }
+  if (interval >= 1) return {
+    num: interval,
+    type: 'month',
+  };
   interval = Math.floor(seconds / 86400);
-  if (interval >= 1) {
-    return interval + " day" + (interval !== 1 ? 's' : '');
-  }
+  if (interval >= 1) return {
+    num: interval,
+    type: 'day',
+  };
   interval = Math.floor(seconds / 3600);
-  if (interval >= 1) {
-    return interval + " hour" + (interval !== 1 ? 's' : '');
-  }
+  if (interval >= 1) return {
+    num: interval,
+    type: 'hour',
+  };
   interval = Math.floor(seconds / 60);
-  if (interval >= 1) {
-    return interval + " minute" + (interval !== 1 ? 's' : '');
-  }
-  return seconds + " second" + (seconds !== 1 ? 's' : '');
+  if (interval >= 1) return {
+    num: interval,
+    type: 'minute',
+  };
+  
+  return {
+    num: seconds,
+    type: 'second',
+  };;
+}
+
+function timeAgoText(time) {
+  const since = timeSince(time);
+  return getText(`time_since.${since.type}`, [since.num]);
 }
 
 if (window.location.pathname.startsWith('/customlink')) {
   (async () => {
-    document.title = "Redirecting... :: animepahe";
-    $('h1').text('Redirecting...');
+    document.title = getText('page_status.redirecting') + " :: animepahe";
+    $('h1').text(getText('page_status.redirecting'));
 
     const parts = {
       animeSession: undefined,
@@ -5115,7 +5256,7 @@ if (window.location.pathname.startsWith('/customlink')) {
         animeData = await getAnimeData(iinfo,["session","name"],{allowGuessing:true});
         if (!animeData.session) return;
       }
-      if (iinfo.name && iinfo.name !== animeData.name && !confirm(`[AnimePahe Improvements]\n\nCouldn't find any anime with name "${iinfo.name}".\nGo to "${animeData.name}" instead?`)) return;
+      if (iinfo.name && iinfo.name !== animeData.name && !confirm(`[AnimePahe Improvements]\n\n${getText('message.redirect.name_not_found', [iinfo.name,animeData.name])}`)) return;
       parts.animeSession = animeData.session;
 
       const episodeParam = searchParams.get('e');
@@ -5140,8 +5281,8 @@ if (window.location.pathname.startsWith('/customlink')) {
 
     if (destination) window.location.replace(destination);
     else {
-      document.title = "Couldn't find anime :: animepahe";
-      $('h1').text("Failed: Couldn't find anime");
+      document.title = getText('tab_title.redirect_failed') + " :: animepahe";
+      $('h1').text(getText('page_status.redirect_failed'));
     }
   })();
   return;
@@ -5227,25 +5368,24 @@ if (/^\/anime\/\w+(\/[\w\-.]+)?$/.test(window.location.pathname)) {
   return;
 }
 
-function getDayName(day) {
-  return [
-    "Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"
+function getDayName(day) { 
+  const name_id = [
+    "sunday","monday","tuesday","wednesday","thursday","friday","saturday"
   ][day];
-}
-
-function toHtmlCodes(string) {
-  return $('<div>').text(string).html().replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+  return getText(`day.${name_id}`);
 }
 
 // MARKER:HEADER BUTTONS
 // Bookmark & episode feed header buttons
 $(`
 <div class="anitracker-header">
-  <button class="anitracker-header-notifications anitracker-header-button" title="View episode feed">
+  <button class="anitracker-header-notifications anitracker-header-button" title="${toHtmlCodes(getText('title.header_button.episode_feed'))}">
     <i class="fa fa-bell" aria-hidden="true"></i>
     <i style="display:none;" aria-hidden="true" class="fa fa-circle anitracker-header-notifications-circle"></i>
   </button>
-  <button class="anitracker-header-bookmark anitracker-header-button" title="View bookmarks"><i class="fa fa-bookmark" aria-hidden="true"></i></button>
+  <button class="anitracker-header-bookmark anitracker-header-button" title="${toHtmlCodes(getText('title.header_button.bookmarks'))}">
+    <i class="fa fa-bookmark" aria-hidden="true"></i>
+  </button>
 </div>`).insertAfter('.navbar-nav');
 
 let currentNotificationIndex = 0;
@@ -5257,9 +5397,9 @@ function openNotificationsModal() {
 
   $(`
   <div class="btn-group" style="margin-bottom: 10px;">
-    <button class="btn btn-secondary anitracker-view-notif-animes" title="View schedule and remove anime from the feed">
+    <button class="btn btn-secondary anitracker-view-notif-animes" title="${toHtmlCodes(getText('title.button.manage_feed'))}">
       <i class="fa fa-calendar" aria-hidden="true"></i>
-      &nbsp;Manage Feed...
+      &nbsp;${toHtmlCodes(getText('button.manage_feed'))}
     </button>
   </div>
   <div class="anitracker-modal-list-container">
@@ -5278,9 +5418,13 @@ function openNotificationsModal() {
     const storage = getStorage();
     $(`
     <div class="anitracker-feed-schedule"></div>
-    <label for="anitracker-week-start-dropdown-toggle" style="vertical-align: top;" title="Select which day the schedule should start">Start from:</label>
+    <label for="anitracker-week-start-dropdown-toggle" style="vertical-align: top;" title="${toHtmlCodes(getText('title.button.feed_schedule.starting_day'))}">
+      ${toHtmlCodes(getText('label.feed_schedule.starting_day'))}
+    </label>
     <div class="btn-group" style="margin-bottom: 10px;">
-      <button class="btn dropdown-toggle btn-dark anitracker-flat-button" id="anitracker-week-start-dropdown-toggle" data-bs-toggle="dropdown" data-toggle="dropdown" title="Select which day the schedule should start">Sunday</button>
+      <button class="btn dropdown-toggle btn-dark anitracker-flat-button" id="anitracker-week-start-dropdown-toggle" data-bs-toggle="dropdown" data-toggle="dropdown" title="${toHtmlCodes(getText('title.button.feed_schedule.starting_day'))}">
+        ${getDayName(0)}
+      </button>
       <div class="dropdown-menu anitracker-dropdown-content anitracker-week-start-dropdown"></div>
     </div>
     <div class="anitracker-modal-list-container" style="width: fit-content;margin: auto;">
@@ -5303,7 +5447,8 @@ function openNotificationsModal() {
 
     openModal('Manage Episode Feed', openNotificationsModal, {hideAnimation: !animation});
     if (!storage.notifications.anime.length) {
-      $(`<span>Use the <i class="fa fa-bell" title="bell"></i> button on an ongoing anime to add it to the feed.</span>`).appendTo('#anitracker-modal-body .anitracker-modal-list');
+      const html = toHtmlCodes(getText('info.manage_feed.no_entries', ['HTML'])).replace('HTML', '<i class="fa fa-bell" title="bell"></i>');
+      $(`<span>${html}</span>`).appendTo('#anitracker-modal-body .anitracker-modal-list');
       makeSchedule(storage.settings.notifScheduleStart);
       return;
     }
@@ -5312,7 +5457,9 @@ function openNotificationsModal() {
     loadUntilPromise($('#anitracker-modal-body .anitracker-modal-list'), promise).then(async () => {
       for (const g of [...storage.notifications.anime].sort((a,b) => a.latest_episode > b.latest_episode ? 1 : -1)) {
         const latestEp = toUTCDate(g.latest_episode);
-        const latestEpString = g.latest_episode !== undefined ? `${getDayName(latestEp.getDay())} ${latestEp.toLocaleTimeString([], {timeStyle:'short'})} (${timeSince(latestEp.getTime())} ago)` : "None found";
+        const latestEpString = g.latest_episode !== undefined
+        ? `${getDayName(latestEp.getDay())} ${latestEp.toLocaleTimeString([], {timeStyle:'short'})} (${timeAgoText(latestEp.getTime())})`
+        : getText('info.episode_feed.latest_episode.none_found');
         const data = await getAnimeData({
           id: g.id,
           name: g.name
@@ -5324,18 +5471,18 @@ function openNotificationsModal() {
             ${toHtmlCodes(g.name)}
           </a><br>
           <span>
-            Latest episode: ${latestEpString}
+            ${toHtmlCodes(getText('info.episode_feed.latest_episode', [latestEpString]))}
           </span><br>
           <div class="btn-group">
-            <button class="btn btn-secondary anitracker-delete-button anitracker-flat-button" title="Remove this anime from the episode feed">
+            <button class="btn btn-secondary anitracker-delete-button anitracker-flat-button" title="${toHtmlCodes(getText('title.button.manage_feed.remove'))}">
               <i class="fa fa-trash" aria-hidden="true"></i>
-              &nbsp;Remove
+              &nbsp;${toHtmlCodes(getText('button.remove'))}
             </button>
           </div>
           <div class="btn-group">
-            <button class="btn btn-secondary anitracker-get-all-button anitracker-flat-button" title="Add all episodes to the feed" ${g.hasFirstEpisode ? 'disabled=""' : ''}>
+            <button class="btn btn-secondary anitracker-get-all-button anitracker-flat-button" title="${toHtmlCodes(getText('title.button.manage_feed.get_all'))}" ${g.hasFirstEpisode ? 'disabled=""' : ''}>
               <i class="fa fa-rotate-right" aria-hidden="true"></i>
-              &nbsp;Get All
+              &nbsp;${toHtmlCodes(getText('button.manage_feed.get_all'))}
             </button>
           </div>
         </div>`).appendTo('#anitracker-modal-body .anitracker-modal-list');
@@ -5371,14 +5518,14 @@ function openNotificationsModal() {
           elem.prop('disabled', true);
         }, 200);
 
-        showMessage('Added all episodes to feed');
+        showMessage(getText('toast.manage_data.get_all'));
       });
 
       $('.anitracker-modal-list-entry .anitracker-delete-button').on('click', (e) => {
         const parent = $(e.currentTarget).parents().eq(1);
         const name = parent.attr('animename');
         toggleNotifications(name, +parent.attr('animeid'));
-        showMessage(`Removed "${name?.slice(0,20)}${name?.length > 20 ? '...' : ''}"`, 4000);
+        showMessage(getText('toast.removed_anime', [`${name?.slice(0,20)}${name?.length > 20 ? '...' : ''}`]), 4000);
 
         const name2 = getAnimeName();
         if (name2.length > 0 && name2 === name) $('.anitracker-notifications-toggle .anitracker-title-icon-check').hide();
@@ -5414,7 +5561,7 @@ function openNotificationsModal() {
   const animeData = [];
   const queue = [...oldStorage.notifications.anime];
 
-  openModal('Episode Feed').then(() => {
+  openModal(getText('modal_title.episode_feed')).then(() => {
     if (queue.length > 0) next();
     else done();
   });
@@ -5429,7 +5576,7 @@ function openNotificationsModal() {
 
     if (data === -1) {
       $('#anitracker-notifications-list-spinner').remove();
-      $(`<span class="text-danger">An error occurred with the following anime:</span><br>
+      $(`<span class="text-danger">${toHtmlCodes(getText('info.episode_feed.error'))}</span><br>
         <span class="text-danger">${toHtmlCodes(anime.name)}</span>`).appendTo('#anitracker-modal-body .anitracker-modal-list');
       return;
     }
@@ -5450,11 +5597,11 @@ function openNotificationsModal() {
       if (anime.latest_episode === undefined || anime.dont_ask === true) continue;
       const time = Date.now() - toUTCDate(anime.latest_episode).getTime();
       if ((time / 1000 / 60 / 60 / 24 / 7) > 2) {
-        const remove = confirm(`[AnimePahe Improvements]\n\nThe latest episode for ${anime.name} was more than 2 weeks ago. Remove it from the feed?\n\nThis prompt will not be shown again.`);
+        const remove = confirm(`[AnimePahe Improvements]\n\n${getText('message.episode_feed.remove_old',[anime.name])}`);
         if (remove === true) {
           toggleNotifications(anime.name, anime.id);
           removedAnime++;
-          showMessage('Removed from feed');
+          showMessage(getText('toast.episode_feed.removed_old'));
         }
         else {
           anime.dont_ask = true;
@@ -5471,7 +5618,8 @@ function openNotificationsModal() {
     storage.notifications.lastUpdated = Date.now();
     saveData(storage);
     if (!storage.notifications.episodes.length) {
-      $("<span>Nothing here yet!</span>").appendTo('#anitracker-modal-body .anitracker-modal-list');
+      $("<span></span>").text(getText('info.episode_feed.empty'))
+      .appendTo('#anitracker-modal-body .anitracker-modal-list');
     }
     else {
       addToList(20);
@@ -5497,12 +5645,12 @@ function openNotificationsModal() {
       <div class="anitracker-big-list-item anitracker-notification-item${ep.watched ? "" : " anitracker-notification-item-unwatched"} anitracker-temp" anime-data="${data.id}" episode-data="${ep.episode}">
         <a href="/play/${data.session}/${ep.session}" target="_blank" title="${toHtmlCodes(data.name)}">
           <div class="anitracker-image-wrapper">
-            <img src="${makePosterUrl(data.poster,'th')}" referrerpolicy="no-referrer" alt="[Thumbnail of ${toHtmlCodes(data.name)}]"}>
+            <img src="${makePosterUrl(data.poster,'th')}" referrerpolicy="no-referrer" alt="${toHtmlCodes(getText('alt.thumbnail', [data.name]))}"}>
           </div>
-          <i class="fa ${ep.watched ? 'fa-eye-slash' : 'fa-eye'} anitracker-watched-toggle" tabindex="0" aria-hidden="true" title="Mark this episode as ${ep.watched ? 'unwatched' : 'watched'}"></i>
+          <i class="fa ${ep.watched ? 'fa-eye-slash' : 'fa-eye'} anitracker-watched-toggle" tabindex="0" aria-hidden="true" title="${toHtmlCodes(getText(ep.watched ? 'title.mark_episode.unwatched' : 'title.mark_episode.watched'))}"></i>
           <div class="anitracker-main-text">${toHtmlCodes(data.name)}</div>
-          <div class="anitracker-subtext">Episode <span class="anitracker-episode-text">${ep.episode}</span></div>
-          <div class="anitracker-subtext">${timeSince(releaseTime)} ago (${releaseTime.toLocaleDateString()})</div>
+          <div class="anitracker-subtext">${toHtmlCodes(getText('generic.episode', ['HTML'])).replace('HTML', `<span class="anitracker-episode-text">${ep.episode}</span>`)}</div>
+          <div class="anitracker-subtext">${timeAgoText(releaseTime)} (${releaseTime.toLocaleDateString()})</div>
         </a>
       </div>`).appendTo('#anitracker-modal-body .anitracker-modal-list');
 
@@ -5537,7 +5685,7 @@ function openNotificationsModal() {
       if (e.type === 'click') elem.blur();
 
       ep.watched = !ep.watched;
-      elem.attr('title', `Mark this episode as ${ep.watched ? 'unwatched' : 'watched'}`);
+      elem.attr('title', getText(ep.watched ? 'title.mark_episode.unwatched' : 'title.mark_episode.watched'));
 
       saveData(storage);
 
@@ -10980,7 +11128,7 @@ function addGeneralButtons() {
       if (syncEnabled && !storage.debug?.noSyncSim) {
         $(`
         <div style="display:flex;flex-direction:column;align-items:center;gap:5px;">
-          <p class="anitracker-secondary-info anitracker-thin-text" title="${syncedTime}">Last synced: <span class="anitracker-time-since-sync">${storage.sync.lastSynced ? timeSince(storage.sync.lastSynced) + ' ago' : 'Never'}</span></p>
+          <p class="anitracker-secondary-info anitracker-thin-text" title="${syncedTime}">Last synced: <span class="anitracker-time-since-sync">${storage.sync.lastSynced ? timeAgoText(storage.sync.lastSynced) : 'Never'}</span></p>
           <div>
             <button class="btn btn-primary anitracker-sync-button" title="Sync data now">
               <i class="fa fa-sync" aria-hidden="true"></i>

@@ -2,10 +2,99 @@
   "name_en": "English (US)",
   "name": "English (US)",
 
-  "default.title.site_search": "Search for anime",
+  "default.status.currently_airing": "Currently Airing",
+  "default.status.finished_airing": "Finished Airing",
+  "default.status.not_yet_aired": "Not yet aired",
 
+  "generic.episode": "Episode %1",
+  "modal_title.timestamp_edit_done": "Timestamp Results",
+  "modal_title.collection": "Collection - %1 Entries",
+  "modal_title.episode_feed": "Episode Feed",
+  "button.remove": "Remove",
+  "button.manage_feed": "Manage Feed...",
+  "button.manage_feed.get_all": "Get All",
+  "result_type.collection": "Collection",
+  "result_info.collection_entries": "%1 Entries",
+  "list_info.episodes": {
+    "=1": "%1 Ep",
+    "else": "%1 Eps"
+  },
+  "page_status.redirecting": "Redirecting...",
+  "page_status.redirect_failed": "Failed: Couldn't find anime",
+  "tab_title.redirect_failed": "Couldn't find anime",
+  "alt.thumbnail": "[Thumbnail of %1]",
+  "title.modal.close": "Close modal",
+  "title.modal.back": "Go back to previous menu",
+  "title.mark_episode.watched": "Mark this episode as watched",
+  "title.mark_episode.unwatched": "Mark this episode as unwatched",
+  "title.site_search": "Search for anime",
+  "title.collection": "%1 - Collection",
+  "title.header_button.episode_feed": "View episode feed",
+  "title.header_button.bookmarks": "View bookmarks",
+  "title.button.manage_feed": "View schedule and remove anime from the feed",
+  "title.button.feed_schedule.starting_day": "Select which day the schedule should start",
+  "title.button.manage_feed.remove": "Remove this anime from the episode feed",
+  "title.button.manage_feed.get_all": "Add all episodes to the feed",
+  "label.feed_schedule.starting_day": "Start from:",
+  "info.timestamp_edit_done": "You can open an issue %1 to get these added.",
+  "info.episode_feed.no_entries": "Use the %1 button on an ongoing anime to add it to the feed.",
+  "info.episode_feed.latest_episode": "Latest episode: %1",
+  "info.episode_feed.latest_episode.none_found": "None found",
+  "info.episode_feed.error": "An error occurred with the following anime:",
+  "info.episode_feed.empty": "Nothing here yet!",
+  "link.timestamp_edit_done.open_issue": "here",
+  "toast.removed_anime": "Removed \"%1\"",
+  "toast.sync.major_deletion": "Potential sync issue. Check the log!",
+  "toast.sync.major_deletion.restored": "Restored data",
+  "toast.manage_data.get_all": "Added all episodes to feed",
+  "toast.episode_feed.removed_old": "Removed from feed",
+  "message.sync.major_deletion.header": "Potential sync issue! The latest sync deleted the following amounts of data:",
+  "message.sync.major_deletion.data.session": "Session entries: %1",
+  "message.sync.major_deletion.data.video_progress": "Video progress entries: %1",
+  "message.sync.major_deletion.data.bookmarks": "Bookmarks: %1",
+  "message.sync.major_deletion.data.notification_anime": "Episode feed entries: %1",
+  "message.sync.major_deletion.data.watched": "Watched anime: %1",
+  "message.sync.major_deletion.footer": "If you believe this is an error, click OK to restore the removed data.",
+  "message.index.page_fail": "Page loading failed.",
+  "message.redirect.name_not_found": "Couldn't find any anime with name \"%1\".\nGo to \"%2\" instead?",
+  "message.episode_feed.remove_old": "The latest episode for \"%1\" was more than 2 weeks ago. Remove it from the feed?\n\nThis prompt will not be shown again.",
   "message.manage_data.clean_up.session": {
     "=1": "Clean up %1 older duplicate entry?",
     "else": "Clean up %1 older duplicate entries?"
+  },
+  "season.winter": "Winter",
+  "season.spring": "Spring",
+  "season.summer": "Summer",
+  "season.fall": "Fall",
+  "day.sunday": "Sunday",
+  "day.monday": "Monday",
+  "day.tuesday": "Tuesday",
+  "day.wednesday": "Wednesday",
+  "day.thursday": "Thursday",
+  "day.friday": "Friday",
+  "day.saturday": "Saturday",
+  "time_since.second": {
+    "=1": "%1 seconds ago",
+    "else": "%1 second ago"
+  },
+  "time_since.minute": {
+    "=1": "%1 minutes ago",
+    "else": "%1 minute ago"
+  },
+  "time_since.hour": {
+    "=1": "%1 hours ago",
+    "else": "%1 hour ago"
+  },
+  "time_since.day": {
+    "=1": "%1 days ago",
+    "else": "%1 day ago"
+  },
+  "time_since.month": {
+    "=1": "%1 months ago",
+    "else": "%1 month ago"
+  },
+  "time_since.year": {
+    "=1": "%1 years ago",
+    "else": "%1 year ago"
   }
 }
