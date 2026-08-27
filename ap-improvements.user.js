@@ -311,9 +311,17 @@ const translations = {
     "modal_title.timestamp_edit_done": "Timestamp Results",
     "modal_title.collection": "Collection - %1 Entries",
     "modal_title.episode_feed": "Episode Feed",
+    "modal_title.bookmarks": "Bookmarks",
+    "modal_title.bookmarks.share_result": "Share Result",
+    "modal_title.bookmarks.add": "Add Bookmark",
+    "modal_title.bookmarks.edit": "Edit Bookmark",
     "button.remove": "Remove",
+    "button.dismiss": "Dismiss",
     "button.manage_feed": "Manage Feed...",
     "button.manage_feed.get_all": "Get All",
+    "button.dropdown.bookmarks.share.image": "Image",
+    "button.dropdown.bookmarks.share.text": "Text",
+    "button.bookmarks.add": "Add Bookmark",
     "result_type.collection": "Collection",
     "result_info.collection_entries": "%1 Entries",
     "list_info.episodes": {
@@ -324,8 +332,10 @@ const translations = {
     "page_status.redirect_failed": "Failed: Couldn't find anime",
     "tab_title.redirect_failed": "Couldn't find anime",
     "alt.thumbnail": "[Thumbnail of %1]",
+    "screenreader.loading": "Loading...",
     "title.modal.close": "Close modal",
     "title.modal.back": "Go back to previous menu",
+    "title.list.reverse_sort": "Sort direction (down is default)",
     "title.mark_episode.watched": "Mark this episode as watched",
     "title.mark_episode.unwatched": "Mark this episode as unwatched",
     "title.site_search": "Search for anime",
@@ -336,19 +346,44 @@ const translations = {
     "title.button.feed_schedule.starting_day": "Select which day the schedule should start",
     "title.button.manage_feed.remove": "Remove this anime from the episode feed",
     "title.button.manage_feed.get_all": "Add all episodes to the feed",
+    "title.bookmarks.sort.recent": "Sort by recently added",
+    "title.bookmarks.sort.alphabetical": "Sort alphabetically",
+    "title.bookmarks.sort.status": "Sort by watching status",
+    "title.bookmarks.layout.list": "Use list layout",
+    "title.bookmarks.layout.grid": "Use grid layout",
+    "title.bookmarks.share": "Share the bookmark list",
+    "title.bookmarks.share.image": "Share the bookmark list as an image",
+    "title.bookmarks.share.text": "Share the bookmark list as a text file",
+    "title.bookmarks.change_status": "Change bookmark watching status",
+    "title.bookmarks.select_status": "Select anime watching status",
+    "title.bookmarks.remove": "Remove this bookmark",
+    "title.bookmarks.dropdown.select_status": "Change watching status to %1",
+    "title.bookmarks.add": "Add bookmark",
+    "title.index.filter.change_rule": "Change filter logic",
     "label.feed_schedule.starting_day": "Start from:",
+    "label.bookmarks.share": "Share through",
     "info.timestamp_edit_done": "You can open an issue %1 to get these added.",
     "info.episode_feed.no_entries": "Use the %1 button on an ongoing anime to add it to the feed.",
     "info.episode_feed.latest_episode": "Latest episode: %1",
     "info.episode_feed.latest_episode.none_found": "None found",
     "info.episode_feed.error": "An error occurred with the following anime:",
     "info.episode_feed.empty": "Nothing here yet!",
+    "info.bookmarks.empty": "No bookmarks yet!",
+    "info.bookmarks.share.save": "Right-click to save",
+    "info.bookmarks.share.layout_tip": "Grid view is recommended over list view",
+    "info.bookmarks.share.load_error": "Failed to load!",
+    "info.bookmarks.add.too_many": "You already have too many bookmarks",
+    "info.share_link.replace_warning": "Due to coming from a share link, the current episode data for this anime was not replaced.",
+    "info.share_link.replace_warning.instruction": "Refresh this page to replace it.",
     "link.timestamp_edit_done.open_issue": "here",
     "toast.removed_anime": "Removed \"%1\"",
     "toast.sync.major_deletion": "Potential sync issue. Check the log!",
     "toast.sync.major_deletion.restored": "Restored data",
     "toast.manage_data.get_all": "Added all episodes to feed",
     "toast.episode_feed.removed_old": "Removed from feed",
+    "toast.bookmarks.added": "Bookmark added!",
+    "toast.bookmarks.removed": "Bookmark removed",
+    "message.refresh.from_404": "The session was outdated, and has been refreshed. Please try that link again.",
     "message.sync.major_deletion.header": "Potential sync issue! The latest sync deleted the following amounts of data:",
     "message.sync.major_deletion.data.session": "Session entries: %1",
     "message.sync.major_deletion.data.video_progress": "Video progress entries: %1",
@@ -363,6 +398,15 @@ const translations = {
       "=1": "Clean up %1 older duplicate entry?",
       "else": "Clean up %1 older duplicate entries?"
     },
+    "placeholder.search": "Search",
+    "index_filter.status.all": "All",
+    "index_filter.status.airing": "Airing",
+    "index_filter.status.completed": "Completed",
+    "index_filter.status.none": "(No status)",
+    "bookmark_status.watching": "Watching",
+    "bookmark_status.planning_to_watch": "Planning to Watch",
+    "bookmark_status.on_hold": "On Hold",
+    "bookmark_status.completed": "Completed",
     "season.winter": "Winter",
     "season.spring": "Spring",
     "season.summer": "Summer",
@@ -5732,16 +5776,19 @@ function openNotificationsModal() {
 
 $('.anitracker-header-notifications').on('click', openNotificationsModal);
 
-// Format: [name, bg_color, text_color, ordering]
+// Format: [bg_color, text_color, ordering]
 const statuses = {
-  watching: ['Watching', '#109d4e', '#86ccb2', 0],
-  planning_to_watch: ['Planning to Watch', '#a95cbd', '#e08ef5', 1],
-  on_hold: ['On Hold', '#ca9c30', '#f5d98e', 2],
-  completed: ['Completed', 'rgb(62, 62, 176)', '#8383ee', 3],
+  watching: ['#109d4e', '#86ccb2', 0],
+  planning_to_watch: ['#a95cbd', '#e08ef5', 1],
+  on_hold: ['#ca9c30', '#f5d98e', 2],
+  completed: ['rgb(62, 62, 176)', '#8383ee', 3],
 }
 const defaultStatus = 'watching';
 function getStatusAttributes(status) {
   return statuses[status] ?? statuses[defaultStatus];
+}
+function getStatusText(status) {
+  return getText(`bookmark_status.${status}`);
 }
 
 function openBookmarksModal() {
@@ -5754,26 +5801,26 @@ function openBookmarksModal() {
   $(`
   <div style="display: flex;gap: 8px;flex-wrap: wrap;">
     <div class="btn-group">
-      <input autocomplete="off" class="form-control anitracker-text-input-bar anitracker-modal-search" placeholder="Search">
-      <button dir="down" class="btn btn-secondary dropdown-toggle anitracker-reverse-order-button anitracker-list-btn" title="Sort direction (down is default)"></button>
+      <input autocomplete="off" class="form-control anitracker-text-input-bar anitracker-modal-search" placeholder="${toHtmlCodes(getText('placeholder.search'))}">
+      <button dir="down" class="btn btn-secondary dropdown-toggle anitracker-reverse-order-button anitracker-list-btn" title="${toHtmlCodes(getText('title.list.reverse_sort'))}"></button>
     </div>
     <div class="btn-group anitracker-sort-method-btns">
-      <button data-sort="recent" class="btn btn-secondary" title="Sort by recently added" ${sort === 'recent' ? 'disabled' : ''}><i class="fa fa-history" aria-hidden="true"></i></button>
-      <button data-sort="alphabetical" class="btn btn-secondary" title="Sort alphabetically" ${sort === 'alphabetical' ? 'disabled' : ''}><i class="fa fa-sort-alpha-down" aria-hidden="true"></i></button>
-      <button data-sort="status" class="btn btn-secondary" title="Sort by watching status" ${sort === 'status' ? 'disabled' : ''}><i class="fa fa-list-alt" aria-hidden="true"></i></button>
+      <button data-sort="recent" class="btn btn-secondary" title="${toHtmlCodes(getText('title.bookmarks.sort.recent'))}" ${sort === 'recent' ? 'disabled' : ''}><i class="fa fa-history" aria-hidden="true"></i></button>
+      <button data-sort="alphabetical" class="btn btn-secondary" title="${toHtmlCodes(getText('title.bookmarks.sort.alphabetical'))}" ${sort === 'alphabetical' ? 'disabled' : ''}><i class="fa fa-sort-alpha-down" aria-hidden="true"></i></button>
+      <button data-sort="status" class="btn btn-secondary" title="${toHtmlCodes(getText('title.bookmarks.sort.status'))}" ${sort === 'status' ? 'disabled' : ''}><i class="fa fa-list-alt" aria-hidden="true"></i></button>
     </div>
     <div class="btn-group anitracker-layout-btns">
-      <button data-layout="list" class="btn btn-secondary" title="Use list layout" ${layout === 'list' ? 'disabled' : ''}><i class="fa fa-list" aria-hidden="true"></i></button>
-      <button data-layout="grid" class="btn btn-secondary" title="Use grid layout" ${layout === 'grid' ? 'disabled' : ''}><i class="fa fa-th-large" aria-hidden="true"></i></button>
+      <button data-layout="list" class="btn btn-secondary" title="${toHtmlCodes(getText('title.bookmarks.layout.list'))}" ${layout === 'list' ? 'disabled' : ''}><i class="fa fa-list" aria-hidden="true"></i></button>
+      <button data-layout="grid" class="btn btn-secondary" title="${toHtmlCodes(getText('title.bookmarks.layout.grid'))}" ${layout === 'grid' ? 'disabled' : ''}><i class="fa fa-th-large" aria-hidden="true"></i></button>
     </div>
     ${storage.bookmarks.length ?`
     <div style="flex-grow: 1;">
-      <button class="btn btn-secondary anitracker-share-bookmarks-button" title="Share the bookmark list"><i aria-hidden="true" class="fa fa-share"></i></button>
+      <button class="btn btn-secondary anitracker-share-bookmarks-button" title="${toHtmlCodes(getText('title.bookmarks.share'))}"><i aria-hidden="true" class="fa fa-share"></i></button>
     </div>
     <div class="dropdown-menu anitracker-dropdown-content anitracker-share-bookmarks-dropdown" style="display:hidden;">
-      <span>Share through</span>
-      <button title="Share the bookmark list as an image" data-action="image"><i class="fa fa-image" aria-hidden="true"></i>Image</button>
-      <button title="Share the bookmark list as a text file" data-action="text"><i class="fa fa-file" aria-hidden="true"></i>Text</button>
+      <span>${toHtmlCodes(getText('label.bookmarks.share'))}</span>
+      <button title="${toHtmlCodes(getText('title.bookmarks.share.image'))}" data-action="image"><i class="fa fa-image" aria-hidden="true"></i>${toHtmlCodes(getText('button.dropdown.bookmarks.share.image'))}</button>
+      <button title="${toHtmlCodes(getText('title.bookmarks.share.text'))}" data-action="text"><i class="fa fa-file" aria-hidden="true"></i>${toHtmlCodes(getText('button.dropdown.bookmarks.share.text'))}</button>
     </div>` : ''}
   </div>
   <div class="anitracker-modal-list-container" style="margin-top: 5px;">
@@ -5784,7 +5831,7 @@ function openBookmarksModal() {
 
   function sortEntries(entries) {
     if (['alphabetical','status'].includes(sort)) entries.sort((a,b) => a.name < b.name ? 1 : -1);
-    if (sort === 'status') entries.sort((a, b) => getStatusAttributes(a.status)[3] < getStatusAttributes(b.status)[3] ? 1 : -1)
+    if (sort === 'status') entries.sort((a, b) => getStatusAttributes(a.status)[2] < getStatusAttributes(b.status)[2] ? 1 : -1)
     if ($('.anitracker-reverse-order-button').attr('dir') === 'down') entries.reverse();
   }
 
@@ -5794,7 +5841,7 @@ function openBookmarksModal() {
     const entries = [...storage.bookmarks];
     if (!entries.length) {
       $('.anitracker-modal-list').addClass('flex');
-      return $(`<span style="margin:auto;">No bookmarks yet!</span>`).appendTo('#anitracker-modal-body .anitracker-modal-list');
+      return $(`<span style="margin:auto;"></span>`).text(getText('info.bookmarks.empty')).appendTo('#anitracker-modal-body .anitracker-modal-list');
     }
 
     sortEntries(entries);
@@ -5828,10 +5875,10 @@ function openBookmarksModal() {
             <span>${toHtmlCodes(name)}</span>
           </a><br>
           <div>
-            <button class="anitracker-bookmark-list-status anitracker-change-status-button" style="color:${statusAttrs[2]};" title="Change bookmark watching status">${statusAttrs[0]}</button>
-            <button class="btn btn-dark anitracker-flat-button anitracker-remove-bookmark-button" title="Remove this bookmark" style="vertical-align: center;">
+            <button class="anitracker-bookmark-list-status anitracker-change-status-button" style="color:${statusAttrs[1]};" title="${toHtmlCodes(getText('title.bookmarks.change_status'))}">${toHtmlCodes(getStatusText(g.status))}</button>
+            <button class="btn btn-dark anitracker-flat-button anitracker-remove-bookmark-button" title="${toHtmlCodes(getText('title.bookmarks.remove'))}" style="vertical-align: center;">
               <i class="fa fa-trash" aria-hidden="true"></i>
-              <span>Remove</span>
+              <span>${toHtmlCodes(getText('button.remove'))}</span>
             </button>
           </div>
         </div>`).appendTo('#anitracker-modal-body .anitracker-modal-list');
@@ -5847,10 +5894,10 @@ function openBookmarksModal() {
             <span>${toHtmlCodes(name)}</span>
           </a>
           <div style="display: flex;flex-direction: column;gap: 2px;">
-            <button class="anitracker-bookmark-grid-status anitracker-change-status-button" style="color:${statusAttrs[2]};" title="Change bookmark watching status">${statusAttrs[0]}</button>
-            <button class="btn btn-dark anitracker-flat-button anitracker-remove-bookmark-button" title="Remove this bookmark">
+            <button class="anitracker-bookmark-grid-status anitracker-change-status-button" style="color:${statusAttrs[1]};" title="${toHtmlCodes(getText('title.bookmarks.change_status'))}">${toHtmlCodes(getStatusText(g.status))}</button>
+            <button class="btn btn-dark anitracker-flat-button anitracker-remove-bookmark-button" title="${toHtmlCodes(getText('title.bookmarks.remove'))}">
               <i class="fa fa-trash" aria-hidden="true"></i>
-              Remove
+              ${toHtmlCodes(getText('button.remove'))}
             </button>
           </div>
         </div>`).appendTo('#anitracker-modal-body .anitracker-modal-list');
@@ -5901,8 +5948,8 @@ function openBookmarksModal() {
     <div class="dropdown-menu anitracker-dropdown-content anitracker-status-dropdown" style="width:13.3em;display:none;"></div>
     `).appendTo('.anitracker-modal-list');
 
-    Object.entries(statuses).forEach(e => { $(`<button class="btn btn-dark anitracker-flat-button anitracker-status-button" title="Change watching status to ${e[1][0]}" style="background-color: ${e[1][1]};width:100%;" data-value="${e[0]}">
-      ${e[1][0]}
+    Object.entries(statuses).forEach(([k,v]) => { $(`<button class="btn btn-dark anitracker-flat-button anitracker-status-button" title="${toHtmlCodes(getText('title.bookmarks.dropdown.select_status',[getStatusText(k)]))}" style="background-color: ${v[0]};width:100%;" data-value="${k}">
+      ${toHtmlCodes(getStatusText(k))}
     </button>`).appendTo('.anitracker-status-dropdown')});
 
     // Apply button events
@@ -6070,7 +6117,7 @@ function openBookmarksModal() {
       btn.html(`
       <div id="anitracker-share-bookmarks-spinner" class="anitracker-text-spinner anitracker-spinner">
         <div class="spinner-border" role="status">
-          <span class="sr-only">Loading...</span>
+          <span class="sr-only">${toHtmlCodes(getText('screenreader.loading'))}</span>
         </div>
         <span>0%</span>
       </div>`);
@@ -6110,8 +6157,8 @@ function openBookmarksModal() {
         html2canvas($('.anitracker-modal-list-container')[0], { allowTaint:true, scale: (newWidth > 1024 ? 0.8 : 1), backgroundColor:null }).then(function(canvas) {
           $('.anitracker-spinner').remove();
           $(`
-          <p class="anitracker-secondary-info">Right-click to save</p>
-          ${layout === 'list' ? '<p class="anitracker-secondary-info"><i>Grid view is recommended over list view</i></p>' : ''}
+          <p class="anitracker-secondary-info">${toHtmlCodes(getText('info.bookmarks.share.save'))}</p>
+          ${layout === 'list' ? `<p class="anitracker-secondary-info"><i>${toHtmlCodes(getText('info.bookmarks.share.layout_tip'))}</i></p>` : ''}
           <div id="anitracker-bookmark-share-result"></div>`).appendTo('#anitracker-modal-body');
           $(canvas).css('height', '100%').css('width', '').appendTo('#anitracker-bookmark-share-result');
           $('#anitracker-bookmark-share-result').css('max-width', Math.min($(canvas).width(), prevWidth));
@@ -6122,15 +6169,15 @@ function openBookmarksModal() {
         $(`
         <div class="anitracker-spinner anitracker-center-content">
           <div class="spinner-border" role="status">
-            <span class="sr-only">Loading...</span>
+            <span class="sr-only">${toHtmlCodes(getText('screenreader.loading'))}</span>
           </div>
         </div>`).appendTo('#anitracker-modal-body');
-        openModal('Share Result', openBookmarksModal);
+        openModal(getText('modal_title.bookmarks.share_result'), openBookmarksModal);
       }).fail(() => {
         console.error("[AnimePahe Improvements] html2canvas failed to load");
         $('#anitracker-modal-body').empty();
-        $('<span style="color:var(--danger)">Failed to load!</span>').appendTo('#anitracker-modal-body');
-        openModal('Share Result', openBookmarksModal);
+        $('<span style="color:var(--danger)"></span>').text(getText('info.bookmarks.share.load_error')).appendTo('#anitracker-modal-body');
+        openModal(getText('modal_title.bookmarks.share_result'), openBookmarksModal);
       });
     }
     else if (action === 'text') {
@@ -6138,7 +6185,7 @@ function openBookmarksModal() {
       const entries = [...storage.bookmarks];
       sortEntries(entries);
 
-      download('bookmarks-list.txt', entries.map(a => `${a.name} - ${getStatusAttributes(a.status)[0]}\n`).join(''));
+      download('bookmarks-list.txt', entries.map(a => `${a.name} - ${getStatusText(a.status)}\n`).join(''));
     }
   })
   .on('blur', () => {
@@ -6170,7 +6217,7 @@ function openBookmarksModal() {
   if (!isMobileOrTablet()) setTimeout(() => {
     $('.anitracker-modal-search').focus();
   }, 0);
-  openModal('Bookmarks');
+  openModal(getText('modal_title.bookmarks'));
 }
 
 function getBookmarkImage(elem, bookmark, session = undefined) {
@@ -6178,7 +6225,7 @@ function getBookmarkImage(elem, bookmark, session = undefined) {
   <div class="anitracker-spinner-parent" style="position: relative;">
     <div class="anitracker-spinner anitracker-center-content" style="position: absolute;width: 100%;align-items: center;aspect-ratio: 1;">
       <div class="spinner-border" role="status" style="">
-        <span class="sr-only">Loading...</span>
+        <span class="sr-only">${toHtmlCodes(getText('screenreader.loading'))}</span>
       </div>
   </div></div>`).prependTo(elem);
 
@@ -6213,13 +6260,15 @@ function openBookmarkStatusEditModal(id, adding=false) {
   $('#anitracker-modal-body').empty();
 
   const status = entry.status ?? defaultStatus;
-  const statusAttrs = getStatusAttributes(entry.status);
+  const statusAttrs = getStatusAttributes(status);
 
   $(`
   <div style="display:flex;gap:10px;">
     <div class="anitracker-bookmark-edit-side" style="max-width:12em;min-width:10em;">
       <div><span style="display:inline-block;width:100%;">${toHtmlCodes(entry.name)}</span></div>
-      <button class="btn dropdown-toggle btn-secondary anitracker-status-dropdown-button" data-bs-toggle="dropdown" data-toggle="dropdown" data-value="${status}" title="Select anime watching status" style="background-color: ${statusAttrs[1]};width:100%;display:block;margin-bottom:16px;">${statusAttrs[0]}</button>
+      <button class="btn dropdown-toggle btn-secondary anitracker-status-dropdown-button" data-bs-toggle="dropdown" data-toggle="dropdown" data-value="${status}" title="${toHtmlCodes(getText('title.bookmarks.select_status'))}" style="background-color: ${statusAttrs[0]};width:100%;display:block;margin-bottom:16px;">
+        ${toHtmlCodes(getStatusText(status))}
+      </button>
       <div class="dropdown-menu anitracker-dropdown-content anitracker-status-dropdown" style="width:12em;"></div>
     </div>
     <div class="anitracker-image-wrapper anitracker-big-poster-icon" style="width:9em;height:9em;">
@@ -6228,8 +6277,8 @@ function openBookmarkStatusEditModal(id, adding=false) {
   </div>
   `).appendTo('#anitracker-modal-body');
 
-  Object.entries(statuses).forEach(e => { $(`<button class="btn btn-dark anitracker-flat-button anitracker-status-button" title="Change watching status to ${e[1][0]}" style="background-color: ${e[1][1]};width:100%;" data-value="${e[0]}">
-    ${e[1][0]}
+  Object.entries(statuses).forEach(([k,v]) => { $(`<button class="btn btn-dark anitracker-flat-button anitracker-status-button" title="${toHtmlCodes(getText('title.bookmarks.dropdown.select_status',[getStatusText(k)]))}" style="background-color: ${v[0]};width:100%;" data-value="${k}">
+    ${toHtmlCodes(getStatusText(k))}
   </button>`).appendTo('.anitracker-status-dropdown')});
 
   $('.anitracker-status-dropdown button').on('click', (e) => {
@@ -6238,8 +6287,8 @@ function openBookmarkStatusEditModal(id, adding=false) {
     const value = pressed.data('value');
     const found = Object.entries(statuses).find(e => e[0] === value)[1];
     btn.data('value', value);
-    btn.text(found[0]);
-    btn.css('background-color', found[1]);
+    btn.text(getStatusText(value));
+    btn.css('background-color', found[0]);
 
     entry.status = value;
     if (adding) return;
@@ -6249,10 +6298,10 @@ function openBookmarkStatusEditModal(id, adding=false) {
 
   if (adding) {
     $(`
-    ${limitReached ? '<span style="color: var(--danger);display: block;text-align: center;">You already have too many bookmarks</span>' : ''}
-    <button class="btn btn-secondary anitracker-flat-button anitracker-confirm-button" title="Add bookmark" style="width:100%;" ${limitReached ? 'disabled' : ''}>
+    ${limitReached ? `<span style="color: var(--danger);display: block;text-align: center;">${toHtmlCodes(getText('info.bookmarks.add.too_many'))}</span>` : ''}
+    <button class="btn btn-secondary anitracker-flat-button anitracker-confirm-button" title="${toHtmlCodes(getText('title.bookmarks.add'))}" style="width:100%;" ${limitReached ? 'disabled' : ''}>
       <i class="fa fa-bookmark" aria-hidden="true"></i>
-      &nbsp;Add Bookmark
+      &nbsp;${toHtmlCodes(getText('button.bookmarks.add'))}
     </button>`).appendTo('.anitracker-bookmark-edit-side');
     $('#anitracker-modal-body .anitracker-confirm-button').on('click', () => {
       if (limitReached) return;
@@ -6262,25 +6311,25 @@ function openBookmarkStatusEditModal(id, adding=false) {
       if (entry.posterUrl) obj.posterUrl = entry.posterUrl;
 
       addBookmark(id, entry.name, obj);
-      showMessage('Bookmark added!');
+      showMessage(getText('toast.bookmarks.added'));
 
       closeModal();
     });
   }
   else {
     $(`
-    <button class="btn btn-danger anitracker-flat-button anitracker-delete-button" title="Remove this bookmark" style="width:100%;">
+    <button class="btn btn-danger anitracker-flat-button anitracker-delete-button" title="${toHtmlCodes(getText('title.bookmarks.remove'))}" style="width:100%;">
       <i class="fa fa-trash" aria-hidden="true"></i>
-      &nbsp;Remove
+      &nbsp;${toHtmlCodes(getText('button.remove'))}
     </button>`).appendTo('.anitracker-bookmark-edit-side');
     $('#anitracker-modal-body .anitracker-delete-button').on('click', () => {
       removeBookmark(id);
-      showMessage('Bookmark removed');
+      showMessage(getText('toast.bookmarks.removed'));
       closeModal();
     });
   }
 
-  openModal(adding ? 'Add Bookmark' : 'Edit Bookmark');
+  openModal(getText(adding ? 'modal_title.bookmarks.add' : 'modal_title.bookmarks.edit'));
 
   const imgElem = $('.anitracker-image-wrapper');
   imgElem.find('img').on('load', function() {
@@ -6485,7 +6534,7 @@ const refArg01 = paramArray.find(a => a[0] === 'ref');
 if (refArg01 !==  undefined) {
   const ref = refArg01[1];
   if (ref === '404') {
-    alert('[AnimePahe Improvements]\n\nThe session was outdated, and has been refreshed. Please try that link again.');
+    alert('[AnimePahe Improvements]\n\n' + getText('message.refresh.from_404'));
   }
   else if (ref === 'customlink' && isEpisode() && initialStorage.settings.autoDelete) {
     const name = getAnimeName();
@@ -6493,9 +6542,9 @@ if (refArg01 !==  undefined) {
     if (initialStorage.linkList.find(e => e.animeName === name && e.type === 'episode' && e.episodeNum !== num)) { // If another episode is already stored
       $(`
         <span style="display:block;width:100%;text-align:center;" class="anitracker-from-share-warning">
-          Due to coming from a share link, the current episode data for this anime was not replaced.
-          <br>Refresh this page to replace it.
-          <br><span class="anitracker-text-button" tabindex="0">Dismiss</span>
+          ${toHtmlCodes(getText('info.share_link.replace_warning'))}
+          <br>${toHtmlCodes(getText('info.share_link.replace_warning.instruction'))}
+          <br><span class="anitracker-text-button" tabindex="0">${toHtmlCodes(getText('button.dismiss'))}</span>
         </span>`).prependTo('.content-wrapper');
 
       $('.anitracker-from-share-warning>span').on('click keydown', function(e) {
@@ -6557,33 +6606,36 @@ function getSearchParamsString(params) {
 function loadIndexPage() {
   const animeList = getAnimeList();
   filterSearchCache['/anime'] = copyObj(animeList);
+  const texts = {
+    changeRulesTitle: toHtmlCodes(getText('title.index.filter.change_rule'))
+  };
 
   $(`
   <div class="anitracker-index">
 
     <div class="anitracker-filter-input" data-filter-type="genre">
-      <button class="anitracker-filter-rules" title="Change filter logic" data-filter-type="genre"><i class="fa fa-sliders"></i></button>
+      <button class="anitracker-filter-rules" title="${texts.changeRulesTitle}" data-filter-type="genre"><i class="fa fa-sliders"></i></button>
       <div>
         <div data-filter-type="genre" class="anitracker-applied-filters"></div><span data-filter-type="genre" role="textbox" contenteditable="" spellcheck="false" class="anitracker-text-input"></span>
       </div>
     </div>
 
     <div class="anitracker-filter-input" data-filter-type="theme">
-      <button class="anitracker-filter-rules" title="Change filter logic" data-filter-type="theme"><i class="fa fa-sliders"></i></button>
+      <button class="anitracker-filter-rules" title="${texts.changeRulesTitle}" data-filter-type="theme"><i class="fa fa-sliders"></i></button>
       <div>
         <div data-filter-type="theme" class="anitracker-applied-filters"></div><span data-filter-type="theme" role="textbox" contenteditable="" spellcheck="false" class="anitracker-text-input"></span>
       </div>
     </div>
 
     <div class="anitracker-filter-input" data-filter-type="type">
-      <button class="anitracker-filter-rules" title="Change filter logic" data-filter-type="type"><i class="fa fa-sliders"></i></button>
+      <button class="anitracker-filter-rules" title="${texts.changeRulesTitle}" data-filter-type="type"><i class="fa fa-sliders"></i></button>
       <div>
         <div data-filter-type="type" class="anitracker-applied-filters"></div><span data-filter-type="type" role="textbox" contenteditable="" spellcheck="false" class="anitracker-text-input"></span>
       </div>
     </div>
 
     <div class="anitracker-filter-input" data-filter-type="demographic">
-      <button class="anitracker-filter-rules" title="Change filter logic" data-filter-type="demographic"><i class="fa fa-sliders"></i></button>
+      <button class="anitracker-filter-rules" title="${texts.changeRulesTitle}" data-filter-type="demographic"><i class="fa fa-sliders"></i></button>
       <div>
         <div data-filter-type="demographic" class="anitracker-applied-filters"></div><span data-filter-type="demographic" role="textbox" contenteditable="" spellcheck="false" class="anitracker-text-input"></span>
       </div>
