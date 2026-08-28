@@ -7436,7 +7436,7 @@ async function getResponse(qurl) {
       }
       if (req.status === 429) {
         siteVars.stalledRequests.push(qurl);
-        waitTime(1500).then(() => {
+        waitTime(1000).then(() => {
           req.open('GET', qurl, true);
           req.send();
         });
@@ -7466,7 +7466,7 @@ function asyncGetResponseData(qurl) {
       }
       if (req.status === 429) {
         siteVars.stalledRequests.push(qurl);
-        waitTime(1500).then(() => {
+        waitTime(1000).then(() => {
           req.open('GET', qurl, true);
           req.send();
         });
