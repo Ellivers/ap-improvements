@@ -2,13 +2,20 @@
 - Due to site changes slowing things down significantly:
   - The Continue Watching section will now only show anime posters, and no longer show episode snapshots
   - The Relative Episode Numbers option will no longer work on the homepage
+  - The Episode Feed menu has been reworked and shows when loading is stalled
 - Added keybinds for going to the start and end of a video
   - Default keybinds are Home and End, respectively
 - Made the keybind for going to the previous modal menu modifiable
   - Default keybind is Backspace
+- Update Episode Feed menu
+  - The feed is no longer automatically refreshed when the menu is opened
+  - Added a Refresh button for refreshing the feed
+  - Added text to indicate when the feed loading is stalled by the site
+  - After the first time loading, subsequent refreshes are now faster than before
 - Updated Continue Watching section
   - Updated loading styling
   - It now shows each episode as it's loaded
+  - Loading is now faster than before, in many cases
 - Changed the way modal menus are laid out
   - In most menus, the close/back button now shares space with the menu title
   - Menu titles and subtitles are now centered and always at the top of the modal
