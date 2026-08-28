@@ -309,7 +309,7 @@ const translations = {
 
     "generic.episode": "Episode %1",
     "modal_title.timestamp_edit_done": "Timestamp Results",
-    "modal_title.collection": "Collection - %1 Entries",
+    "modal_title.collection": "Collection - %d Entries",
     "modal_title.episode_feed": "Episode Feed",
     "modal_title.bookmarks": "Bookmarks",
     "modal_title.bookmarks.share_result": "Share Result",
@@ -326,10 +326,10 @@ const translations = {
     "button.index.apply_filters": "Apply",
     "button.index.random_anime": "Random Anime",
     "result_type.collection": "Collection",
-    "result_info.collection_entries": "%1 Entries",
+    "result_info.collection_entries": "%d Entries",
     "list_info.episodes": {
-      "=1": "%1 Ep",
-      "else": "%1 Eps"
+      "=1": "%d Ep",
+      "else": "%d Eps"
     },
     "page_status.redirecting": "Redirecting...",
     "page_status.redirect_failed": "Failed: Couldn't find anime",
@@ -395,18 +395,18 @@ const translations = {
     "toast.bookmarks.removed": "Bookmark removed",
     "message.refresh.from_404": "The session was outdated, and has been refreshed. Please try that link again.",
     "message.sync.major_deletion.header": "Potential sync issue! The latest sync deleted the following amounts of data:",
-    "message.sync.major_deletion.data.session": "Session entries: %1",
-    "message.sync.major_deletion.data.video_progress": "Video progress entries: %1",
-    "message.sync.major_deletion.data.bookmarks": "Bookmarks: %1",
-    "message.sync.major_deletion.data.notification_anime": "Episode feed entries: %1",
-    "message.sync.major_deletion.data.watched": "Watched anime: %1",
+    "message.sync.major_deletion.data.session": "Session entries: %d",
+    "message.sync.major_deletion.data.video_progress": "Video progress entries: %d",
+    "message.sync.major_deletion.data.bookmarks": "Bookmarks: %d",
+    "message.sync.major_deletion.data.notification_anime": "Episode feed entries: %d",
+    "message.sync.major_deletion.data.watched": "Watched anime: %d",
     "message.sync.major_deletion.footer": "If you believe this is an error, click OK to restore the removed data.",
     "message.index.page_fail": "Page loading failed.",
     "message.redirect.name_not_found": "Couldn't find any anime with name \"%1\".\nGo to \"%2\" instead?",
     "message.episode_feed.remove_old": "The latest episode for \"%1\" was more than 2 weeks ago. Remove it from the feed?\n\nThis prompt will not be shown again.",
     "message.manage_data.clean_up.session": {
-      "=1": "Clean up %1 older duplicate entry?",
-      "else": "Clean up %1 older duplicate entries?"
+      "=1": "Clean up %d older duplicate entry?",
+      "else": "Clean up %d older duplicate entries?"
     },
     "placeholder.search": "Search",
     "placeholder.loading": "Loading...",
@@ -430,28 +430,28 @@ const translations = {
     "day.friday": "Friday",
     "day.saturday": "Saturday",
     "time_since.second": {
-      "=1": "%1 second ago",
-      "else": "%1 seconds ago"
+      "=1": "%d second ago",
+      "else": "%d seconds ago"
     },
     "time_since.minute": {
-      "=1": "%1 minute ago",
-      "else": "%1 minutes ago"
+      "=1": "%d minute ago",
+      "else": "%d minutes ago"
     },
     "time_since.hour": {
-      "=1": "%1 hour ago",
-      "else": "%1 hours ago"
+      "=1": "%d hour ago",
+      "else": "%d hours ago"
     },
     "time_since.day": {
-      "=1": "%1 day ago",
-      "else": "%1 days ago"
+      "=1": "%d day ago",
+      "else": "%d days ago"
     },
     "time_since.month": {
-      "=1": "%1 month ago",
-      "else": "%1 months ago"
+      "=1": "%d month ago",
+      "else": "%d months ago"
     },
     "time_since.year": {
-      "=1": "%1 year ago",
-      "else": "%1 years ago"
+      "=1": "%d year ago",
+      "else": "%d years ago"
     },
 
     "filter.genre.comedy": "Comedy",
@@ -575,8 +575,8 @@ function validateTranslations(obj) {
     }
     for (const [qExpr, text] of entries) {
       if (text.includes('HTML')) err(key, `${qExpr}: Cannot contain "HTML"`);
-      if (!/%1/.test(text)) {
-        err(key, `${qExpr}: Text needs to contain %1`);
+      if (!/%d/.test(text)) {
+        err(key, `${qExpr}: Text needs to contain number placeholder "%d"`);
       }
       const qErrors = validateQuantityExpression(qExpr);
       qErrors.forEach(e => {err(key, `${qExpr}: ${e}`)});
@@ -657,6 +657,7 @@ function makeTranslatedText(translationKey, vars = []) {
 
 function insertTranslationVars(raw, vars) {
   for (let i = 0; i < vars.length; i++) {
+    if (i === 0 && !isNaN(+vars[i])) raw = raw.replace('%d', vars[i]);
     raw = raw.replace(`%${i+1}`, vars[i]);
   }
   return raw;
