@@ -322,6 +322,9 @@ const translations = {
     "button.dropdown.bookmarks.share.image": "Image",
     "button.dropdown.bookmarks.share.text": "Text",
     "button.bookmarks.add": "Add Bookmark",
+    "button.index.reset_filters": "Reset",
+    "button.index.apply_filters": "Apply",
+    "button.index.random_anime": "Random Anime",
     "result_type.collection": "Collection",
     "result_info.collection_entries": "%1 Entries",
     "list_info.episodes": {
@@ -360,8 +363,15 @@ const translations = {
     "title.bookmarks.dropdown.select_status": "Change watching status to %1",
     "title.bookmarks.add": "Add bookmark",
     "title.index.filter.change_rule": "Change filter logic",
+    "title.index.dropdown.status": "Choose status",
+    "title.index.button.season": "Set season filter",
+    "title.index.button.reset_filters": "Reset filters",
+    "title.index.button.apply_filters": "Apply selected filters",
+    "title.index.button.random_anime": "Open a random anime from within the selected filters",
+    "title.index.input.search": "Search within applied filters",
     "label.feed_schedule.starting_day": "Start from:",
     "label.bookmarks.share": "Share through",
+    "info.index.filter_results": "Filter results: %1",
     "info.timestamp_edit_done": "You can open an issue %1 to get these added.",
     "info.episode_feed.no_entries": "Use the %1 button on an ongoing anime to add it to the feed.",
     "info.episode_feed.latest_episode": "Latest episode: %1",
@@ -399,10 +409,11 @@ const translations = {
       "else": "Clean up %1 older duplicate entries?"
     },
     "placeholder.search": "Search",
-    "index_filter.status.all": "All",
-    "index_filter.status.airing": "Airing",
-    "index_filter.status.completed": "Completed",
-    "index_filter.status.none": "(No status)",
+    "placeholder.loading": "Loading...",
+    "placeholder.index.filter.genre": "Genre",
+    "placeholder.index.filter.theme": "Theme",
+    "placeholder.index.filter.type": "Type",
+    "placeholder.index.filter.demographic": "Demographic",
     "bookmark_status.watching": "Watching",
     "bookmark_status.planning_to_watch": "Planning to Watch",
     "bookmark_status.on_hold": "On Hold",
@@ -441,7 +452,105 @@ const translations = {
     "time_since.year": {
       "=1": "%1 year ago",
       "else": "%1 years ago"
-    }
+    },
+
+    "filter.genre.comedy": "Comedy",
+    "filter.genre.slice_of_life": "Slice of Life",
+    "filter.genre.romance": "Romance",
+    "filter.genre.ecchi": "Ecchi",
+    "filter.genre.drama": "Drama",
+    "filter.genre.supernatural": "Supernatural",
+    "filter.genre.sports": "Sports",
+    "filter.genre.horror": "Horror",
+    "filter.genre.sci_fi": "Sci-Fi",
+    "filter.genre.action": "Action",
+    "filter.genre.fantasy": "Fantasy",
+    "filter.genre.mystery": "Mystery",
+    "filter.genre.suspense": "Suspense",
+    "filter.genre.adventure": "Adventure",
+    "filter.genre.boys_love": "Boys Love",
+    "filter.genre.girls_love": "Girls Love",
+    "filter.genre.hentai": "Hentai",
+    "filter.genre.gourmet": "Gourmet",
+    "filter.genre.erotica": "Erotica",
+    "filter.genre.avant_garde": "Avant Garde",
+    "filter.genre.award_winning": "Award Winning",
+    "filter.genre.none": "(None)",
+
+    "filter.theme.adult_cast": "Adult Cast",
+    "filter.theme.anthropomorphic": "Anthropomorphic",
+    "filter.theme.detective": "Detective",
+    "filter.theme.love_polygon": "Love Polygon",
+    "filter.theme.mecha": "Mecha",
+    "filter.theme.music": "Music",
+    "filter.theme.psychological": "Psychological",
+    "filter.theme.school": "School",
+    "filter.theme.super_power": "Super Power",
+    "filter.theme.space": "Space",
+    "filter.theme.cgdct": "CGDCT",
+    "filter.theme.romantic_subtext": "Romantic Subtext",
+    "filter.theme.historical": "Historical",
+    "filter.theme.video_game": "Video Game",
+    "filter.theme.martial_arts": "Martial Arts",
+    "filter.theme.idols_female": "Idols (Female)",
+    "filter.theme.idols_male": "Idols (Male)",
+    "filter.theme.gag_humor": "Gag Humor",
+    "filter.theme.parody": "Parody",
+    "filter.theme.performing_arts": "Performing Arts",
+    "filter.theme.military": "Military",
+    "filter.theme.harem": "Harem",
+    "filter.theme.reverse_harem": "Reverse Harem",
+    "filter.theme.samurai": "Samurai",
+    "filter.theme.vampire": "Vampire",
+    "filter.theme.mythology": "Mythology",
+    "filter.theme.high_stakes_game": "High Stakes Game",
+    "filter.theme.strategy_game": "Strategy Game",
+    "filter.theme.magical_sex_shift": "Magical Sex Shift",
+    "filter.theme.racing": "Racing",
+    "filter.theme.isekai": "Isekai",
+    "filter.theme.workplace": "Workplace",
+    "filter.theme.iyashikei": "Iyashikei",
+    "filter.theme.time_travel": "Time Travel",
+    "filter.theme.gore": "Gore",
+    "filter.theme.educational": "Educational",
+    "filter.theme.delinquents": "Delinquents",
+    "filter.theme.organized_crime": "Organized Crime",
+    "filter.theme.otaku_culture": "Otaku Culture",
+    "filter.theme.medical": "Medical",
+    "filter.theme.survival": "Survival",
+    "filter.theme.reincarnation": "Reincarnation",
+    "filter.theme.showbiz": "Showbiz",
+    "filter.theme.team_sports": "Team Sports",
+    "filter.theme.mahou_shoujo": "Mahou Shoujo",
+    "filter.theme.combat_sports": "Combat Sports",
+    "filter.theme.crossdressing": "Crossdressing",
+    "filter.theme.visual_arts": "Visual Arts",
+    "filter.theme.childcare": "Childcare",
+    "filter.theme.pets": "Pets",
+    "filter.theme.love_status_quo": "Love Status Quo",
+    "filter.theme.urban_fantasy": "Urban Fantasy",
+    "filter.theme.villainess": "Villainess",
+    "filter.theme.none": "(None)",
+
+    "filter.type.tv": "TV",
+    "filter.type.movie": "Movie",
+    "filter.type.ova": "OVA",
+    "filter.type.ona": "ONA",
+    "filter.type.special": "Special",
+    "filter.type.music": "Music",
+    "filter.type.none": "(None)",
+
+    "filter.demographic.shounen": "Shounen",
+    "filter.demographic.shoujo": "Shoujo",
+    "filter.demographic.seinen": "Seinen",
+    "filter.demographic.kids": "Kids",
+    "filter.demographic.josei": "Josei",
+    "filter.demographic.none": "(None)",
+
+    "filter.status.all": "All",
+    "filter.status.airing": "Airing",
+    "filter.status.completed": "Completed",
+    "filter.status.none": "(No status)"
   },
   active: {},
 };
@@ -4881,36 +4990,22 @@ if (!isRandomAnime() && initialStorage.temp !== undefined) {
 const filterSearchCache = {};
 
 const filterValues = {
-  "genre":[
-    {"name":"Comedy","value":"comedy"},{"name":"Slice of Life","value":"slice-of-life"},{"name":"Romance","value":"romance"},{"name":"Ecchi","value":"ecchi"},{"name":"Drama","value":"drama"},
-    {"name":"Supernatural","value":"supernatural"},{"name":"Sports","value":"sports"},{"name":"Horror","value":"horror"},{"name":"Sci-Fi","value":"sci-fi"},{"name":"Action","value":"action"},
-    {"name":"Fantasy","value":"fantasy"},{"name":"Mystery","value":"mystery"},{"name":"Suspense","value":"suspense"},{"name":"Adventure","value":"adventure"},{"name":"Boys Love","value":"boys-love"},
-    {"name":"Girls Love","value":"girls-love"},{"name":"Hentai","value":"hentai"},{"name":"Gourmet","value":"gourmet"},{"name":"Erotica","value":"erotica"},{"name":"Avant Garde","value":"avant-garde"},
-    {"name":"Award Winning","value":"award-winning"}
+  "genre": [
+    "comedy","slice-of-life","romance","ecchi","drama","supernatural","sports","horror","sci-fi","action","fantasy",
+    "mystery","suspense","adventure","boys-love","girls-love","hentai","gourmet","erotica","avant-garde","award-winning"
   ],
-  "theme":[
-    {"name":"Adult Cast","value":"adult-cast"},{"name":"Anthropomorphic","value":"anthropomorphic"},{"name":"Detective","value":"detective"},{"name":"Love Polygon","value":"love-polygon"},
-    {"name":"Mecha","value":"mecha"},{"name":"Music","value":"music"},{"name":"Psychological","value":"psychological"},{"name":"School","value":"school"},{"name":"Super Power","value":"super-power"},
-    {"name":"Space","value":"space"},{"name":"CGDCT","value":"cgdct"},{"name":"Romantic Subtext","value":"romantic-subtext"},{"name":"Historical","value":"historical"},{"name":"Video Game","value":"video-game"},
-    {"name":"Martial Arts","value":"martial-arts"},{"name":"Idols (Female)","value":"idols-female"},{"name":"Idols (Male)","value":"idols-male"},{"name":"Gag Humor","value":"gag-humor"},{"name":"Parody","value":"parody"},
-    {"name":"Performing Arts","value":"performing-arts"},{"name":"Military","value":"military"},{"name":"Harem","value":"harem"},{"name":"Reverse Harem","value":"reverse-harem"},{"name":"Samurai","value":"samurai"},
-    {"name":"Vampire","value":"vampire"},{"name":"Mythology","value":"mythology"},{"name":"High Stakes Game","value":"high-stakes-game"},{"name":"Strategy Game","value":"strategy-game"},
-    {"name":"Magical Sex Shift","value":"magical-sex-shift"},{"name":"Racing","value":"racing"},{"name":"Isekai","value":"isekai"},{"name":"Workplace","value":"workplace"},{"name":"Iyashikei","value":"iyashikei"},
-    {"name":"Time Travel","value":"time-travel"},{"name":"Gore","value":"gore"},{"name":"Educational","value":"educational"},{"name":"Delinquents","value":"delinquents"},{"name":"Organized Crime","value":"organized-crime"},
-    {"name":"Otaku Culture","value":"otaku-culture"},{"name":"Medical","value":"medical"},{"name":"Survival","value":"survival"},{"name":"Reincarnation","value":"reincarnation"},{"name":"Showbiz","value":"showbiz"},
-    {"name":"Team Sports","value":"team-sports"},{"name":"Mahou Shoujo","value":"mahou-shoujo"},{"name":"Combat Sports","value":"combat-sports"},{"name":"Crossdressing","value":"crossdressing"},
-    {"name":"Visual Arts","value":"visual-arts"},{"name":"Childcare","value":"childcare"},{"name":"Pets","value":"pets"},{"name":"Love Status Quo","value":"love-status-quo"},{"name":"Urban Fantasy","value":"urban-fantasy"},
-    {"name":"Villainess","value":"villainess"}
+  "theme": [
+    "adult-cast","anthropomorphic","detective","love-polygon","mecha","music","psychological","school","super-power",
+    "space","cgdct","romantic-subtext","historical","video-game","martial-arts","idols-female","idols-male","gag-humor",
+    "parody","performing-arts","military","harem","reverse-harem","samurai","vampire","mythology","high-stakes-game",
+    "strategy-game","magical-sex-shift","racing","isekai","workplace","iyashikei","time-travel","gore","educational",
+    "delinquents","organized-crime","otaku-culture","medical","survival","reincarnation","showbiz","team-sports",
+    "mahou-shoujo","combat-sports","crossdressing","visual-arts","childcare","pets","love-status-quo","urban-fantasy",
+    "villainess"
   ],
-  "type":[
-    {"name":"TV","value":"tv"},{"name":"Movie","value":"movie"},{"name":"OVA","value":"ova"},{"name":"ONA","value":"ona"},{"name":"Special","value":"special"},{"name":"Music","value":"music"}
-  ],
-  "demographic":[
-    {"name":"Shounen","value":"shounen"},{"name":"Shoujo","value":"shoujo"},{"name":"Seinen","value":"seinen"},{"name":"Kids","value":"kids"},{"name":"Josei","value":"josei"}
-  ],
-  "status":[
-    {"value":"airing"},{"value":"completed"}
-  ]
+  "type": ["tv","movie","ova","ona","special","music"],
+  "demographic": ["shounen","shoujo","seinen","kids","josei"],
+  "status": ["airing","completed"],
 };
 
 const filterDefaultRules = {
@@ -5006,7 +5101,7 @@ function getFilteredList(filtersInput) {
         if (filter.value === 'none') {
           filtersTotal += filterValues[filterType].length;
 
-          getLists(filterValues[filterType].map(a => {return {type: filterType, value: a.value, exclude: false};})).then((filtered) => {
+          getLists(filterValues[filterType].map(a => {return {type: filterType, value: a, exclude: false};})).then((filtered) => {
             getPage('/anime').then((unfiltered) => {
               const none = [];
               for (const entry of unfiltered) {
@@ -6613,7 +6708,18 @@ function loadIndexPage() {
   const animeList = getAnimeList();
   filterSearchCache['/anime'] = copyObj(animeList);
   const texts = {
-    changeRulesTitle: toHtmlCodes(getText('title.index.filter.change_rule'))
+    changeRulesTitle: toHtmlCodes(getText('title.index.filter.change_rule')),
+    statusDropdownTitle: toHtmlCodes(getText('title.index.dropdown.status')),
+    seasonSelectorTitle: toHtmlCodes(getText('title.index.button.season')),
+    filterResultCounter: toHtmlCodes(getText('info.index.filter_results',['HTML'])),
+    resetFiltersTitle: toHtmlCodes(getText('title.index.button.reset_filters')),
+    resetFilters: toHtmlCodes(getText('button.index.reset_filters')),
+    applyFiltersTitle: toHtmlCodes(getText('title.index.button.apply_filters')),
+    applyFilters: toHtmlCodes(getText('button.index.apply_filters')),
+    randomAnimeTitle: toHtmlCodes(getText('title.index.button.random_anime')),
+    randomAnime: toHtmlCodes(getText('button.index.random_anime')),
+    searchTitle: toHtmlCodes(getText('title.index.input.search')),
+    searchPlaceholder: toHtmlCodes(getText('placeholder.loading')),
   };
 
   $(`
@@ -6649,11 +6755,13 @@ function loadIndexPage() {
 
     <div style="margin-left: auto;">
       <div class="btn-group">
-        <button class="btn dropdown-toggle btn-dark" id="anitracker-status-button" data-bs-toggle="dropdown" data-toggle="dropdown" title="Choose status">All</button>
+        <button class="btn dropdown-toggle btn-dark" id="anitracker-status-button" data-bs-toggle="dropdown" data-toggle="dropdown" title="${texts.statusDropdownTitle}">
+          ${toHtmlCodes(getFilterName('status','all'))}
+        </button>
       </div>
 
       <div class="btn-group">
-        <button class="btn btn-dark" id="anitracker-time-search-button" title="Set season filter">
+        <button class="btn btn-dark" id="anitracker-time-search-button" title="${texts.seasonSelectorTitle}">
           <svg fill="#ffffff" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 512 512" xml:space="preserve" aria-hidden="true">
             <path d="M256,0C114.842,0,0,114.842,0,256s114.842,256,256,256s256-114.842,256-256S397.158,0,256,0z M374.821,283.546H256
                      c-15.148,0-27.429-12.283-27.429-27.429V137.295c0-15.148,12.281-27.429,27.429-27.429s27.429,12.281,27.429,27.429v91.394h91.392
@@ -6666,22 +6774,30 @@ function loadIndexPage() {
   <div id="anitracker-filter-dropdown-container"></div>
   </div>
   <div class="anitracker-index-lower">
-    <span style="font-size: 1.2em;color:#ddd;" id="anitracker-filter-result-count">Filter results: <span>${animeList.length}</span></span>
+    <span style="font-size: 1.2em;color:#ddd;" id="anitracker-filter-result-count">
+      ${texts.filterResultCounter.replace('HTML', `<span>${animeList.length}</span>`)}
+    </span>
     <div>
       <div class="btn-group">
-        <span id="anitracker-reset-filters" title="Reset filters" class="anitracker-text-button" style="margin-right: 10px;" tabindex="0"><i aria-hidden="true" class="fa fa-rotate-right"></i>&nbsp;Reset</span>
+        <span id="anitracker-reset-filters" title="${texts.resetFiltersTitle}" class="anitracker-text-button" style="margin-right: 10px;" tabindex="0">
+          <i aria-hidden="true" class="fa fa-rotate-right"></i>
+          &nbsp;${texts.resetFilters}
+        </span>
       </div>
       <div class="btn-group">
-        <button class="btn btn-dark" id="anitracker-apply-filters" title="Apply selected filters"><i class="fa fa-check" aria-hidden="true"></i>&nbsp;&nbsp;Apply</button>
+        <button class="btn btn-dark" id="anitracker-apply-filters" title="${texts.applyFiltersTitle}">
+          <i class="fa fa-check" aria-hidden="true"></i>
+          &nbsp;${texts.applyFilters}
+          </button>
       </div>
       <div class="btn-group">
-        <button class="btn btn-dark" id="anitracker-random-anime" title="Open a random anime from within the selected filters">
+        <button class="btn btn-dark" id="anitracker-random-anime" title="${texts.randomAnimeTitle}">
           <i class="fa fa-random" aria-hidden="true"></i>
-          &nbsp;Random Anime
+          &nbsp;${texts.randomAnime}
         </button>
       </div>
       <div class="btn-group">
-        <input id="anitracker-anime-list-search" title="Search within applied filters" disabled="" autocomplete="off" class="form-control anitracker-text-input-bar" style="width: 150px;" placeholder="Loading...">
+        <input id="anitracker-anime-list-search" title="${texts.searchTitle}" disabled="" autocomplete="off" class="form-control anitracker-text-input-bar" style="width: 150px;" placeholder="${texts.searchPlaceholder}">
       </div>
     </div>
   </div>`).insertBefore('.index');
@@ -6689,8 +6805,8 @@ function loadIndexPage() {
   getTrackerDiv().css('justify-content', 'center').insertAfter('.index');
   addGeneralButtons();
 
-  function getDropdownButtons(filters, type) {
-    return filters.sort((a,b) => a.name > b.name ? 1 : -1).concat({value: 'none', name: '(None)'}).map(g => $(`<button data-filter-type="${type}" data-filter-value="${g.value}">${g.name}</button>`));
+  function getDropdownButtons(filterValues, type) {
+    return filterValues.sort().concat('none').map(g => $(`<button data-filter-type="${type}" data-filter-value="${g}">${toHtmlCodes(getFilterName(type,g))}</button>`));
   }
 
   $(`<div id="anitracker-genre-dropdown" tabindex="-1" data-filter-type="genre" class="dropdown-menu anitracker-dropdown-content anitracker-filter-dropdown">`).appendTo('#anitracker-filter-dropdown-container');
@@ -6706,18 +6822,10 @@ function loadIndexPage() {
   getDropdownButtons(filterValues.demographic, 'demographic').forEach(g => { g.appendTo('#anitracker-demographic-dropdown') });
 
   $(`<div id="anitracker-status-dropdown" tabindex="-1" data-filter-type="status" class="dropdown-menu anitracker-dropdown-content anitracker-filter-dropdown special">`).insertAfter('#anitracker-status-button');
-  ['all','airing','completed'].forEach(g => { $(`<button data-filter-type="status" data-filter-value="${g}">${g[0].toUpperCase() + g.slice(1)}</button>`).appendTo('#anitracker-status-dropdown') });
-  $(`<button data-filter-type="status" data-filter-value="none">(No status)</button>`).appendTo('#anitracker-status-dropdown');
+  ['all','airing','completed','none'].forEach(g => { $(`<button data-filter-type="status" data-filter-value="${g}"></button>`).text(getFilterName('status',g)).appendTo('#anitracker-status-dropdown') });
 
   const timeframeSettings = {
     enabled: false
-  };
-
-  const placeholderTexts = {
-    'genre': 'Genre',
-    'theme': 'Theme',
-    'type': 'Type',
-    'demographic': 'Demographic'
   };
 
   const selectedFilters = [];
@@ -6753,6 +6861,10 @@ function loadIndexPage() {
     };
   }
 
+  function getFilterName(type, value) {
+    return getText(`filter.${type}.${value.replaceAll('-','_')}`, [], {default: value});
+  }
+
   function getInputText(elem) {
     return elem.contents().filter(function() {
       return this.nodeType === Node.TEXT_NODE;
@@ -6765,7 +6877,9 @@ function loadIndexPage() {
 
   function addPlaceholder(elem, filterType) {
     if (getInputText(elem) !== '' || elem.find('.anitracker-placeholder').length) return;
-    $(`<span data-filter-type="${filterType}" class="anitracker-placeholder">${placeholderTexts[filterType]}</span>`).prependTo(elem);
+    $(`<span data-filter-type="${filterType}" class="anitracker-placeholder"></span>`)
+    .text(getText(`placeholder.index.filter.${filterType}`))
+    .prependTo(elem);
   }
 
   function setChangesToApply(on) {
@@ -6877,11 +6991,7 @@ function loadIndexPage() {
     elems.input?.css('width','').css('height','');
     if (elems.input !== undefined) clearPlaceholder(elems.input);
     if (getActiveFilter(filter) !== undefined || filterValues[filter.type] === undefined) return;
-    const filterEntry = filterValues[filter.type].find(f => f.value === filter.value);
-    const name = (() => {
-      if (filter.value === 'none') return '(None)';
-      else return filterEntry !== undefined ? filterEntry.name : filter.value;
-    })();
+    const name = getFilterName(filter.type, filter.value);
 
     // Events for filter icons
     const icon = $(`<span class="anitracker-filter-icon ${filter.exclude ? 'excluded' : 'included'}" data-filter-type="${filter.type}" data-filter-value="${filter.value}" data-filter-exclude="${filter.exclude}">${name}</span>`).appendTo(elems.filterIconContainer);
