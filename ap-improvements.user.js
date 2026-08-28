@@ -336,41 +336,41 @@ const translations = {
     "tab_title.redirect_failed": "Couldn't find anime",
     "alt.thumbnail": "[Thumbnail of %1]",
     "screenreader.loading": "Loading...",
-    "title.modal.close": "Close modal",
-    "title.modal.back": "Go back to previous menu",
-    "title.list.reverse_sort": "Sort direction (down is default)",
-    "title.mark_episode.watched": "Mark this episode as watched",
-    "title.mark_episode.unwatched": "Mark this episode as unwatched",
-    "title.site_search": "Search for anime",
-    "title.collection": "%1 - Collection",
-    "title.header_button.episode_feed": "View episode feed",
-    "title.header_button.bookmarks": "View bookmarks",
-    "title.button.manage_feed": "View schedule and remove anime from the feed",
-    "title.button.feed_schedule.starting_day": "Select which day the schedule should start",
+    "title.button.modal.close": "Close modal",
+    "title.button.modal.back": "Go back to previous menu",
+    "title.button.list.reverse_sort": "Sort direction (down is default)",
+    "title.button.episode_feed.mark_episode.watched": "Mark this episode as watched",
+    "title.button.episode_feed.mark_episode.unwatched": "Mark this episode as unwatched",
+    "title.button.header.episode_feed": "View episode feed",
+    "title.button.header.bookmarks": "View bookmarks",
+    "title.button.episode_feed.manage_feed": "View schedule and remove anime from the feed",
+    "title.button.manage_feed.schedule.starting_day": "Select which day the schedule should start",
     "title.button.manage_feed.remove": "Remove this anime from the episode feed",
     "title.button.manage_feed.get_all": "Add all episodes to the feed",
-    "title.bookmarks.sort.recent": "Sort by recently added",
-    "title.bookmarks.sort.alphabetical": "Sort alphabetically",
-    "title.bookmarks.sort.status": "Sort by watching status",
-    "title.bookmarks.layout.list": "Use list layout",
-    "title.bookmarks.layout.grid": "Use grid layout",
-    "title.bookmarks.share": "Share the bookmark list",
-    "title.bookmarks.share.image": "Share the bookmark list as an image",
-    "title.bookmarks.share.text": "Share the bookmark list as a text file",
-    "title.bookmarks.change_status": "Change bookmark watching status",
-    "title.bookmarks.select_status": "Select anime watching status",
-    "title.bookmarks.remove": "Remove this bookmark",
-    "title.bookmarks.dropdown.select_status": "Change watching status to %1",
-    "title.bookmarks.add": "Add bookmark",
-    "title.index.filter.change_rule": "Change filter logic",
-    "title.index.dropdown.status": "Choose status",
-    "title.index.button.season": "Set season filter",
-    "title.index.button.reset_filters": "Reset filters",
-    "title.index.button.apply_filters": "Apply selected filters",
-    "title.index.button.random_anime": "Open a random anime from within the selected filters",
-    "title.index.input.search": "Search within applied filters",
-    "label.feed_schedule.starting_day": "Start from:",
-    "label.bookmarks.share": "Share through",
+    "title.button.bookmarks.sort.recent": "Sort by recently added",
+    "title.button.bookmarks.sort.alphabetical": "Sort alphabetically",
+    "title.button.bookmarks.sort.status": "Sort by watching status",
+    "title.button.bookmarks.layout.list": "Use list layout",
+    "title.button.bookmarks.layout.grid": "Use grid layout",
+    "title.button.bookmarks.share": "Share the bookmark list",
+    "title.button.bookmarks.change_status": "Change bookmark watching status",
+    "title.button.bookmarks.select_status": "Select anime watching status",
+    "title.button.bookmarks.remove": "Remove this bookmark",
+    "title.button.bookmarks.add": "Add bookmark",
+    "title.button.index.change_filter_rule": "Change filter logic",
+    "title.button.index.status_dropdown": "Choose status",
+    "title.button.index.season_filter": "Set season filter",
+    "title.button.index.reset_filters": "Reset filters",
+    "title.button.index.apply_filters": "Apply selected filters",
+    "title.button.index.random_anime": "Open a random anime from within the selected filters",
+    "title.button.dropdown.bookmarks.share.image": "Share the bookmark list as an image",
+    "title.button.dropdown.bookmarks.share.text": "Share the bookmark list as a text file",
+    "title.button.dropdown.bookmarks.status": "Change watching status to %1",
+    "title.input.site_search": "Search for anime",
+    "title.input.index.search": "Search within applied filters",
+    "title.search_result.collection": "%1 - Collection",
+    "label.manage_feed.schedule.starting_day": "Start from:",
+    "label.dropdown.bookmarks.share": "Share through",
     "info.index.filter_results": "Filter results: %1",
     "info.timestamp_edit_done": "You can open an issue %1 to get these added.",
     "info.episode_feed.no_entries": "Use the %1 button on an ongoing anime to add it to the feed.",
@@ -4141,8 +4141,8 @@ function openModal(title = '', backFunction, options = {}) {
   $('#anitracker-modal').trigger('anitracker:open');
 
   const close = $('#anitracker-modal-close');
-  if (backFunction) close.replaceClass('fa-close', 'fa-arrow-left').attr('title', getText('title.modal.back'));
-  else close.replaceClass('fa-arrow-left', 'fa-close').attr('title', getText('title.modal.close'));
+  if (backFunction) close.replaceClass('fa-close', 'fa-arrow-left').attr('title', getText('title.button.modal.back'));
+  else close.replaceClass('fa-arrow-left', 'fa-close').attr('title', getText('title.button.modal.close'));
   $('#anitracker-modal-title').text(title);
   setModalSubtitle(options.subtitle ?? '');
   
@@ -4901,7 +4901,7 @@ function searchComplete() {
 function displayCollection(seriesList, elem) {
   elem.empty().css('padding', '');
   $(`
-  <a title="${toHtmlCodes(getText('title.collection', [seriesList[0].title]))}" href="javascript:;">
+  <a title="${toHtmlCodes(getText('title.search_result.collection', [seriesList[0].title]))}" href="javascript:;">
     <div class="result-thumbnail">
       <div class="anitracker-collection-image-wrapper">
         <img src="${makePosterUrl(seriesList[0].poster,'th')}" referrerpolicy="no-referrer" style="pointer-events: all !important;max-width: 30px;">
@@ -4958,7 +4958,7 @@ function displayCollection(seriesList, elem) {
   });
 }
 
-$('.input-search').attr('title',getText('title.site_search'));
+$('.input-search').attr('title',getText('title.input.site_search'));
 $('.input-search').on('keyup', (e) => {
   const collectionElem = $('.search-results').find('.anitracker-collection');
   if (collectionElem.length && e.key === "Enter" && collectionElem.hasClass('selected')) collectionElem.trigger('click');
@@ -5534,11 +5534,11 @@ function getDayName(day) {
 // Bookmark & episode feed header buttons
 $(`
 <div class="anitracker-header">
-  <button class="anitracker-header-notifications anitracker-header-button" title="${toHtmlCodes(getText('title.header_button.episode_feed'))}">
+  <button class="anitracker-header-notifications anitracker-header-button" title="${toHtmlCodes(getText('title.button.header.episode_feed'))}">
     <i class="fa fa-bell" aria-hidden="true"></i>
     <i style="display:none;" aria-hidden="true" class="fa fa-circle anitracker-header-notifications-circle"></i>
   </button>
-  <button class="anitracker-header-bookmark anitracker-header-button" title="${toHtmlCodes(getText('title.header_button.bookmarks'))}">
+  <button class="anitracker-header-bookmark anitracker-header-button" title="${toHtmlCodes(getText('title.button.header.bookmarks'))}">
     <i class="fa fa-bookmark" aria-hidden="true"></i>
   </button>
 </div>`).insertAfter('.navbar-nav');
@@ -5552,7 +5552,7 @@ function openNotificationsModal() {
 
   $(`
   <div class="btn-group" style="margin-bottom: 10px;">
-    <button class="btn btn-secondary anitracker-view-notif-animes" title="${toHtmlCodes(getText('title.button.manage_feed'))}">
+    <button class="btn btn-secondary anitracker-view-notif-animes" title="${toHtmlCodes(getText('title.button.episode_feed.manage_feed'))}">
       <i class="fa fa-calendar" aria-hidden="true"></i>
       &nbsp;${toHtmlCodes(getText('button.manage_feed'))}
     </button>
@@ -5573,11 +5573,11 @@ function openNotificationsModal() {
     const storage = getStorage();
     $(`
     <div class="anitracker-feed-schedule"></div>
-    <label for="anitracker-week-start-dropdown-toggle" style="vertical-align: top;" title="${toHtmlCodes(getText('title.button.feed_schedule.starting_day'))}">
-      ${toHtmlCodes(getText('label.feed_schedule.starting_day'))}
+    <label for="anitracker-week-start-dropdown-toggle" style="vertical-align: top;" title="${toHtmlCodes(getText('title.button.manage_feed.schedule.starting_day'))}">
+      ${toHtmlCodes(getText('label.manage_feed.schedule.starting_day'))}
     </label>
     <div class="btn-group" style="margin-bottom: 10px;">
-      <button class="btn dropdown-toggle btn-dark anitracker-flat-button" id="anitracker-week-start-dropdown-toggle" data-bs-toggle="dropdown" data-toggle="dropdown" title="${toHtmlCodes(getText('title.button.feed_schedule.starting_day'))}">
+      <button class="btn dropdown-toggle btn-dark anitracker-flat-button" id="anitracker-week-start-dropdown-toggle" data-bs-toggle="dropdown" data-toggle="dropdown" title="${toHtmlCodes(getText('title.button.manage_feed.schedule.starting_day'))}">
         ${getDayName(0)}
       </button>
       <div class="dropdown-menu anitracker-dropdown-content anitracker-week-start-dropdown"></div>
@@ -5803,7 +5803,7 @@ function openNotificationsModal() {
           <div class="anitracker-image-wrapper">
             <img src="${makePosterUrl(data.poster,'th')}" referrerpolicy="no-referrer" alt="${toHtmlCodes(getText('alt.thumbnail', [data.name]))}"}>
           </div>
-          <i class="fa ${ep.watched ? 'fa-eye-slash' : 'fa-eye'} anitracker-watched-toggle" tabindex="0" aria-hidden="true" title="${toHtmlCodes(getText(ep.watched ? 'title.mark_episode.unwatched' : 'title.mark_episode.watched'))}"></i>
+          <i class="fa ${ep.watched ? 'fa-eye-slash' : 'fa-eye'} anitracker-watched-toggle" tabindex="0" aria-hidden="true" title="${toHtmlCodes(getText(ep.watched ? 'title.button.episode_feed.mark_episode.unwatched' : 'title.button.episode_feed.mark_episode.watched'))}"></i>
           <div class="anitracker-main-text">${toHtmlCodes(data.name)}</div>
           <div class="anitracker-subtext">${toHtmlCodes(getText('generic.episode', ['HTML'])).replace('HTML', `<span class="anitracker-episode-text">${ep.episode}</span>`)}</div>
           <div class="anitracker-subtext">${timeAgoText(releaseTime)} (${releaseTime.toLocaleDateString()})</div>
@@ -5841,7 +5841,7 @@ function openNotificationsModal() {
       if (e.type === 'click') elem.blur();
 
       ep.watched = !ep.watched;
-      elem.attr('title', getText(ep.watched ? 'title.mark_episode.unwatched' : 'title.mark_episode.watched'));
+      elem.attr('title', getText(ep.watched ? 'title.button.episode_feed.mark_episode.unwatched' : 'title.button.episode_feed.mark_episode.watched'));
 
       saveData(storage);
 
@@ -5898,25 +5898,25 @@ function openBookmarksModal() {
   <div style="display: flex;gap: 8px;flex-wrap: wrap;">
     <div class="btn-group">
       <input autocomplete="off" class="form-control anitracker-text-input-bar anitracker-modal-search" placeholder="${toHtmlCodes(getText('placeholder.search'))}">
-      <button dir="down" class="btn btn-secondary dropdown-toggle anitracker-reverse-order-button anitracker-list-btn" title="${toHtmlCodes(getText('title.list.reverse_sort'))}"></button>
+      <button dir="down" class="btn btn-secondary dropdown-toggle anitracker-reverse-order-button anitracker-list-btn" title="${toHtmlCodes(getText('title.button.list.reverse_sort'))}"></button>
     </div>
     <div class="btn-group anitracker-sort-method-btns">
-      <button data-sort="recent" class="btn btn-secondary" title="${toHtmlCodes(getText('title.bookmarks.sort.recent'))}" ${sort === 'recent' ? 'disabled' : ''}><i class="fa fa-history" aria-hidden="true"></i></button>
-      <button data-sort="alphabetical" class="btn btn-secondary" title="${toHtmlCodes(getText('title.bookmarks.sort.alphabetical'))}" ${sort === 'alphabetical' ? 'disabled' : ''}><i class="fa fa-sort-alpha-down" aria-hidden="true"></i></button>
-      <button data-sort="status" class="btn btn-secondary" title="${toHtmlCodes(getText('title.bookmarks.sort.status'))}" ${sort === 'status' ? 'disabled' : ''}><i class="fa fa-list-alt" aria-hidden="true"></i></button>
+      <button data-sort="recent" class="btn btn-secondary" title="${toHtmlCodes(getText('title.button.bookmarks.sort.recent'))}" ${sort === 'recent' ? 'disabled' : ''}><i class="fa fa-history" aria-hidden="true"></i></button>
+      <button data-sort="alphabetical" class="btn btn-secondary" title="${toHtmlCodes(getText('title.button.bookmarks.sort.alphabetical'))}" ${sort === 'alphabetical' ? 'disabled' : ''}><i class="fa fa-sort-alpha-down" aria-hidden="true"></i></button>
+      <button data-sort="status" class="btn btn-secondary" title="${toHtmlCodes(getText('title.button.bookmarks.sort.status'))}" ${sort === 'status' ? 'disabled' : ''}><i class="fa fa-list-alt" aria-hidden="true"></i></button>
     </div>
     <div class="btn-group anitracker-layout-btns">
-      <button data-layout="list" class="btn btn-secondary" title="${toHtmlCodes(getText('title.bookmarks.layout.list'))}" ${layout === 'list' ? 'disabled' : ''}><i class="fa fa-list" aria-hidden="true"></i></button>
-      <button data-layout="grid" class="btn btn-secondary" title="${toHtmlCodes(getText('title.bookmarks.layout.grid'))}" ${layout === 'grid' ? 'disabled' : ''}><i class="fa fa-th-large" aria-hidden="true"></i></button>
+      <button data-layout="list" class="btn btn-secondary" title="${toHtmlCodes(getText('title.button.bookmarks.layout.list'))}" ${layout === 'list' ? 'disabled' : ''}><i class="fa fa-list" aria-hidden="true"></i></button>
+      <button data-layout="grid" class="btn btn-secondary" title="${toHtmlCodes(getText('title.button.bookmarks.layout.grid'))}" ${layout === 'grid' ? 'disabled' : ''}><i class="fa fa-th-large" aria-hidden="true"></i></button>
     </div>
     ${storage.bookmarks.length ?`
     <div style="flex-grow: 1;">
-      <button class="btn btn-secondary anitracker-share-bookmarks-button" title="${toHtmlCodes(getText('title.bookmarks.share'))}"><i aria-hidden="true" class="fa fa-share"></i></button>
+      <button class="btn btn-secondary anitracker-share-bookmarks-button" title="${toHtmlCodes(getText('title.button.bookmarks.share'))}"><i aria-hidden="true" class="fa fa-share"></i></button>
     </div>
     <div class="dropdown-menu anitracker-dropdown-content anitracker-share-bookmarks-dropdown" style="display:hidden;">
-      <span>${toHtmlCodes(getText('label.bookmarks.share'))}</span>
-      <button title="${toHtmlCodes(getText('title.bookmarks.share.image'))}" data-action="image"><i class="fa fa-image" aria-hidden="true"></i>${toHtmlCodes(getText('button.dropdown.bookmarks.share.image'))}</button>
-      <button title="${toHtmlCodes(getText('title.bookmarks.share.text'))}" data-action="text"><i class="fa fa-file" aria-hidden="true"></i>${toHtmlCodes(getText('button.dropdown.bookmarks.share.text'))}</button>
+      <span>${toHtmlCodes(getText('label.dropdown.bookmarks.share'))}</span>
+      <button title="${toHtmlCodes(getText('title.button.dropdown.bookmarks.share.image'))}" data-action="image"><i class="fa fa-image" aria-hidden="true"></i>${toHtmlCodes(getText('button.dropdown.bookmarks.share.image'))}</button>
+      <button title="${toHtmlCodes(getText('title.button.dropdown.bookmarks.share.text'))}" data-action="text"><i class="fa fa-file" aria-hidden="true"></i>${toHtmlCodes(getText('button.dropdown.bookmarks.share.text'))}</button>
     </div>` : ''}
   </div>
   <div class="anitracker-modal-list-container" style="margin-top: 5px;">
@@ -5971,7 +5971,7 @@ function openBookmarksModal() {
             <span>${toHtmlCodes(name)}</span>
           </a><br>
           <div>
-            <button class="anitracker-bookmark-list-status anitracker-change-status-button" style="color:${statusAttrs[1]};" title="${toHtmlCodes(getText('title.bookmarks.change_status'))}">${toHtmlCodes(getStatusText(g.status))}</button>
+            <button class="anitracker-bookmark-list-status anitracker-change-status-button" style="color:${statusAttrs[1]};" title="${toHtmlCodes(getText('title.button.bookmarks.change_status'))}">${toHtmlCodes(getStatusText(g.status))}</button>
             <button class="btn btn-dark anitracker-flat-button anitracker-remove-bookmark-button" title="${toHtmlCodes(getText('title.bookmarks.remove'))}" style="vertical-align: center;">
               <i class="fa fa-trash" aria-hidden="true"></i>
               <span>${toHtmlCodes(getText('button.remove'))}</span>
@@ -5990,7 +5990,7 @@ function openBookmarksModal() {
             <span>${toHtmlCodes(name)}</span>
           </a>
           <div style="display: flex;flex-direction: column;gap: 2px;">
-            <button class="anitracker-bookmark-grid-status anitracker-change-status-button" style="color:${statusAttrs[1]};" title="${toHtmlCodes(getText('title.bookmarks.change_status'))}">${toHtmlCodes(getStatusText(g.status))}</button>
+            <button class="anitracker-bookmark-grid-status anitracker-change-status-button" style="color:${statusAttrs[1]};" title="${toHtmlCodes(getText('title.button.bookmarks.change_status'))}">${toHtmlCodes(getStatusText(g.status))}</button>
             <button class="btn btn-dark anitracker-flat-button anitracker-remove-bookmark-button" title="${toHtmlCodes(getText('title.bookmarks.remove'))}">
               <i class="fa fa-trash" aria-hidden="true"></i>
               ${toHtmlCodes(getText('button.remove'))}
@@ -6044,7 +6044,7 @@ function openBookmarksModal() {
     <div class="dropdown-menu anitracker-dropdown-content anitracker-status-dropdown" style="width:13.3em;display:none;"></div>
     `).appendTo('.anitracker-modal-list');
 
-    Object.entries(statuses).forEach(([k,v]) => { $(`<button class="btn btn-dark anitracker-flat-button anitracker-status-button" title="${toHtmlCodes(getText('title.bookmarks.dropdown.select_status',[getStatusText(k)]))}" style="background-color: ${v[0]};width:100%;" data-value="${k}">
+    Object.entries(statuses).forEach(([k,v]) => { $(`<button class="btn btn-dark anitracker-flat-button anitracker-status-button" title="${toHtmlCodes(getText('title.button.dropdown.bookmarks.status',[getStatusText(k)]))}" style="background-color: ${v[0]};width:100%;" data-value="${k}">
       ${toHtmlCodes(getStatusText(k))}
     </button>`).appendTo('.anitracker-status-dropdown')});
 
@@ -6362,7 +6362,7 @@ function openBookmarkStatusEditModal(id, adding=false) {
   <div style="display:flex;gap:10px;">
     <div class="anitracker-bookmark-edit-side" style="max-width:12em;min-width:10em;">
       <div><span style="display:inline-block;width:100%;">${toHtmlCodes(entry.name)}</span></div>
-      <button class="btn dropdown-toggle btn-secondary anitracker-status-dropdown-button" data-bs-toggle="dropdown" data-toggle="dropdown" data-value="${status}" title="${toHtmlCodes(getText('title.bookmarks.select_status'))}" style="background-color: ${statusAttrs[0]};width:100%;display:block;margin-bottom:16px;">
+      <button class="btn dropdown-toggle btn-secondary anitracker-status-dropdown-button" data-bs-toggle="dropdown" data-toggle="dropdown" data-value="${status}" title="${toHtmlCodes(getText('title.button.bookmarks.select_status'))}" style="background-color: ${statusAttrs[0]};width:100%;display:block;margin-bottom:16px;">
         ${toHtmlCodes(getStatusText(status))}
       </button>
       <div class="dropdown-menu anitracker-dropdown-content anitracker-status-dropdown" style="width:12em;"></div>
@@ -6373,7 +6373,7 @@ function openBookmarkStatusEditModal(id, adding=false) {
   </div>
   `).appendTo('#anitracker-modal-body');
 
-  Object.entries(statuses).forEach(([k,v]) => { $(`<button class="btn btn-dark anitracker-flat-button anitracker-status-button" title="${toHtmlCodes(getText('title.bookmarks.dropdown.select_status',[getStatusText(k)]))}" style="background-color: ${v[0]};width:100%;" data-value="${k}">
+  Object.entries(statuses).forEach(([k,v]) => { $(`<button class="btn btn-dark anitracker-flat-button anitracker-status-button" title="${toHtmlCodes(getText('title.button.dropdown.bookmarks.status',[getStatusText(k)]))}" style="background-color: ${v[0]};width:100%;" data-value="${k}">
     ${toHtmlCodes(getStatusText(k))}
   </button>`).appendTo('.anitracker-status-dropdown')});
 
@@ -6395,7 +6395,7 @@ function openBookmarkStatusEditModal(id, adding=false) {
   if (adding) {
     $(`
     ${limitReached ? `<span style="color: var(--danger);display: block;text-align: center;">${toHtmlCodes(getText('info.bookmarks.add.too_many'))}</span>` : ''}
-    <button class="btn btn-secondary anitracker-flat-button anitracker-confirm-button" title="${toHtmlCodes(getText('title.bookmarks.add'))}" style="width:100%;" ${limitReached ? 'disabled' : ''}>
+    <button class="btn btn-secondary anitracker-flat-button anitracker-confirm-button" title="${toHtmlCodes(getText('title.button.bookmarks.add'))}" style="width:100%;" ${limitReached ? 'disabled' : ''}>
       <i class="fa fa-bookmark" aria-hidden="true"></i>
       &nbsp;${toHtmlCodes(getText('button.bookmarks.add'))}
     </button>`).appendTo('.anitracker-bookmark-edit-side');
@@ -6708,17 +6708,17 @@ function loadIndexPage() {
   const animeList = getAnimeList();
   filterSearchCache['/anime'] = copyObj(animeList);
   const texts = {
-    changeRulesTitle: toHtmlCodes(getText('title.index.filter.change_rule')),
-    statusDropdownTitle: toHtmlCodes(getText('title.index.dropdown.status')),
-    seasonSelectorTitle: toHtmlCodes(getText('title.index.button.season')),
+    changeRulesTitle: toHtmlCodes(getText('title.button.index.change_filter_rule')),
+    statusDropdownTitle: toHtmlCodes(getText('title.button.index.status_dropdown')),
+    seasonSelectorTitle: toHtmlCodes(getText('title.button.index.season_filter')),
     filterResultCounter: toHtmlCodes(getText('info.index.filter_results',['HTML'])),
-    resetFiltersTitle: toHtmlCodes(getText('title.index.button.reset_filters')),
+    resetFiltersTitle: toHtmlCodes(getText('title.button.index.reset_filters')),
     resetFilters: toHtmlCodes(getText('button.index.reset_filters')),
-    applyFiltersTitle: toHtmlCodes(getText('title.index.button.apply_filters')),
+    applyFiltersTitle: toHtmlCodes(getText('title.button.index.apply_filters')),
     applyFilters: toHtmlCodes(getText('button.index.apply_filters')),
-    randomAnimeTitle: toHtmlCodes(getText('title.index.button.random_anime')),
+    randomAnimeTitle: toHtmlCodes(getText('title.button.index.random_anime')),
     randomAnime: toHtmlCodes(getText('button.index.random_anime')),
-    searchTitle: toHtmlCodes(getText('title.index.input.search')),
+    searchTitle: toHtmlCodes(getText('title.input.index.search')),
     searchPlaceholder: toHtmlCodes(getText('placeholder.loading')),
   };
 
