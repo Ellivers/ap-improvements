@@ -3097,7 +3097,7 @@ const siteVars = {
   cached: {
     animeSearch: [],
     firstEpisode: {},
-    firstEpPage: [],
+    episodePage: [],
     animeId: {},
     animeSession: [],
     page: {},
@@ -6075,10 +6075,12 @@ async function updateNotifications(animeName, storage = getStorage()) {
   }
 
   const stallInterval = makeStallInterval([makeSearchable(animeName)]);
+  const reqdata = ['session','name'];
+  if (!nobj.poster) reqdata.push('poster');
   const data = await getAnimeData({
     name: animeName,
     id: nobj.id
-  },['session','poster','name'],{ignored:['storage_notification_anime']});
+  },reqdata,{ignored:['storage_notification_anime']});
   removeStallInterval(stallInterval);
 
   if (!data.session || !data.name) return 1;
@@ -6112,8 +6114,9 @@ async function updateNotifications(animeName, storage = getStorage()) {
       time: ep.created_at
     });
   }
-  const latestEpisode = await getLatestEpisode(data.session); // Is already cached before being called
-  if (latestEpisode) nobj.latest_episode = toUTCDate(latestEpisode.created_at).getTime();
+  const lastEpisodePage = siteVars.cached.episodePage.find(r => r.session === data.session && r.page === 1 && r.sort === 'episode_desc');
+  if (lastEpisodePage?.value.data.length) nobj.latest_episode = toUTCDate(lastEpisodePage.value.data[0].created_at).getTime();
+  if (data.poster) nobj.poster = data.poster;
 
   const watched = decodeWatched(storage.watched);
 
@@ -6138,6 +6141,7 @@ async function updateNotifications(animeName, storage = getStorage()) {
   saveData(storage);
 
   if (!data.id) data.id = nobj.id;
+  if (!data.poster) data.poster = nobj.poster;
   return data;
 
   // Inner functions:
@@ -7395,7 +7399,7 @@ async function asyncGetPage(qurl) {
 }
 
 async function getEpisodePageResponse(session, pageNum = 1, sort = 'episode_asc', options = {}) {
-  const cached = siteVars.cached.firstEpPage.find(r => r.session === session && r.page === pageNum && r.sort === sort);
+  const cached = siteVars.cached.episodePage.find(r => r.session === session && r.page === pageNum && r.sort === sort);
   if (cached && !options.noCache) return cached.value;
 
   const foundReq = siteVars.ongoingRequests.find(r => r.type === 'firstEpPage' && r.session === session && r.page === pageNum && r.sort === sort);
@@ -7410,7 +7414,7 @@ async function getEpisodePageResponse(session, pageNum = 1, sort = 'episode_asc'
   entry.promise = new Promise(resolve => {
     getResponse(`/api?m=release&sort=${sort}&id=${session}&page=${pageNum}`).then(data => {
       siteVars.ongoingRequests = siteVars.ongoingRequests.filter(r => !(r.type === 'firstEpPage' && r.session === session && r.page === pageNum && r.sort === sort));
-      if (data && !cached) siteVars.cached.firstEpPage.push({
+      if (data && !cached) siteVars.cached.episodePage.push({
         session: session,
         page: pageNum,
         sort: sort,
@@ -8052,7 +8056,7 @@ async function getEpisodeData(aSession, episodeNum) {
 
   const firstEpisode = episodes.data[0].episode;
   siteVars.cached.firstEpisode[aSession] = firstEpisode;
-  siteVars.cached.firstEpPage[aSession] = episodes.data;
+  siteVars.cached.episodePage[aSession] = episodes.data;
   let data = episodes.data.find(a => a.episode === episodeNum);
   if (data) return data;
   // If the episode wasn't found on the first page, find the page where the episode is
