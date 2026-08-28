@@ -3467,15 +3467,15 @@ const animeInfoFunctions = [
     }
   },
   {
-    "id": "search_query",
-    "outputs": ["name","id","session","poster"],
-    "fn": getAnimeDataFromSearch
-  },
-  {
     "id": "index",
     "outputs": ["session","name"],
     "instant": true,
     "fn": getAnimeSession,
+  },
+  {
+    "id": "search_query",
+    "outputs": ["name","id","session","poster"],
+    "fn": getAnimeDataFromSearch
   },
   {
     "id": "episode_list",
@@ -5056,26 +5056,26 @@ $(`
 let currentNotificationIndex = 0;
 
 function openNotificationsModal() {
-  currentNotificationIndex = 0;
   const oldStorage = getStorage();
   $('#anitracker-modal-body').empty();
 
   $(`
-  <div class="btn-group" style="margin-bottom: 10px;">
-    <button class="btn btn-secondary anitracker-view-notif-animes" title="View schedule and remove anime from the feed">
-      <i class="fa fa-calendar" aria-hidden="true"></i>
-      &nbsp;Manage Feed...
-    </button>
+  <div style="margin-bottom:10px;display:flex;flex-wrap:wrap;gap:8px;justify-content:center;">
+    <div class="btn-group">
+      <button class="btn btn-secondary anitracker-view-notif-animes" title="View schedule and remove anime from the feed">
+        <i class="fa fa-calendar" aria-hidden="true"></i>
+        &nbsp;Manage Feed...
+      </button>
+    </div>
+    <div class="btn-group">
+      <button class="btn btn-secondary anitracker-refresh-notifs" title="Refresh the feed">
+        <i class="fa fa-refresh" aria-hidden="true"></i>
+        &nbsp;Refresh Feed
+      </button>
+    </div>
   </div>
   <div class="anitracker-modal-list-container">
-    <div class="anitracker-modal-list" style="min-height: 100px;min-width: 200px;">
-      <div id="anitracker-notifications-list-spinner" class="anitracker-spinner" style="display:flex;align-items:center;flex-direction:column;">
-        <div class="spinner-border" role="status">
-          <span class="sr-only">Loading...</span>
-        </div>
-        <span><span class="anitracker-loaded-amount">0</span><span>/${oldStorage.notifications.anime.length}</span></span>
-      </div>
-    </div>
+    <div class="anitracker-modal-list" style="min-height: 100px;min-width: 200px;"></div>
   </div>`).appendTo('#anitracker-modal-body');
 
   function openNotifAnimesModal(animation = true) {
@@ -5216,12 +5216,33 @@ function openNotificationsModal() {
   }
   $('.anitracker-view-notif-animes').on('click', openNotifAnimesModal);
 
-  const animeData = [];
-  const queue = [...oldStorage.notifications.anime];
+  const animeData = [...oldStorage.notifications.anime];
+  const queue = [];
 
   openModal('Episode Feed').then(() => {
-    if (queue.length > 0) next();
+    if (animeData.find(a => !a.session)) startLoading();
     else done();
+  });
+
+  function startLoading() {
+    if (!modalIsOpen() || $('#anitracker-notifications-list-spinner').length) return;
+
+    $('#anitracker-modal-body .anitracker-modal-list').empty();
+    $(`<div id="anitracker-notifications-list-spinner" class="anitracker-spinner" style="display:flex;align-items:center;flex-direction:column;">
+        <div class="spinner-border" role="status">
+          <span class="sr-only">Loading...</span>
+        </div>
+        <span><span class="anitracker-loaded-amount">0</span><span>/${oldStorage.notifications.anime.length}</span></span>
+      </div>`).appendTo('#anitracker-modal-body .anitracker-modal-list');
+
+    queue.push(...animeData);
+    animeData.length = 0;
+    if (queue.length) next();
+    else done();
+  }
+
+  $('.anitracker-refresh-notifs').on('click', function() {
+    startLoading();
   });
 
   async function next() {
@@ -5239,21 +5260,17 @@ function openNotificationsModal() {
         <span class="text-danger">${toHtmlCodes(anime.name)}</span>`).appendTo('#anitracker-modal-body .anitracker-modal-list');
       return;
     }
-    animeData.push({
-      id: anime.id,
-      data: data
-    });
+    animeData.push(data);
 
-    if (queue.length > 0) next();
+    if (queue.length) next();
     else done();
   }
 
   function done() {
-    if (!$('#anitracker-notifications-list-spinner').length) return;
     const storage = getStorage();
     let removedAnime = 0;
     for (const anime of storage.notifications.anime) {
-      if (anime.latest_episode === undefined || anime.dont_ask === true) continue;
+      if (!anime.latest_episode || anime.dont_ask === true) continue;
       const time = Date.now() - anime.latest_episode;
       if ((time / 1000 / 60 / 60 / 24 / 7) > 2) {
         const remove = confirm(`[AnimePahe Improvements]\n\nThe latest episode for ${anime.name} was more than 2 weeks ago. Remove it from the feed?\n\nThis prompt will not be shown again.`);
@@ -5276,6 +5293,7 @@ function openNotificationsModal() {
     storage.notifications.episodes.sort((a,b) => a.time < b.time ? 1 : -1);
     storage.notifications.lastUpdated = Date.now();
     saveData(storage);
+    currentNotificationIndex = 0;
     if (!storage.notifications.episodes.length) {
       $("<span>Nothing here yet!</span>").appendTo('#anitracker-modal-body .anitracker-modal-list');
     }
@@ -5292,7 +5310,7 @@ function openNotificationsModal() {
       const ep = storage.notifications.episodes[i];
       if (!ep) break;
       currentNotificationIndex++;
-      const data = animeData.find(a => a.id === ep.animeId)?.data;
+      const data = animeData.find(a => a.id === ep.animeId);
       if (!data) {
         console.error(`[AnimePahe Improvements] Could not find corresponding anime "${ep.animeName}" with ID ${ep.animeId} (episode ${ep.episode})`);
         continue;
@@ -6062,7 +6080,8 @@ function toggleNotifications(name, id = undefined) {
 // 0 - anime was not in notifications storage (impossible?)
 // 1 - anime data request failed
 // 2 - episode list request failed
-async function updateNotifications(animeName, storage = getStorage()) {
+async function updateNotifications(animeName) {
+  let storage = getStorage();
   let nobj = storage.notifications.anime.find(g => g.name === animeName);
   if (nobj === undefined) {
     toggleNotifications(animeName);
@@ -6079,8 +6098,9 @@ async function updateNotifications(animeName, storage = getStorage()) {
   if (!nobj.poster) reqdata.push('poster');
   const data = await getAnimeData({
     name: animeName,
-    id: nobj.id
-  },reqdata,{ignored:['storage_notification_anime']});
+    id: nobj.id,
+    poster: nobj.poster,
+  },reqdata,{ignored:['storage_notification_anime'],requireNew:true});
   removeStallInterval(stallInterval);
 
   if (!data.session || !data.name) return 1;
@@ -6117,6 +6137,7 @@ async function updateNotifications(animeName, storage = getStorage()) {
   const lastEpisodePage = siteVars.cached.episodePage.find(r => r.session === data.session && r.page === 1 && r.sort === 'episode_desc');
   if (lastEpisodePage?.value.data.length) nobj.latest_episode = toUTCDate(lastEpisodePage.value.data[0].created_at).getTime();
   if (data.poster) nobj.poster = data.poster;
+  nobj.session = data.session;
 
   const watched = decodeWatched(storage.watched);
 
