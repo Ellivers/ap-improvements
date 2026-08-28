@@ -4966,7 +4966,7 @@ $('.input-search').on('keyup', (e) => {
 });
 
 function getFlattenedStatus(status) {
-  return status.toLowerCase().replace(' ','_');
+  return status.toLowerCase().replaceAll(' ','_');
 }
 
 function getSeasonTimeframe(from, to) {
