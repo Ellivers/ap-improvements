@@ -5789,6 +5789,7 @@ function openBookmarksModal() {
     $('#anitracker-modal-body .anitracker-dropdown-content').hide();
   });
 
+  openModal('Bookmarks');
   if (!storage.bookmarks.length) return layoutEntries();
 
   const promise = siteVars.cached.animeSession.length ? waitTime(200) : getAnimeSession({},{justCache:true});
@@ -5803,7 +5804,6 @@ function openBookmarksModal() {
   if (!isMobileOrTablet()) setTimeout(() => {
     $('.anitracker-modal-search').focus();
   }, 0);
-  openModal('Bookmarks');
 }
 
 function getBookmarkImage(elem, bookmark, session = undefined) {
