@@ -5062,7 +5062,7 @@ function openNotificationsModal() {
   $('#anitracker-modal-body').empty();
 
   $(`
-  <div style="margin-bottom:10px;display:flex;flex-wrap:wrap;gap:8px;justify-content:center;">
+  <div style="margin-bottom:5px;display:flex;flex-wrap:wrap;gap:8px;justify-content:center;">
     <div class="btn-group">
       <button class="btn btn-secondary anitracker-view-notif-animes" title="View schedule and remove anime from the feed">
         <i class="fa fa-calendar" aria-hidden="true"></i>
@@ -5076,6 +5076,9 @@ function openNotificationsModal() {
       </button>
     </div>
   </div>
+  <span style="display: block;text-align: center;margin-bottom: 5px;overflow:hidden;">
+    Last refreshed: <span class="anitracker-last-refreshed">${getLastRefreshedText(oldStorage.notifications.lastUpdated)}</span>
+  </span>
   <div class="anitracker-modal-list-container">
     <div class="anitracker-modal-list" style="min-height: 100px;min-width: 200px;"></div>
   </div>`).appendTo('#anitracker-modal-body');
@@ -5223,7 +5226,7 @@ function openNotificationsModal() {
 
   openModal('Episode Feed').then(() => {
     if (animeData.find(a => (a.updateFrom !== undefined || !a.session))) startLoading();
-    else done();
+    else done(false);
   });
 
   function startLoading() {
@@ -5236,6 +5239,7 @@ function openNotificationsModal() {
         </div>
         <span><span class="anitracker-loaded-amount">0</span><span>/${oldStorage.notifications.anime.length}</span></span>
       </div>`).appendTo('#anitracker-modal-body .anitracker-modal-list');
+    $('.anitracker-last-refreshed').parent().css('height','0');
 
     queue.push(...animeData);
     animeData.length = 0;
@@ -5268,7 +5272,7 @@ function openNotificationsModal() {
     else done();
   }
 
-  function done() {
+  function done(fromRefresh = true) {
     const storage = getStorage();
     let removedAnime = 0;
     for (const anime of storage.notifications.anime) {
@@ -5292,9 +5296,12 @@ function openNotificationsModal() {
       return;
     }
     $('#anitracker-notifications-list-spinner').remove();
-    storage.notifications.episodes.sort((a,b) => a.time < b.time ? 1 : -1);
-    storage.notifications.lastUpdated = Date.now();
-    saveData(storage);
+    if (fromRefresh) {
+      storage.notifications.episodes.sort((a,b) => a.time < b.time ? 1 : -1);
+      storage.notifications.lastUpdated = Date.now();
+      saveData(storage);
+      $('.anitracker-last-refreshed').text(getLastRefreshedText(storage.notifications.lastUpdated)).parent().css('height','');
+    }
     currentNotificationIndex = 0;
     if (!storage.notifications.episodes.length) {
       $('<div class="anitracker-center-content" style="height:75px;align-items:center;"><span>Nothing here yet!</span></div>')
@@ -5304,6 +5311,11 @@ function openNotificationsModal() {
       addToList(20);
       setModalShift(shouldShiftModal());
     }
+  }
+
+  function getLastRefreshedText(value) {
+    if (!value) return "Never";
+    return `${timeSince(value)} ago`;
   }
 
   function addToList(num) {
