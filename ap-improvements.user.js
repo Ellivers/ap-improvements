@@ -5070,7 +5070,7 @@ function openNotificationsModal() {
     <div class="btn-group">
       <button class="btn btn-secondary anitracker-refresh-notifs" title="Refresh the feed">
         <i class="fa fa-refresh" aria-hidden="true"></i>
-        &nbsp;Refresh Feed
+        &nbsp;Refresh
       </button>
     </div>
   </div>
@@ -5220,7 +5220,7 @@ function openNotificationsModal() {
   const queue = [];
 
   openModal('Episode Feed').then(() => {
-    if (animeData.find(a => !a.session)) startLoading();
+    if (animeData.find(a => (a.updateFrom !== undefined || !a.session))) startLoading();
     else done();
   });
 
@@ -5295,7 +5295,8 @@ function openNotificationsModal() {
     saveData(storage);
     currentNotificationIndex = 0;
     if (!storage.notifications.episodes.length) {
-      $("<span>Nothing here yet!</span>").appendTo('#anitracker-modal-body .anitracker-modal-list');
+      $('<div class="anitracker-center-content" style="height:75px;align-items:center;"><span>Nothing here yet!</span></div>')
+      .appendTo('#anitracker-modal-body .anitracker-modal-list');
     }
     else {
       addToList(20);
