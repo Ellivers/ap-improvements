@@ -3413,15 +3413,17 @@ const animeInfoFunctions = [
   },
   {
     "id": "storage_notification_anime",
-    "outputs": ["id","name"],
+    "outputs": ["id","name","poster","session"],
     "instant": true,
     "fn": (iinfo = {}, config = {}) => {
       const storage = getStorage();
-      const found = storage.notifications.anime.find(a => matchDataPartial(a,iinfo,["name","id"]));
+      const found = storage.notifications.anime.find(a => matchDataPartial(a,iinfo,["name","id","poster"]));
       if (!found) return undefined;
       return {
         old: {
           name: found.name,
+          poster: found.poster,
+          session: found.session,
         },
         new: {
           id: found.id,
@@ -7824,7 +7826,6 @@ function setupContinueWatchingSection() {
     const promise = siteVars.cached.animeSession.length ? waitTime(200) : getAnimeSession({},{justCache:true});
     loadUntilPromise($('#anitracker-modal-body .anitracker-modal-list'), promise).then(() => {
       layoutEntries();
-      setModalSubtitle('Bookmarked entries have icons');
     });
 
     if (!isMobileOrTablet()) setTimeout(() => {
