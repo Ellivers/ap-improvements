@@ -1,8 +1,14 @@
 ### 4.12.0 (in development)
+- Due to site changes slowing things down significantly:
+  - The Continue Watching section will now only show anime posters, and no longer show episode snapshots
+  - The Relative Episode Numbers option will no longer work on the homepage
 - Added keybinds for going to the start and end of a video
   - Default keybinds are Home and End, respectively
 - Made the keybind for going to the previous modal menu modifiable
   - Default keybind is Backspace
+- Updated Continue Watching section
+  - Updated loading styling
+  - It now shows each episode as it's loaded
 - Changed the way modal menus are laid out
   - In most menus, the close/back button now shares space with the menu title
   - Menu titles and subtitles are now centered and always at the top of the modal
@@ -17,9 +23,11 @@
 - Tab focusing the link for the previous/next episode/anime now shows an outline
 - The page is no longer scrolled when pressing a keybind that would otherwise do so
 - Made the section text of the Options menu bold
+- Fixed various loading issues from site changes
 - Fixed session refreshing sometimes not working properly
 - Fixed the no bookmarks text disappearing when changing the bookmark sorting/layout
-- Fixed some links in the Manage Data menu still using IDs instead of names 
+- Fixed some links in the Manage Data menu still using IDs instead of names
+- Fixed potential anime data issue for certain anime
 - Various other fixes
 
 ### 4.11.1 (2026-08-20)
