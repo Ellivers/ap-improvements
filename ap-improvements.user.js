@@ -374,8 +374,8 @@ const translations = {
     "info.index.filter_results": "Filter results: %1",
     "info.timestamp_edit_done": "You can open an issue %1 to get these added.",
     "info.episode_feed.no_entries": "Use the %1 button on an ongoing anime to add it to the feed.",
-    "info.episode_feed.latest_episode": "Latest episode: %1",
-    "info.episode_feed.latest_episode.none_found": "None found",
+    "info.manage_feed.latest_episode": "Latest episode: %1",
+    "info.manage_feed.latest_episode.none_found": "None found",
     "info.episode_feed.error": "An error occurred with the following anime:",
     "info.episode_feed.empty": "Nothing here yet!",
     "info.bookmarks.empty": "No bookmarks yet!",
@@ -4361,6 +4361,10 @@ function getSeasonName(season) {
   return ["winter","spring","summer","fall"][season];
 }
 
+function getSeasonText(season) {
+  return getText(`season.${season}`);
+}
+
 function getBestThumbnailUrl() {
   if (!isEpisode()) return;
   const selected = {
@@ -5603,7 +5607,7 @@ function openNotificationsModal() {
 
     openModal('Manage Episode Feed', openNotificationsModal, {hideAnimation: !animation});
     if (!storage.notifications.anime.length) {
-      const html = toHtmlCodes(getText('info.manage_feed.no_entries', ['HTML'])).replace('HTML', '<i class="fa fa-bell" title="bell"></i>');
+      const html = toHtmlCodes(getText('info.manage_feed.empty', ['HTML'])).replace('HTML', '<i class="fa fa-bell" title="bell"></i>');
       $(`<span>${html}</span>`).appendTo('#anitracker-modal-body .anitracker-modal-list');
       makeSchedule(storage.settings.notifScheduleStart);
       return;
@@ -5615,7 +5619,7 @@ function openNotificationsModal() {
         const latestEp = toUTCDate(g.latest_episode);
         const latestEpString = g.latest_episode !== undefined
         ? `${getDayName(latestEp.getDay())} ${latestEp.toLocaleTimeString([], {timeStyle:'short'})} (${timeAgoText(latestEp.getTime())})`
-        : getText('info.episode_feed.latest_episode.none_found');
+        : getText('info.manage_feed.latest_episode.none_found');
         const data = await getAnimeData({
           id: g.id,
           name: g.name
@@ -5627,7 +5631,7 @@ function openNotificationsModal() {
             ${toHtmlCodes(g.name)}
           </a><br>
           <span>
-            ${toHtmlCodes(getText('info.episode_feed.latest_episode', [latestEpString]))}
+            ${toHtmlCodes(getText('info.manage_feed.latest_episode', [latestEpString]))}
           </span><br>
           <div class="btn-group">
             <button class="btn btn-secondary anitracker-delete-button anitracker-flat-button" title="${toHtmlCodes(getText('title.button.manage_feed.remove'))}">
@@ -5899,7 +5903,7 @@ function openBookmarksModal() {
   <div style="display: flex;gap: 8px;flex-wrap: wrap;">
     <div class="btn-group">
       <input autocomplete="off" class="form-control anitracker-text-input-bar anitracker-modal-search" placeholder="${toHtmlCodes(getText('placeholder.search'))}">
-      <button dir="down" class="btn btn-secondary dropdown-toggle anitracker-reverse-order-button anitracker-list-btn" title="${toHtmlCodes(getText('title.button.list.reverse_sort'))}"></button>
+      <button dir="down" class="btn btn-secondary dropdown-toggle anitracker-reverse-order-button anitracker-list-btn" title="${toHtmlCodes(getText('title.button.bookmarks.reverse_sort'))}"></button>
     </div>
     <div class="btn-group anitracker-sort-method-btns">
       <button data-sort="recent" class="btn btn-secondary" title="${toHtmlCodes(getText('title.button.bookmarks.sort.recent'))}" ${sort === 'recent' ? 'disabled' : ''}><i class="fa fa-history" aria-hidden="true"></i></button>
@@ -7503,42 +7507,64 @@ function loadIndexPage() {
 
   $('#anitracker-time-search-button').on('click', () => {
     $('#anitracker-modal-body').empty();
+    const texts = {
+      enableSwitch: toHtmlCodes(getText('switch.index.season_filter.enable')),
+      enableSwitchTitle: toHtmlCodes(getText('title.switch.index.season_filter.enable')),
+      invertSwitch: toHtmlCodes(getText('switch.index.season_filter.invert')),
+      invertSwitchTitle: toHtmlCodes(getText('title.switch.index.season_filter.invert')),
+      fromLabel: toHtmlCodes(getText('label.index.season_filter.from')),
+      fromLabelTitle: toHtmlCodes(getText('title.label.index.season_filter.from')),
+      toLabel: toHtmlCodes(getText('label.index.season_filter.to')),
+      toLabelTitle: toHtmlCodes(getText('title.label.index.season_filter.to')),
+      yearPlaceholder: toHtmlCodes(getText('placeholder.index.season_filter.year')),
+      seasonFromTitle: toHtmlCodes(getText('title.button.index.season_filter.season.from')),
+      seasonToTitle: toHtmlCodes(getText('title.button.index.season_filter.season.to')),
+      copyToLowerTitle: toHtmlCodes(getText('title.button.index.season_filter.copy_to_lower')),
+      saveButton: toHtmlCodes(getText('button.save')),
+      saveButtonTitle: toHtmlCodes(getText('title.button.index.season_filter.save')),
+    };
 
     $(`
     <div class="custom-control custom-switch">
       <input type="checkbox" class="custom-control-input" id="anitracker-settings-enable-switch">
-      <label class="custom-control-label" for="anitracker-settings-enable-switch" title="Enable season range filter">Enable</label>
+      <label class="custom-control-label" for="anitracker-settings-enable-switch" title="${texts.enableSwitchTitle}">
+        ${texts.enableSwitch}
+      </label>
     </div>
     <div class="custom-control custom-switch">
       <input type="checkbox" class="custom-control-input" id="anitracker-settings-invert-switch" disabled>
-      <label class="custom-control-label" for="anitracker-settings-invert-switch" title="Invert season range">Invert</label>
+      <label class="custom-control-label" for="anitracker-settings-invert-switch" title="${texts.invertSwitchTitle}">
+        ${texts.invertSwitch}
+      </label>
     </div>
     <br>
     <div class="anitracker-season-group" id="anitracker-season-from">
-      <label for="anitracker-from-year-input" title="Select start season year">From:</label>
+      <label for="anitracker-from-year-input" title="${texts.fromLabelTitle}">${texts.fromLabel}</label>
       <div class="btn-group">
-        <input autocomplete="off" id="anitracker-from-year-input" class="form-control anitracker-text-input-bar anitracker-year-input" disabled placeholder="Year" type="number">
+        <input autocomplete="off" id="anitracker-from-year-input" class="form-control anitracker-text-input-bar anitracker-year-input" disabled placeholder="${texts.yearPlaceholder}" type="number">
       </div>
       <div class="btn-group">
-        <button class="btn dropdown-toggle btn-secondary anitracker-season-dropdown-button" disabled data-bs-toggle="dropdown" data-toggle="dropdown" data-value="Spring" title="Select start season quarter">Spring</button>
-        <button class="btn btn-secondary" id="anitracker-season-copy-to-lower" title="Copy the 'from' season to the 'to' season">
+        <button class="btn dropdown-toggle btn-secondary anitracker-season-dropdown-button" disabled data-bs-toggle="dropdown" data-toggle="dropdown" data-value="Spring" title="${texts.seasonFromTitle}"></button>
+        <button class="btn btn-secondary" id="anitracker-season-copy-to-lower" title="${texts.copyToLowerTitle}">
           <i class="fa fa-arrow-circle-down" aria-hidden="true"></i>
         </button>
       </div>
     </div>
     <div class="anitracker-season-group" id="anitracker-season-to">
-      <label for="anitracker-to-year-input" title="Select end season year">To:</label>
+      <label for="anitracker-to-year-input" title="${texts.toLabelTitle}">${texts.toLabel}</label>
       <div class="btn-group">
-        <input autocomplete="off" id="anitracker-to-year-input" class="form-control anitracker-text-input-bar anitracker-year-input" disabled placeholder="Year" type="number">
+        <input autocomplete="off" id="anitracker-to-year-input" class="form-control anitracker-text-input-bar anitracker-year-input" disabled placeholder="${texts.yearPlaceholder}" type="number">
       </div>
       <div class="btn-group">
-        <button class="btn dropdown-toggle btn-secondary anitracker-season-dropdown-button" disabled data-bs-toggle="dropdown" data-toggle="dropdown" data-value="Spring" title="Select end season quarter">Spring</button>
+        <button class="btn dropdown-toggle btn-secondary anitracker-season-dropdown-button" disabled data-bs-toggle="dropdown" data-toggle="dropdown" data-value="Spring" title="${texts.seasonToTitle}"></button>
       </div>
     </div>
     <br>
     <div>
       <div class="btn-group">
-        <button class="btn btn-primary" id="anitracker-modal-confirm-button">Save</button>
+        <button class="btn btn-primary" id="anitracker-modal-confirm-button" title="${texts.saveButtonTitle}">
+          ${texts.saveButton}
+        </button>
       </div>
     </div>`).appendTo('#anitracker-modal-body');
 
@@ -7553,19 +7579,20 @@ function loadIndexPage() {
     $('#anitracker-settings-invert-switch').prop('checked', timeframeSettings.inverted);
 
     $('#anitracker-season-copy-to-lower').on('click', () => {
-      const seasonName = $('#anitracker-season-from .anitracker-season-dropdown-button').data('value');
+      const seasonName = $('#anitracker-season-from .anitracker-season-dropdown-button').text();
+      const seasonValue = $('#anitracker-season-from .anitracker-season-dropdown-button').data('value');
       $('#anitracker-season-to .anitracker-year-input').val($('#anitracker-season-from .anitracker-year-input').val());
-      $('#anitracker-season-to .anitracker-season-dropdown-button').data('value', seasonName);
+      $('#anitracker-season-to .anitracker-season-dropdown-button').data('value', seasonValue);
       $('#anitracker-season-to .anitracker-season-dropdown-button').text(seasonName);
     });
 
     $(`<div class="dropdown-menu anitracker-dropdown-content anitracker-season-dropdown">`).insertAfter('.anitracker-season-dropdown-button');
-    ['Winter','Spring','Summer','Fall'].forEach(g => { $(`<button ref="${g.toLowerCase()}">${g}</button>`).appendTo('.anitracker-season-dropdown') });
+    ['winter','spring','summer','fall'].forEach(g => { $(`<button value="${g}">${toHtmlCodes(getSeasonText(g))}</button>`).appendTo('.anitracker-season-dropdown') });
 
     $('.anitracker-season-dropdown button').on('click', (e) => {
       const pressed = $(e.target);
       const btn = pressed.parents().eq(1).find('.anitracker-season-dropdown-button');
-      btn.data('value', pressed.text());
+      btn.data('value', pressed.attr('value'));
       btn.text(pressed.text());
     });
 
@@ -7596,15 +7623,17 @@ function loadIndexPage() {
       if (enabled) {
         for (const input of $('.anitracker-year-input')) {
           if (/^\d{4}$/.test($(input).val())) continue;
-          alert('[AnimePahe Improvements]\n\nYear values must both be 4 numbers.');
+          alert('[AnimePahe Improvements]\n\n' + getText('message.index.season_filter.invalid_year'));
           return;
         }
         if (to.year < from.year || (to.year === from.year && to.season < from.season)) {
-          alert('[AnimePahe Improvements]\n\nSeason times must be from oldest to newest.' + (to.season === 0 ? '\n(Winter is the first quarter of the year)' : ''));
+          alert('[AnimePahe Improvements]\n\n'
+            + getText('message.index.season_filter.invalid_season_order')
+            + (to.season === 0 ? `\n${getText('message.index.season_filter.invalid_season_order.tip')}` : ''));
           return;
         }
         if (to.year - from.year > 100) {
-          alert('[AnimePahe Improvements]\n\nYear interval cannot be more than 100 years.');
+          alert('[AnimePahe Improvements]\n\n' + getText('message.index.season_filter.too_broad'));
           return;
         }
         removeSeasonFilters(); // Put here so it doesn't remove existing filters if input is invalid
@@ -7651,7 +7680,7 @@ function loadIndexPage() {
   $.anitrackerCachedScript('https://cdn.jsdelivr.net/npm/fuse.js@7.0.0', function() {
     let typingTimer;
     const elem = $('#anitracker-anime-list-search');
-    elem.prop('disabled', false).attr('placeholder', 'Search');
+    elem.prop('disabled', false).attr('placeholder', getText('placeholder.search'));
 
     elem.on('anitracker:search', function() {
       if ($(this).val() !== '') animeListSearch();
@@ -8029,7 +8058,7 @@ function loadUntilPromise(elem, promise) {
   const spinner = $(`
   <div class="anitracker-spinner anitracker-center-content" style="width: 100%;min-height:5rem;align-items:center;">
     <div class="spinner-border" role="status">
-      <span class="sr-only">Loading...</span>
+      <span class="sr-only">${toHtmlCodes(getText('screenreader.loading'))}</span>
     </div>
   </div>`).appendTo(elem);
 
@@ -8101,13 +8130,16 @@ function setupContinueWatchingSection() {
 
   $(`
   <div id="anitracker-continue-watching-section">
-    <h2><i class="fa fa-play" aria-hidden="true" style="margin: 5px; margin-right: 1rem;"></i>Continue Watching</h2>
+    <h2>
+      <i class="fa fa-play" aria-hidden="true" style="margin: 5px; margin-right: 1rem;"></i>
+      ${toHtmlCodes(getText('header.continue_watching'))}
+    </h2>
     <div class="anitracker-episode-list-wrapper">
       <div class="episode-list row"></div>
     </div>
     <div class="anitracker-center-content" style="margin-top:-1.5rem;margin-bottom:5px;">
-      <button id="anitracker-continue-watching-show-more-button" class="btn btn-dark" title="View all episodes with saved progress">
-        <i class="fa fa-history" aria-hidden="true"></i>&nbsp;Show More...
+      <button id="anitracker-continue-watching-show-more-button" class="btn btn-dark" title="${toHtmlCodes(getText('title.button.continue_watching.show_more'))}">
+        <i class="fa fa-history" aria-hidden="true"></i>&nbsp;${toHtmlCodes(getText('button.continue_watching.show_more'))}
       </button>
     </div>
   </div>`).prependTo('.latest-release');
@@ -8117,7 +8149,7 @@ function setupContinueWatchingSection() {
     if (!$('.anitracker-episode-list-wrapper .episode').length) {
       $(`
       <div class="anitracker-center-content" style="align-self:center;width:100%;position:absolute;">
-        <span>Nothing to continue watching!</span>
+        <span>${toHtmlCodes(getText('info.continue_watching.empty'))}</span>
       </div>`).appendTo('.anitracker-episode-list-wrapper .episode-list.row');
     }
   });
@@ -8128,8 +8160,8 @@ function setupContinueWatchingSection() {
 
     $(`
     <div class="btn-group" style="margin-left: 5px;">
-      <input autocomplete="off" class="form-control anitracker-text-input-bar anitracker-modal-search" placeholder="Search">
-      <button dir="down" class="btn btn-secondary dropdown-toggle anitracker-reverse-order-button anitracker-list-btn" title="Sort direction (down is default, and means newest first)"></button>
+      <input autocomplete="off" class="form-control anitracker-text-input-bar anitracker-modal-search" placeholder="${toHtmlCodes(getText('placeholder.search'))}">
+      <button dir="down" class="btn btn-secondary dropdown-toggle anitracker-reverse-order-button anitracker-list-btn" title="${toHtmlCodes(getText('title.button.list.reverse_sort'))}"></button>
     </div>
     <div class="anitracker-modal-list-container" style="margin-top:5px;">
       <div class="anitracker-modal-list" style="min-height: 100px;min-width: 200px;"></div>
@@ -8170,12 +8202,19 @@ function setupContinueWatchingSection() {
           </a>
           <a href="${href}" target="_blank" class="anitracker-text-section" title="${titleAttr}">
             <span class="anitracker-main-text">${toHtmlCodes(visibleAnimeName)}</span>
-            <span class="anitracker-normal-text">Episode ${entry.episodeNum}</span>
+            <span class="anitracker-normal-text">${toHtmlCodes(getText('generic.episode', [entry.episodeNum]))}</span>
             <span class="anitracker-secondary-info">${secondsToHMS(entry.time)}${entry.duration ? ' / ' + secondsToHMS(entry.duration) : ''}</span>
           </a>
           <div class="anitracker-button-section">
-            ${animeId ? '<button class="btn btn-dark anitracker-mark-watched-button" title="Mark as watched and remove"><i class="fa fa-eye" aria-hidden="true"></i>&nbsp;Watched</button>' : ''}
-            <button class="btn btn-dark anitracker-delete-button" title="Remove video progress"><i class="fa fa-trash" aria-hidden="true"></i>&nbsp;Remove</button>
+            ${animeId ? `
+              <button class="btn btn-dark anitracker-mark-watched-button" title="${toHtmlCodes(getText('title.button.video_progress.mark_watched'))}">
+                <i class="fa fa-eye" aria-hidden="true"></i>
+                &nbsp;${toHtmlCodes(getText('button.video_progress.mark_watched'))}
+              </button>` : ''}
+            <button class="btn btn-dark anitracker-delete-button" title="${toHtmlCodes(getText('title.button.video_progress.remove'))}">
+              <i class="fa fa-trash" aria-hidden="true"></i>
+              &nbsp;${toHtmlCodes(getText('button.video_progress.remove'))}
+            </button>
           </div>
         </div>`).appendTo('#anitracker-modal-body .anitracker-modal-list').data('anime-id', animeId).data('title', entry.animeName).data('episode', entry.episodeNum);
         if (!Array.from($(elem).find('a,span')).map(el => $(el).text()).join().toLowerCase().includes($('.anitracker-modal-search').val().toLowerCase())) elem.hide();
@@ -8196,7 +8235,7 @@ function setupContinueWatchingSection() {
         if (!id) return;
 
         addWatched(+id, episode);
-        showMessage(`Marked "${name?.slice(0,16)}${name?.length > 16 ? '...' : ''}" episode ${episode} as watched`, 4000);
+        showMessage(getText('toast.video_progress.marked_watched',[`${name?.slice(0,16)}${name?.length > 16 ? '...' : ''}`,episode]), 4000);
       });
       $('.anitracker-video-progress-item .anitracker-delete-button').on('click', function() {
         const elem = $(this).parents(':eq(1)');
@@ -8208,7 +8247,7 @@ function setupContinueWatchingSection() {
         deleteEpisodeFromTracker(name, episode, id);
 
         removeVideoProgressElem(elem);
-        showMessage(`Removed "${name?.slice(0,16)}${name?.length > 16 ? '...' : ''}" episode ${episode}`, 4000);
+        showMessage(getText('toast.video_progress.removed',[`${name?.slice(0,16)}${name?.length > 16 ? '...' : ''}`,episode]), 4000);
       });
       scrollModalToTop();
       setModalShift(shouldShiftModal());
