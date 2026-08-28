@@ -7406,7 +7406,7 @@ function getEpisodeSessionFromUrl(url = window.location.toString()) {
 }
 
 function makeSearchable(string) {
-  return encodeURIComponent(string.replace(' -',' '));
+  return encodeURIComponent(string.replaceAll(' -',' '));
 }
 
 function getAnimeDataFromPage(page = $(document), isEpisode) {
