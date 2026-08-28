@@ -4954,7 +4954,7 @@ function displayCollection(seriesList, elem) {
       </div>`).appendTo('#anitracker-modal-body .anitracker-modal-list');
     }
 
-    openModal(getText('modal_title.collection', [seriesList.length]), undefined, {subtitle: 'May not be entirely accurate'});
+    openModal(getText('modal_title.collection', [seriesList.length]), undefined, {subtitle: getText('modal_subtitle.collection')});
     scrollModalToTop();
   });
 }
@@ -7111,7 +7111,7 @@ function loadIndexPage() {
       </div>`;
     });
 
-    if (!entries.length) elements = `<div class="col-12 col-md-6">No results found.</div>`;
+    if (!entries.length) elements = `<div class="col-12 col-md-6">${toHtmlCodes(getText('info.index.no_results'))}</div>`;
 
     Array.from($(elements)).forEach(a => {$(a).appendTo('#anitracker-search-results').find('a').attr('title',$(a).find('a').text());});
   }
@@ -7170,7 +7170,7 @@ function loadIndexPage() {
     const elem = $(`
     <div class="anitracker-filter-spinner anitracker-spinner ${coverScreen ? 'screen' : 'small'}">
       <div class="spinner-border" role="status">
-        <span class="sr-only">Loading...</span>
+        <span class="sr-only">${toHtmlCodes(getText('screenreader.loading'))}</span>
       </div>
       <span>0%</span>
     </div>`);
@@ -7423,6 +7423,9 @@ function loadIndexPage() {
   $('.anitracker-filter-rules').on('click', (e) => {
     const elem1 = $(e.currentTarget);
     const filterType = elem1.data('filter-type');
+    const ruleTypeTitle = toHtmlCodes(getText('title.button.index.rule_type'));
+    const ruleTypeAnd = toHtmlCodes(getText('button.index.rule_type.and'));
+    const ruleTypeOr = toHtmlCodes(getText('button.index.rule_type.or'));
 
     const disableInclude = ['type','demographic'].includes(filterType) ? 'disabled' : '';
 
@@ -7431,20 +7434,33 @@ function loadIndexPage() {
     $(`
     <div class="anitracker-filter-rule-selection" ${disableInclude} data-rule-type="include" style="background-color: #485057;">
       <i class="fa fa-plus" aria-hidden="true"></i>
-      <span>Include:</span>
-      <div class="btn-group"><button ${disableInclude} title="Select this rule type">and</button><button ${disableInclude} title="Select this rule type">or</button></div>
+      <span>${toHtmlCodes(getText('label.index.rule.include'))}</span>
+      <div class="btn-group">
+        <button ${disableInclude} title="${ruleTypeTitle}">${ruleTypeAnd}</button>
+        <button ${disableInclude} title="${ruleTypeTitle}">${ruleTypeOr}</button>
+      </div>
     </div>
     <div class="anitracker-filter-rule-selection anitracker-center-content" data-rule-type="combined">
       <span>-</span>
-      <div class="btn-group"><button title="Select this rule type">and</button><button title="Select this rule type">or</button></div>
+      <div class="btn-group">
+        <button title="${ruleTypeTitle}">${ruleTypeAnd}</button>
+        <button title="${ruleTypeTitle}">${ruleTypeOr}</button>
+      </div>
       <span>-</span>
     </div>
     <div class="anitracker-filter-rule-selection" data-rule-type="exclude" style="background-color: #485057;">
       <i class="fa fa-minus" aria-hidden="true"></i>
-      <span>Exclude:</span>
-      <div class="btn-group"><button title="Select this rule type">and</button><button title="Select this rule type">or</button></div>
+      <span>${toHtmlCodes(getText('label.index.rule.exclude'))}</span>
+      <div class="btn-group">
+        <button title="${ruleTypeTitle}">${ruleTypeAnd}</button>
+        <button title="${ruleTypeTitle}">${ruleTypeOr}</button>
+      </div>
     </div>
-    <div style="display: flex;justify-content: center; margin-top: 10px;"><button class="btn btn-secondary anitracker-flat-button" id="anitracker-reset-filter-rules" title="Reset to defaults">Reset</button></div>
+    <div style="display: flex;justify-content: center; margin-top: 10px;">
+      <button class="btn btn-secondary anitracker-flat-button" id="anitracker-reset-filter-rules" title="${toHtmlCodes(getText('title.button.index.reset_rules'))}">
+        ${toHtmlCodes(getText('button.index.reset_rules'))}
+      </button>
+    </div>
     `).appendTo('#anitracker-modal-body');
 
     function refreshBtnStates() {
