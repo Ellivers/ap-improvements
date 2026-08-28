@@ -6074,13 +6074,13 @@ async function updateNotifications(animeName, storage = getStorage()) {
     name: animeName,
     id: nobj.id
   },['session','poster','name'],{ignored:['storage_notification_anime']});
-  clearInterval(stallInterval);
+  removeStallInterval(stallInterval);
 
   if (!data.session || !data.name) return 1;
 
   const stallInterval2 = makeStallInterval([data.session]);
   const episodes = await getAllEpisodes(data.session, 'desc');
-  clearInterval(stallInterval2)
+  removeStallInterval(stallInterval2)
 
   if (episodes === undefined) return 2;
   if (!episodes.length) return 3;
@@ -6150,6 +6150,11 @@ async function updateNotifications(animeName, storage = getStorage()) {
     resolve(data);
   });
 
+  function removeStallInterval(interval) {
+    clearInterval(interval);
+    $('#anitracker-notifications-list-spinner > #anitracker-notifications-stall-info').remove();
+  }
+
   function makeStallInterval(match) {
     return onStalledRequest(
       [match],
@@ -6163,9 +6168,7 @@ async function updateNotifications(animeName, storage = getStorage()) {
         }
         elem.find('.anitracker-seconds').text(secondsStalled);
       },
-      () => {
-        $('#anitracker-notifications-list-spinner > #anitracker-notifications-stall-info').remove();
-      }
+      removeStallInterval
     );
   }
 }
