@@ -6001,6 +6001,24 @@ function setBookmarkStatus(id, status) {
   saveData(storage);
 }
 
+// Calls a function each second a request that includes an entry in "match" is stalled
+// Returns the interval, to cancel after the request is done
+function onStalledRequest(match, callback, stallOver = function(){}) {
+  let stalledSeconds = 0;
+  const interval = setInterval(() => {
+    if (!siteVars.stalledRequests.find(r => match.find(m => r.includes(m)))) {
+      if (stalledSeconds) {
+        clearInterval(interval);
+        stallOver(stalledSeconds);
+      }
+      return;
+    }
+    stalledSeconds++;
+    callback(stalledSeconds);
+  }, 1000);
+  return interval;
+}
+
 function toggleNotifications(name, id = undefined) {
   const storage = getStorage();
   const found = (() => {
@@ -6051,12 +6069,19 @@ async function updateNotifications(animeName, storage = getStorage()) {
     toggleNotifications(animeName);
     return 0;
   }
+  const stallInterval = makeStallInterval([makeSearchable(animeName)]);
   const data = await getAnimeData({
     name: animeName,
     id: nobj.id
   },['session','poster','name'],{ignored:['storage_notification_anime']});
+  clearInterval(stallInterval);
+
   if (!data.session || !data.name) return 1;
+
+  const stallInterval2 = makeStallInterval([data.session]);
   const episodes = await getAllEpisodes(data.session, 'desc');
+  clearInterval(stallInterval2)
+
   if (episodes === undefined) return 2;
   if (!episodes.length) return 3;
 
@@ -6124,6 +6149,25 @@ async function updateNotifications(animeName, storage = getStorage()) {
     if (!data.id) data.id = nobj.id;
     resolve(data);
   });
+
+  function makeStallInterval(match) {
+    return onStalledRequest(
+      [match],
+      (secondsStalled) => {
+        let elem = $('#anitracker-notifications-list-spinner > #anitracker-notifications-stall-info');
+        if (!elem.length) {
+          elem = $(`
+            <span id="anitracker-notifications-stall-info">
+              <span>Waiting... (<span class="anitracker-seconds">0</span>)</span>
+            </span>`).appendTo('#anitracker-notifications-list-spinner');
+        }
+        elem.find('.anitracker-seconds').text(secondsStalled);
+      },
+      () => {
+        $('#anitracker-notifications-list-spinner > #anitracker-notifications-stall-info').remove();
+      }
+    );
+  }
 }
 
 const paramArray = Array.from(new URLSearchParams(window.location.search));
