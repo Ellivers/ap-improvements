@@ -3093,6 +3093,7 @@ const siteVars = {
   modalEvents: [],
   messageTimeout: undefined,
   ongoingRequests: [],
+  stalledRequests: [], // List of URLs
   cached: {
     animeSearch: [],
     firstEpisode: {},
@@ -7354,11 +7355,13 @@ async function getResponse(qurl) {
     const req = new XMLHttpRequest();
     req.open('GET', qurl, true);
     req.onload = () => {
+      siteVars.stalledRequests = siteVars.stalledRequests.filter(r => r !== qurl);
       if (req.status === 200) {
         resolve(JSON.parse(req.response));
         return;
       }
       if (req.status === 429) {
+        siteVars.stalledRequests.push(qurl);
         waitTime(1000).then(() => {
           req.open('GET', qurl, true);
           req.send();
@@ -7382,11 +7385,13 @@ function asyncGetResponseData(qurl) {
     const req = new XMLHttpRequest();
     req.open('GET', qurl, true);
     req.onload = () => {
+      siteVars.stalledRequests = siteVars.stalledRequests.filter(r => r !== qurl);
       if (req.status === 200) {
         resolve(JSON.parse(req.response).data);
         return;
       }
       if (req.status === 429) {
+        siteVars.stalledRequests.push(qurl);
         waitTime(1000).then(() => {
           req.open('GET', qurl, true);
           req.send();
