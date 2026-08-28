@@ -4886,10 +4886,11 @@ function timeSince(date) {
   return seconds + " second" + (seconds !== 1 ? 's' : '');
 }
 
-if (window.location.pathname.startsWith('/customlink')) {
+if (/^\/(customlink|anitracker-redirect)/.test(window.location.pathname)) {
   (async () => {
     document.title = "Redirecting... :: animepahe";
     $('h1').text('Redirecting...');
+    const includeRef = window.location.pathname.startsWith('/customlink');
 
     const parts = {
       animeSession: undefined,
@@ -4897,39 +4898,46 @@ if (window.location.pathname.startsWith('/customlink')) {
       time: -1
     };
     const searchParams = new URLSearchParams(window.location.search);
+    const sessionParam = searchParams.get('s');
+    const animeParam = searchParams.get('a');
+    const episodeParam = searchParams.get('e');
+    const timeParam = searchParams.get('t');
     const destination = await (async () => {
-      const animeParam = searchParams.get('a');
-      if (!animeParam) return;
-
-      const iinfo = {};
-      if (+animeParam) iinfo.id = +animeParam; // animeParam can be both an ID (legacy) and a name
-      else iinfo.name = decodeURIComponent(animeParam);
-
-      let animeData;
-      animeData = await getAnimeData(iinfo,["session","name"]);
-      if (!animeData.session) {
-        animeData = await getAnimeData(iinfo,["session","name"],{allowGuessing:true});
-        if (!animeData.session) return;
+      if (sessionParam) {
+        const sessionResponse = await getPageResponse(`/anime/${sessionParam}`);
+        if (sessionResponse.status === 200) parts.animeSession = sessionParam;
       }
-      if (iinfo.name && iinfo.name !== animeData.name && !confirm(`[AnimePahe Improvements]\n\nCouldn't find any anime with name "${iinfo.name}".\nGo to "${animeData.name}" instead?`)) return;
-      parts.animeSession = animeData.session;
 
-      const episodeParam = searchParams.get('e');
+      if (animeParam && !parts.animeSession) {
+        const iinfo = {};
+        if (+animeParam) iinfo.id = +animeParam; // animeParam can be both an ID (legacy) and a name
+        else iinfo.name = decodeURIComponent(animeParam);
+  
+        let animeData;
+        animeData = await getAnimeData(iinfo,["session","name"]);
+        if (!animeData.session) {
+          animeData = await getAnimeData(iinfo,["session","name"],{allowGuessing:true});
+          if (!animeData.session) return;
+        }
+        if (iinfo.name && iinfo.name !== animeData.name && !confirm(`[AnimePahe Improvements]\n\nCouldn't find any anime with name "${iinfo.name}".\nGo to "${animeData.name}" instead?`)) return;
+        parts.animeSession = animeData.session;
+      }
+      if (!parts.animeSession) return;
+      
       if (episodeParam) {
         const epData = await getEpisodeData(parts.animeSession, +episodeParam);
         parts.episodeSession = epData?.session;
       }
-      const timeParam = searchParams.get('t');
       if (timeParam) parts.time = +timeParam;
 
       if (parts.animeSession && parts.episodeSession && parts.time >= 0) {
-        return '/play/' + parts.animeSession + '/' + parts.episodeSession + '?time=' + parts.time + '&ref=customlink';
+        return '/play/' + parts.animeSession + '/' + parts.episodeSession + '?time=' + parts.time + (includeRef ? '&ref=customlink' : '');
       }
       if (parts.animeSession && parts.episodeSession && parts.time === -1) {
-        return '/play/' + parts.animeSession + '/' + parts.episodeSession + '?ref=customlink';
+        return '/play/' + parts.animeSession + '/' + parts.episodeSession + (includeRef ? '?ref=customlink' : '');
       }
       if (parts.animeSession && !parts.episodeSession) {
-        return '/anime/' + parts.animeSession + '?ref=customlink';
+        return '/anime/' + parts.animeSession + (includeRef ? '?ref=customlink' : '');
       }
       return undefined;
     })();
@@ -5113,7 +5121,7 @@ function openNotificationsModal() {
           id: g.id,
           name: g.name
         }, ["session"], {requireInstant:true,ignored:['storage_notification_anime']});
-        const href = data.session ? `/anime/${data.session}` : `/customlink?a=${encodeURIComponent(g.name)}`;
+        const href = data.session ? `/anime/${data.session}` : `/anitracker-redirect?a=${encodeURIComponent(g.name)}`;
         $(`
         <div class="anitracker-modal-list-entry" animeid="${g.id}" animename="${toHtmlCodes(g.name)}">
           <a href="${href}" target="_blank" title="${toHtmlCodes(g.name)}">
@@ -7610,8 +7618,8 @@ function setupContinueWatchingSection() {
         const animeId = data.id || entry.animeId;
         const href = (() => {
           if (data.session && data.episode_session) return `/play/${data.session}/${data.episode_session}`;
-          else if (data.session) return `/anime/${data.session}`;
-          return `/customlink?a=${encodeURIComponent(visibleAnimeName)}&e=${entry.episodeNum}`;
+          else if (data.session) return `/anitracker-redirect?s=${data.session}&a=${encodeURIComponent(visibleAnimeName)}&e=${entry.episodeNum}`;
+          return `/anitracker-redirect?a=${encodeURIComponent(visibleAnimeName)}&e=${entry.episodeNum}`;
         })();
 
         const elem = $(`
@@ -7881,10 +7889,10 @@ async function addContinueWatchingEpisodes(storage, episodeCount, clearAll = fal
     const epValue = getEpisodeValue(ep.episode, ep.episode2, storage.settings.relativeEpNums ? ep.firstEpisode : undefined);
     const href = (() => {
       if (ep.animeSession && ep.session) return `/play/${ep.animeSession}/${ep.session}`;
-      else if (ep.animeSession) return `/anime/${ep.animeSession}`;
-      else if (ep.title) return `/customlink?a=${encodeURIComponent(ep.title)}&e=${ep.episode}`;
+      else if (ep.animeSession) return `/anitracker-redirect?s=${ep.animeSession}&a=${encodeURIComponent(ep.title)}&e=${ep.episode}`;
+      else if (ep.title) return `/anitracker-redirect?a=${encodeURIComponent(ep.title)}&e=${ep.episode}`;
     })();
-    const animeHref = ep.animeSession ? `/anime/${ep.animeSession}` : `/customlink?a=${encodeURIComponent(ep.title)}`;
+    const animeHref = ep.animeSession ? `/anime/${ep.animeSession}` : `/anitracker-redirect?a=${encodeURIComponent(ep.title)}`;
 
     const elem = $(`
     <div class="episode-wrap col-12 col-sm-4">
@@ -7935,17 +7943,17 @@ async function addContinueWatchingEpisodes(storage, episodeCount, clearAll = fal
 
   continueWatchingStatus.inProgress = false;
   if (continueWatchingStatus.queue.length) addContinueWatchingEpisodes(getStorage(), continueWatchingStatus.queue.shift()); // Advance the queue
+}
 
-  function getPageResponse(qurl) {
-    const request = new XMLHttpRequest();
-    request.open('GET', qurl, true);
-    return new Promise(resolve => {
-      request.onload = () => {
-        resolve(request);
-      }
-      request.send();
-    });
-  }
+function getPageResponse(qurl) {
+  const request = new XMLHttpRequest();
+  request.open('GET', qurl, true);
+  return new Promise(resolve => {
+    request.onload = () => {
+      resolve(request);
+    }
+    request.send();
+  });
 }
 
 function getPageNum(elem = $('.pagination')) {
@@ -10572,7 +10580,7 @@ function addGeneralButtons() {
       });
       else if (dataType === 'videoTimes') [...storage.videoTimes].reverse().forEach(g => {
         const linkListObj = storage.linkList.find(a => a.animeId === g.animeId || a.animeName === g.animeName);
-        const href = linkListObj ? `/anime/${linkListObj.animeSession}` : `/customlink?a=${encodeURIComponent(g.animeName)}`;
+        const href = linkListObj ? `/anime/${linkListObj.animeSession}` : `/anitracker-redirect?a=${encodeURIComponent(g.animeName)}`;
         $(`
         <div class="anitracker-modal-list-entry">
           <span title="${toHtmlCodes(g.animeName)}">
@@ -10591,7 +10599,7 @@ function addGeneralButtons() {
         decodeWatched(storage.watched).reverse().forEach(g => {
           const linkListObj = storage.linkList.find(a => a.animeId === g.animeId);
           const episodes = g.episodes;
-          const href = linkListObj ? `/anime/${linkListObj.animeSession}` : `/customlink?a=${g.animeId}`;
+          const href = linkListObj ? `/anime/${linkListObj.animeSession}` : `/anitracker-redirect?a=${g.animeId}`;
           $(`
           <div class="anitracker-modal-list-entry" animeid="${g.animeId}">
             <span>
@@ -10647,7 +10655,7 @@ function addGeneralButtons() {
           else return `animename="${toHtmlCodes(g.animeName)}"`;
         })();
         const linkListObj = storage.linkList.find(a => a.animeId === g.animeId || a.animeName === g.animeName);
-        const href = linkListObj ? `/anime/${linkListObj.animeSession}` : `/customlink?a=${encodeURIComponent(g.animeName)}`;
+        const href = linkListObj ? `/anime/${linkListObj.animeSession}` : `/anitracker-redirect?a=${encodeURIComponent(g.animeName)}`;
         $(`
         <div class="anitracker-modal-list-entry">
           <span title="${toHtmlCodes(g.animeName)}">
