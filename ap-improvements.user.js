@@ -5232,7 +5232,7 @@ function openNotificationsModal() {
     const anime = queue.shift();
     const data = await updateNotifications(anime.name);
 
-    if (typeof data !== 'object' && data !== 3) {
+    if (typeof data !== 'object') {
       console.error(`[AnimePahe Improvements] Received response ${data} with anime`);
       $('#anitracker-notifications-list-spinner').remove();
       $(`<span class="text-danger">An error occurred with the following anime:</span><br>
@@ -5254,7 +5254,7 @@ function openNotificationsModal() {
     let removedAnime = 0;
     for (const anime of storage.notifications.anime) {
       if (anime.latest_episode === undefined || anime.dont_ask === true) continue;
-      const time = Date.now() - toUTCDate(anime.latest_episode).getTime();
+      const time = Date.now() - anime.latest_episode;
       if ((time / 1000 / 60 / 60 / 24 / 7) > 2) {
         const remove = confirm(`[AnimePahe Improvements]\n\nThe latest episode for ${anime.name} was more than 2 weeks ago. Remove it from the feed?\n\nThis prompt will not be shown again.`);
         if (remove === true) {
@@ -5301,7 +5301,7 @@ function openNotificationsModal() {
       const releaseTime = toUTCDate(ep.time);
       const elem = $(`
       <div class="anitracker-big-list-item anitracker-notification-item${ep.watched ? "" : " anitracker-notification-item-unwatched"} anitracker-temp" anime-data="${data.id}" episode-data="${ep.episode}">
-        <a href="/play/${data.session}/${ep.session}" target="_blank" title="${toHtmlCodes(data.name)}">
+        <a href="/anitracker-redirect?s=${data.session}&a=${toHtmlCodes(encodeURIComponent(data.name))}&e=${ep.episode}" target="_blank" title="${toHtmlCodes(data.name)}">
           <div class="anitracker-image-wrapper">
             <img src="${makePosterUrl(data.poster,'th')}" referrerpolicy="no-referrer" alt="[Thumbnail of ${toHtmlCodes(data.name)}]"}>
           </div>
@@ -6058,17 +6058,22 @@ function toggleNotifications(name, id = undefined) {
 }
 
 // Return values:
-// Object - success
+// Anime data object - success
 // 0 - anime was not in notifications storage (impossible?)
 // 1 - anime data request failed
 // 2 - episode list request failed
-// 3 - no episodes available (success)
 async function updateNotifications(animeName, storage = getStorage()) {
   let nobj = storage.notifications.anime.find(g => g.name === animeName);
   if (nobj === undefined) {
     toggleNotifications(animeName);
     return 0;
   }
+  const compareUpdateTime = getCompareTime();
+  if (nobj.updateFrom !== undefined) {
+    delete nobj.updateFrom;
+    saveData(storage);
+  }
+
   const stallInterval = makeStallInterval([makeSearchable(animeName)]);
   const data = await getAnimeData({
     name: animeName,
@@ -6079,76 +6084,64 @@ async function updateNotifications(animeName, storage = getStorage()) {
   if (!data.session || !data.name) return 1;
 
   const stallInterval2 = makeStallInterval([data.session]);
-  const episodes = await getAllEpisodes(data.session, 'desc');
-  removeStallInterval(stallInterval2)
+  const newestEpisodes = await getNewestEpisodes(data.session, compareUpdateTime);
+  removeStallInterval(stallInterval2);
 
-  if (episodes === undefined) return 2;
-  if (!episodes.length) return 3;
+  if (newestEpisodes === undefined) return 2;
 
   storage = getStorage();
   nobj = storage.notifications.anime.find(g => g.name === animeName); // Refresh the reference
-  return new Promise(resolve => {
-    if (storage.settings.relativeEpNums) {
-      siteVars.cached.firstEpisode[data.session] = episodes[episodes.length - 1].episode;
-    }
+  const episodes = storage.notifications.episodes;
 
-    nobj.latest_episode = episodes[0].created_at;
-
-    if (nobj.name !== data.name) {
-      for (const ep of storage.notifications.episodes) {
-        if (ep.animeName !== nobj.name) continue;
-        ep.animeName = data.name;
-      }
-      nobj.name = data.name;
-    }
-
-    const compareUpdateTime = nobj.updateFrom ?? storage.notifications.lastUpdated;
-    if (nobj.updateFrom !== undefined) delete nobj.updateFrom;
-
-    const watched = decodeWatched(storage.watched);
-
-    let hasFirstEpisode = false;
-
+  if (nobj.name !== data.name) {
     for (const ep of episodes) {
-      const epWatched = isWatched(nobj.id, ep.episode, watched) || getStoredTime(nobj.name, ep.episode, storage, nobj.id);
-
-      const found = storage.notifications.episodes.find(a => a.episode === ep.episode && (a.animeId === nobj.id || a.animeName === data.name));
-      if (found) {
-        found.session = ep.session;
-        if (!found.watched) found.watched = epWatched;
-        if (found.animeId === undefined) found.animeId = nobj.id;
-
-        // The list is backwards, so the first episode is at the end of it
-        if (ep.episode === episodes[episodes.length - 1].episode) hasFirstEpisode = true;
-        continue;
-      }
-
-      if (toUTCDate(ep.created_at).getTime() < compareUpdateTime) {
-        continue;
-      }
-
-      storage.notifications.episodes.push({
-        animeName: nobj.name,
-        animeId: nobj.id, // Anime entries had ID in first iteration, but episode entries did not
-        session: ep.session,
-        episode: ep.episode,
-        time: ep.created_at,
-        watched: epWatched
-      });
+      if (ep.animeName !== animeName) continue;
+      ep.animeName = data.name;
     }
+    nobj.name = data.name;
+  }
+  
+  // Add newly found episodes
+  for (const ep of newestEpisodes.reverse()) {
+    episodes.splice(0,0,{
+      animeName: data.name,
+      animeId: nobj.id, // Anime entries had ID in first iteration, but episode entries did not
+      session: ep.session,
+      episode: ep.episode,
+      time: ep.created_at
+    });
+  }
+  if (episodes.length) nobj.latest_episode = toUTCDate(episodes[0].time).getTime();
 
-    nobj.hasFirstEpisode = hasFirstEpisode;
+  const watched = decodeWatched(storage.watched);
 
-    const limit = getStorageLimits().notifications.episodes;
-    if (storage.notifications.episodes.length > limit) {
-      storage.notifications.episodes = storage.notifications.episodes.slice(0, limit);
-    }
+  for (const ep of episodes) {
+    if (ep.animeName !== data.name) continue;
 
-    saveData(storage);
+    const epWatched = isWatched(nobj.id, ep.episode, watched) || getStoredTime(nobj.name, ep.episode, storage, nobj.id);
 
-    if (!data.id) data.id = nobj.id;
-    resolve(data);
-  });
+    if (!ep.watched) ep.watched = epWatched;
+    if (!ep.animeId) ep.animeId = nobj.id;
+  }
+
+  if (storage.settings.relativeEpNums && nobj.hasFirstEpisode && episodes.length) {
+    siteVars.cached.firstEpisode[data.session] = episodes[episodes.length - 1].episode;
+  }
+
+  const limit = getStorageLimits().notifications.episodes;
+  if (storage.notifications.episodes.length > limit) {
+    storage.notifications.episodes = storage.notifications.episodes.slice(0, limit);
+  }
+
+  saveData(storage);
+
+  if (!data.id) data.id = nobj.id;
+  return data;
+
+  function getCompareTime() {
+    if (typeof nobj.latest_episode === 'string') nobj.latest_episode = toUTCDate(nobj.latest_episode).getTime(); // For old format
+    return nobj.latest_episode || nobj.updateFrom || storage.notifications.lastUpdated;
+  }
 
   function removeStallInterval(interval) {
     clearInterval(interval);
@@ -6170,6 +6163,33 @@ async function updateNotifications(animeName, storage = getStorage()) {
       },
       removeStallInterval
     );
+  }
+}
+
+async function getNewestEpisodes(session, untilTime, noCache = true) {
+  const finalList = [];
+  const [succeeded, episodeResponse] = await addUntilEp(1);
+  if (!episodeResponse) return undefined;
+
+  if (!episodeResponse.data.length) return finalList;
+  if (succeeded) return finalList;
+  if (episodeResponse.current_page === episodeResponse.last_page) return finalList;
+  console.log(episodeResponse, episodeResponse.data[0], episodeResponse.data[0]?.created_at, toUTCDate(episodeResponse.data[0]?.created_at).getTime(), toUTCDate(episodeResponse.data[0]?.created_at).getTime() >= untilTime)
+
+  for (let i = 2; i <= episodeResponse.last_page; i++) {
+    const [succeeded] = await(addUntilEp(i));
+    if (succeeded) return finalList;
+  }
+  return finalList;
+
+  async function addUntilEp(page) {
+    const episodeResponse = await getEpisodePageResponse(session, page, 'episode_desc', {noCache: noCache});
+
+    for (const ep of episodeResponse.data) {
+      if (toUTCDate(ep.created_at).getTime() <= untilTime) return [true, episodeResponse];
+      finalList.push(ep);
+    }
+    return [false, episodeResponse];
   }
 }
 
