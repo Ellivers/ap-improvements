@@ -629,7 +629,7 @@ function validateQuantityExpression(qExpr) {
 function getText(translationKey, vars = [], options = {}) {
   if (options.default) {
     const val = translations.active[translationKey] || translations.default[translationKey];
-    if (val) return val;
+    if (!val) return options.default;
   }
   return makeTranslatedText(translationKey, vars);
 }
