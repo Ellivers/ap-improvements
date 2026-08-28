@@ -5116,7 +5116,7 @@ function openNotificationsModal() {
     const promise = siteVars.cached.animeSession.length ? waitTime(200) : getAnimeSession({},{justCache:true});
     loadUntilPromise($('#anitracker-modal-body .anitracker-modal-list'), promise).then(async () => {
       for (const g of [...storage.notifications.anime].sort((a,b) => a.latest_episode > b.latest_episode ? 1 : -1)) {
-        const latestEp = toUTCDate(g.latest_episode);
+        const latestEp = new Date(g.latest_episode);
         const latestEpString = g.latest_episode !== undefined ? `${getDayName(latestEp.getDay())} ${latestEp.toLocaleTimeString([], {timeStyle:'short'})} (${timeSince(latestEp.getTime())} ago)` : "None found";
         const data = await getAnimeData({
           id: g.id,
@@ -6091,10 +6091,11 @@ async function updateNotifications(animeName, storage = getStorage()) {
 
   storage = getStorage();
   nobj = storage.notifications.anime.find(g => g.name === animeName); // Refresh the reference
-  const episodes = storage.notifications.episodes;
+  const allEpisodes = storage.notifications.episodes;
+  const episodes = allEpisodes.filter(g => g.animeName === animeName);
 
   if (nobj.name !== data.name) {
-    for (const ep of episodes) {
+    for (const ep of allEpisodes) {
       if (ep.animeName !== animeName) continue;
       ep.animeName = data.name;
     }
@@ -6103,7 +6104,7 @@ async function updateNotifications(animeName, storage = getStorage()) {
   
   // Add newly found episodes
   for (const ep of newestEpisodes.reverse()) {
-    episodes.splice(0,0,{
+    allEpisodes.splice(0,0,{
       animeName: data.name,
       animeId: nobj.id, // Anime entries had ID in first iteration, but episode entries did not
       session: ep.session,
@@ -6111,11 +6112,12 @@ async function updateNotifications(animeName, storage = getStorage()) {
       time: ep.created_at
     });
   }
-  if (episodes.length) nobj.latest_episode = toUTCDate(episodes[0].time).getTime();
+  const latestEpisode = await getLatestEpisode(data.session); // Is already cached before being called
+  if (latestEpisode) nobj.latest_episode = toUTCDate(latestEpisode.created_at).getTime();
 
   const watched = decodeWatched(storage.watched);
 
-  for (const ep of episodes) {
+  for (const ep of allEpisodes) {
     if (ep.animeName !== data.name) continue;
 
     const epWatched = isWatched(nobj.id, ep.episode, watched) || getStoredTime(nobj.name, ep.episode, storage, nobj.id);
@@ -6138,9 +6140,10 @@ async function updateNotifications(animeName, storage = getStorage()) {
   if (!data.id) data.id = nobj.id;
   return data;
 
+  // Inner functions:
   function getCompareTime() {
     if (typeof nobj.latest_episode === 'string') nobj.latest_episode = toUTCDate(nobj.latest_episode).getTime(); // For old format
-    return nobj.latest_episode || nobj.updateFrom || storage.notifications.lastUpdated;
+    return nobj.updateFrom ?? nobj.latest_episode ?? storage.notifications.lastUpdated;
   }
 
   function removeStallInterval(interval) {
@@ -6156,7 +6159,7 @@ async function updateNotifications(animeName, storage = getStorage()) {
         if (!elem.length) {
           elem = $(`
             <span id="anitracker-notifications-stall-info">
-              <span>Waiting... (<span class="anitracker-seconds">0</span>)</span>
+              <span>Stalled... (<span class="anitracker-seconds">0</span>)</span>
             </span>`).appendTo('#anitracker-notifications-list-spinner');
         }
         elem.find('.anitracker-seconds').text(secondsStalled);
@@ -6174,7 +6177,6 @@ async function getNewestEpisodes(session, untilTime, noCache = true) {
   if (!episodeResponse.data.length) return finalList;
   if (succeeded) return finalList;
   if (episodeResponse.current_page === episodeResponse.last_page) return finalList;
-  console.log(episodeResponse, episodeResponse.data[0], episodeResponse.data[0]?.created_at, toUTCDate(episodeResponse.data[0]?.created_at).getTime(), toUTCDate(episodeResponse.data[0]?.created_at).getTime() >= untilTime)
 
   for (let i = 2; i <= episodeResponse.last_page; i++) {
     const [succeeded] = await(addUntilEp(i));
@@ -6191,6 +6193,11 @@ async function getNewestEpisodes(session, untilTime, noCache = true) {
     }
     return [false, episodeResponse];
   }
+}
+
+async function getLatestEpisode(session) {
+  const episodeResponse = await getEpisodePageResponse(session, 1, 'episode_desc');
+  return episodeResponse?.data[0];
 }
 
 const paramArray = Array.from(new URLSearchParams(window.location.search));
