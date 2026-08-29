@@ -8355,6 +8355,16 @@ function setSessionData() {
           animeName: animeName,
           episodeNum: getEpisodeNum()
         });
+
+        if (storage.settings.relativeEpNums) {
+          getFirstEpisodeEntry({
+            id: data.id,
+            session: animeSession
+          }).then(firstEpEntry => {
+            if (!firstEpEntry) return;
+            addDataToSession({firstEpisode: firstEpEntry.first_episode});
+          });
+        }
       }
       else {
         if (isSyncEnabled(storage)) {
@@ -8376,6 +8386,17 @@ function setSessionData() {
       resolve();
     });
   });
+}
+
+function addDataToSession(data) {
+  const storage = getStorage();
+  const sessionEntry = getStoredLinkData(storage);
+  if (!sessionEntry) return;
+  for (const [key, value] of Object.entries(data)) {
+    sessionEntry[key] = value;
+  }
+  saveData(storage);
+  return sessionEntry;
 }
 
 if (!obj && !is404) {
@@ -8502,13 +8523,8 @@ if (isEpisode()) {
 
       $('#fansubMenu').html(targ.html());
 
-      const storage = getStorage();
-      const data = getStoredLinkData(storage);
-      if (data) {
-        const subInfo = getSubInfo(targ.text());
-        data.subInfo = [subInfo.name, subInfo.quality, subInfo.other];
-        saveData(storage);
-      }
+      const subInfo = getSubInfo(targ.text());
+      addDataToSession({subInfo: [subInfo.name, subInfo.quality, subInfo.other]});
 
       Cookies.set('res', targ.data('resolution'), {
         expires: 365,
@@ -8608,8 +8624,7 @@ function setRelativeEpNums(on) {
 
   const dropdownEpRegex = /Episode ([\d.]+)-?([\d.]+)?/;
   if (on) {
-    getFirstEpisodeEntry({session: animeSession}).then(firstEpEntry => {
-      const firstEp = firstEpEntry?.first_episode;
+    getFirstEpForEpisode().then(firstEp => {
       setEpValue(getEpisodeValue(currentEpisode, currentEpisode2, firstEp));
 
       for (const dropdownEp of $('.episode-menu .dropdown-menu a.dropdown-item')) {
@@ -8631,6 +8646,18 @@ function setRelativeEpNums(on) {
       if (!ep) continue;
       elem.text('Episode ' + ep + (ep2 ? '-' + ep2 : ''));
     }
+  }
+
+  async function getFirstEpForEpisode() {
+    const sessionEntry = getStoredLinkData(getStorage());
+    if (sessionEntry?.firstEpisode) return sessionEntry.firstEpisode;
+
+    const firstEpEntry = await getFirstEpisodeEntry({session: animeSession});
+    if (!firstEpEntry) return undefined;
+
+    addDataToSession({firstEpisode: firstEpEntry.first_episode});
+    
+    return firstEpEntry.first_episode;
   }
 
   function setEpValue(value) {
@@ -9606,10 +9633,7 @@ function updateAnimeCover() {
   getAnimeCoverUrl().then(src => {
     $('#anitracker-cover-spinner').remove();
     if (!src) {
-      const storage = getStorage();
-      const storedObj = getStoredLinkData(storage);
-      storedObj.coverImg = 'default';
-      saveData(storage);
+      addDataToSession({coverImg: 'default'});
       return;
     }
     setAnimeCover(src);
@@ -9807,11 +9831,8 @@ async function getAnimeCoverUrl() {
 }
 
 async function setAnimeCover(src, defaultBg = false) {
-  const storage = getStorage();
-  const bobj = getStoredLinkData(storage);
-  bobj.coverImg = src;
-  saveData(storage);
-
+  addDataToSession({coverImg: src});
+  
   const cover = $('.anime-cover');
 
   if (!defaultBg) {
