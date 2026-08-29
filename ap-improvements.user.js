@@ -5076,7 +5076,7 @@ function openNotificationsModal() {
       </button>
     </div>
   </div>
-  <span style="display: block;text-align: center;margin-bottom: 5px;overflow:hidden;">
+  <span title="${getLastRefreshedTitle(oldStorage.notifications.lastUpdated)}" style="display: block;text-align: center;margin-bottom: 5px;overflow:hidden;">
     Last refreshed: <span class="anitracker-last-refreshed">${getLastRefreshedText(oldStorage.notifications.lastUpdated)}</span>
   </span>
   <div class="anitracker-modal-list-container">
@@ -5300,7 +5300,8 @@ function openNotificationsModal() {
       storage.notifications.episodes.sort((a,b) => a.time < b.time ? 1 : -1);
       storage.notifications.lastUpdated = Date.now();
       saveData(storage);
-      $('.anitracker-last-refreshed').text(getLastRefreshedText(storage.notifications.lastUpdated)).parent().css('height','');
+      $('.anitracker-last-refreshed').text(getLastRefreshedText(storage.notifications.lastUpdated))
+      .parent().css('height','').attr('title',getLastRefreshedTitle(storage.notifications.lastUpdated));
     }
     currentNotificationIndex = 0;
     if (!storage.notifications.episodes.length) {
@@ -5311,6 +5312,11 @@ function openNotificationsModal() {
       addToList(20);
       setModalShift(shouldShiftModal());
     }
+  }
+
+  function getLastRefreshedTitle(value) {
+    if (!value) return "Not yet refreshed";
+    return new Date(value).toLocaleString();
   }
 
   function getLastRefreshedText(value) {
