@@ -3217,18 +3217,21 @@ async function getFirstEpisodeEntry(iinfo) {
   if (cached) return cached;
   if (!iinfo.session) return undefined;
 
-  return new Promise(resolve => {
-    getEpisodePageResponse(iinfo.session).then(response => {
-      if (!response) return console.error(`[AnimePahe Improvements] Failed getting first episode for anime with session ${iinfo.session}`);
-      const ep = response.data[0]?.episode;
-      resolve({
-        first_episode: ep,
-        session: iinfo.session,
-        id: iinfo.id,
-      });
-      return;
-    });
-  });
+  let response = await getEpisodePageResponse(iinfo.session);
+  if (!response && iinfo.name) {
+    const newData = await getAnimeData(iinfo, ["session"], {requireNew:true});
+    if (newData.session) response = await getEpisodePageResponse(newData.session);
+  }
+  if (!response) {
+    console.error(`[AnimePahe Improvements] Failed getting first episode for anime with session ${iinfo.session}`);
+    return undefined;
+  }
+  const ep = response.data[0]?.episode;
+  return {
+    first_episode: ep,
+    session: iinfo.session,
+    id: iinfo.id,
+  };
 }
 
 function getCachedFirstEpisodeEntry(iinfo) {
@@ -3687,14 +3690,15 @@ async function getAnimeData(_iinfo = {}, _reqinfo = [], config = {}) {
       }
       if (result.new.episode_session) oinfo.new.session = result.new.session;
       
-      if (config.requireNew) continue;
       for (const [key, value] of Object.entries(result.old)) {
         if (!value) continue;
-        if (!oinfo.old[key]) oinfo.old[key] = value;
         if (!iinfo[key]) iinfo[key] = value;
+        if (config.requireNew) continue; // If requireNew is true, only add to iinfo (and not oinfo)
+
+        if (!oinfo.old[key]) oinfo.old[key] = value;
         if (value) reqinfo = reqinfo.filter(a => a !== key);
       }
-      if (result.old.episode_session) oinfo.old.session = result.old.session;
+      if (!config.requireNew && result.old.episode_session) oinfo.old.session = result.old.session;
     }
 
     if (!reqinfo.length || i === 1) break;
@@ -3867,7 +3871,10 @@ if (isEpisode()) {
         sendMessage({action:"response",type:'name',value:getAnimeName()});
       }
       else if (data.type === 'first_episode') {
-        getFirstEpisodeEntry({session: animeSession}).then(firstEpEntry => {
+        getFirstEpisodeEntry({
+          session: animeSession,
+          name: getAnimeName(),
+        }).then(firstEpEntry => {
           sendMessage({action:"response",type:'first_episode',value:firstEpEntry?.first_episode});
         });
       }
@@ -5434,7 +5441,11 @@ function openNotificationsModal() {
       </div>`).appendTo('#anitracker-modal-body .anitracker-modal-list');
 
       if (storage.settings.relativeEpNums) {
-        getFirstEpisodeEntry({session: data.session}).then(firstEpEntry => {
+        getFirstEpisodeEntry({
+          session: data.session,
+          name: data.name,
+          id: data.id,
+        }).then(firstEpEntry => {
           elem.find('.anitracker-episode-text').text(getRelativeEpisodeNum(ep.episode, firstEpEntry?.first_episode));
         });
       }
@@ -8174,6 +8185,7 @@ async function addContinueWatchingEpisodes(storage, episodeCount, clearAll = fal
       getFirstEpisodeEntry({
         id: ep.animeId,
         session: ep.animeSession,
+        name: ep.title,
       }).then(firstEpEntry => {
         if (!firstEpEntry) return;
         elem.data('firstEp', firstEpEntry.first_episode);
@@ -8313,7 +8325,10 @@ if (isEpisode() && !is404) {
   $('#downloadMenu').attr('title','Download video');
 }
 else if (isAnime() && !is404) {
-  getFirstEpisodeEntry({session: animeSession}); // Start the request so subsequent calls can get it easier
+  getFirstEpisodeEntry({
+    session: animeSession,
+    name: getAnimeName(),
+  }); // Start the request so subsequent calls can get it easier
 }
 
 console.log('[AnimePahe Improvements]', obj, animeSession, episodeSession);
@@ -8359,7 +8374,8 @@ function setSessionData() {
         if (storage.settings.relativeEpNums) {
           getFirstEpisodeEntry({
             id: data.id,
-            session: animeSession
+            session: animeSession,
+            name: animeName,
           }).then(firstEpEntry => {
             if (!firstEpEntry) return;
             addDataToSession({firstEpisode: firstEpEntry.first_episode});
@@ -8595,7 +8611,10 @@ function setRelativeEpNums(on) {
       const ep = +titleParts[2];
       const ep2 = titleParts[3] ? +titleParts[3] : undefined;
 
-      getFirstEpisodeEntry({session: animeSession}).then(firstEpEntry => {
+      getFirstEpisodeEntry({
+        session: animeSession,
+        name: getAnimeName(),
+      }).then(firstEpEntry => {
         setDocumentTitle(`${titleParts[1]} Ep. ${getEpisodeValue(ep, ep2, firstEpEntry?.first_episode)}${titleParts[4] ?? ''} :: animepahe`);
       });
     }
@@ -8652,7 +8671,11 @@ function setRelativeEpNums(on) {
     const sessionEntry = getStoredLinkData(getStorage());
     if (sessionEntry?.firstEpisode) return sessionEntry.firstEpisode;
 
-    const firstEpEntry = await getFirstEpisodeEntry({session: animeSession});
+    const firstEpEntry = await getFirstEpisodeEntry({
+      session: animeSession,
+      name: getAnimeName(),
+      id: sessionEntry.animeId,
+    });
     if (!firstEpEntry) return undefined;
 
     addDataToSession({firstEpisode: firstEpEntry.first_episode});
@@ -9342,10 +9365,21 @@ async function updateEpisodePage(entry, allowCache = true) {
   applyEpisodeOptionsEvents(episodeElements);
 
   // Second loop for episode number correction, because otherwise the await could slow down the other visuals
-  let firstEpisodeEntry = (entry.mode === 'multi' || !storage.settings.relativeEpNums) ? undefined : await getFirstEpisodeEntry({id: episodes[0].anime_id, session: animeSession});
+  let firstEpisodeEntry = (entry.mode === 'multi' || !storage.settings.relativeEpNums)
+    ? undefined
+    : await getFirstEpisodeEntry({
+      id: episodes[0].anime_id,
+      session: animeSession,
+      name: animeName
+    });
 
   for (let i = 0; i < episodeElements.length; i++) {
-    if (entry.mode === 'multi' && storage.settings.relativeEpNums) firstEpisodeEntry = await getFirstEpisodeEntry({id: episodes[i].anime_id, session: episodes[i].anime_session});
+    if (entry.mode === 'multi' && storage.settings.relativeEpNums)
+      firstEpisodeEntry = await getFirstEpisodeEntry({
+        id: episodes[i].anime_id,
+        session: episodes[i].anime_session,
+        name: episodes[i].anime_title,
+      });
 
     if (pageNum !== getPageNum()) break; // If the page has been changed
 
