@@ -7414,9 +7414,17 @@ function isMobileOrTablet() {
   return check;
 }
 
+function bytesToBase64(bytes) {
+  const binString = Array.from(bytes, (byte) =>
+    String.fromCodePoint(byte),
+  ).join("");
+  return btoa(binString);
+}
+
 function download(filename, text, dataType = 'text/plain') {
   const element = document.createElement('a');
-  element.setAttribute('href', `data:${dataType};charset=utf-8,${encodeURIComponent(text)}`);
+  const bytes = new TextEncoder().encode(text);
+  element.setAttribute('href', `data:${dataType};base64,${bytesToBase64(bytes)}`);
   element.setAttribute('download', filename);
 
   element.click();
