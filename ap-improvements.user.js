@@ -7787,10 +7787,10 @@ if (isHome()) {
   });
 
   new MutationObserver(function(mutationList, observer) {
-    updateEpisodePages(false);
-
     observer.disconnect();
-    setTimeout(observer.observe($('.episode-list-wrapper')[0], { childList: true, subtree: false }), 1);
+    updateEpisodePages(false).then(() => {
+      observer.observe($('.episode-list-wrapper')[0], { childList: true, subtree: false });
+    });
   }).observe($('.episode-list-wrapper')[0], { childList: true, subtree: false });
 
   return;
@@ -9277,11 +9277,11 @@ function applyEpisodeOptionsEvents(elems) {
   });
 }
 
-function updateEpisodePages(allowCache = true) {
+async function updateEpisodePages(allowCache = true) {
   if (isHome()) updateContinueWatchingEpisodes();
-  siteVars.episodePages.forEach(g => {
-    updateEpisodePage(g, allowCache);
-  });
+  for (const page of siteVars.episodePages) {
+    await updateEpisodePage(page, allowCache);
+  }
 }
 
 // MARKER:EPISODE PAGE CHANGES
@@ -9644,10 +9644,10 @@ if (isAnime()) {
   // Show episode upload time & episode progress
   new MutationObserver(function(mutationList, observer) {
     if (!$('.episode-list-wrapper .episode-wrap').length) return;
-    updateEpisodePages(false);
-
     observer.disconnect();
-    setTimeout(observer.observe($('.episode-list-wrapper')[0], { childList: true, subtree: false }), 1);
+    updateEpisodePages(false).then(() => {
+      observer.observe($('.episode-list-wrapper')[0], { childList: true, subtree: false });
+    });
   }).observe($('.episode-list-wrapper')[0], { childList: true, subtree: false });
 
   // Title icons
