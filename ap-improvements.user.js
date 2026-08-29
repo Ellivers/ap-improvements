@@ -5578,9 +5578,9 @@ function openBookmarksModal() {
         }, ["session","name"], {requireInstant: true, ignored:['storage_bookmark']});
         session = foundData.session;
         if (session) sessionCache[g.id] = session;
-        name = foundData.name;
+        if (foundData.name) name = foundData.name;
       }
-      const href = session ? `href="/anime/${session}"` : '';
+      const href = session ? `href="/anime/${session}"` : `/anitracker-redirect?a=${encodeURIComponent(name)}`;
       let elem;
 
       if (layout === 'list') {
