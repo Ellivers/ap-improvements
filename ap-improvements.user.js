@@ -9650,51 +9650,55 @@ async function getAnimeCoverUrl() {
   })();
 
   if (!anilistId) {
-    const googleRes = await withGoogle();
-    return googleRes;
+    return withGoogle();
   }
 
-  const request = new XMLHttpRequest();
-  request.open('POST', 'https://graphql.anilist.co', true);
-  request.setRequestHeader('Content-Type', 'application/json');
-  request.setRequestHeader('Accept', 'application/json');
+  return new Promise(resolve => {
+    const request = new XMLHttpRequest();
+    request.open('POST', 'https://graphql.anilist.co', true);
+    request.setRequestHeader('Content-Type', 'application/json');
+    request.setRequestHeader('Accept', 'application/json');
 
-  request.onload = async () => {
-    let response;
-    try {
-      response = JSON.parse(request.response);
-    }
-    catch (err) {
-      console.error(err);
-      const googleRes = await withGoogle();
-      return googleRes;
-    }
-    const animeObj = response?.data?.Media;
-    if (!animeObj || !animeObj.bannerImage) {
-      const googleRes = await withGoogle();
-      return googleRes;
-    }
-
-    return animeObj.bannerImage;
-  };
-  request.onerror = async (err) => {
-    console.error(err);
-    const googleRes = await withGoogle();
-    return googleRes;
-  }
-  request.ontimeout = request.onerror;
-
-  request.send(JSON.stringify({
-    query: `
-      query ($id: Int) {
-        Media (id: $id, type: ANIME) {
-          bannerImage
+    request.onload = () => {
+      const bannerSrc = (() => {
+        try {
+          return JSON.parse(request.response).data?.Media?.bannerImage;
         }
-      }`,
-    variables: {
-      id: anilistId
+        catch (err) {
+          console.error(err);
+          return;
+        }
+      })();
+      if (!bannerSrc) {
+        withGoogle().then(googleRes => {
+          resolve(googleRes);
+        });
+        return;
+      }
+
+      resolve(bannerSrc);
+    };
+    request.onerror = (err) => {
+      console.error(err);
+      withGoogle().then(googleRes => {
+        resolve(googleRes);
+      });
+      return;
     }
-  }));
+    request.ontimeout = request.onerror;
+
+    request.send(JSON.stringify({
+      query: `
+        query ($id: Int) {
+          Media (id: $id, type: ANIME) {
+            bannerImage
+          }
+        }`,
+      variables: {
+        id: anilistId
+      }
+    }));
+  });
 
   async function withGoogle() {
     console.log('[AnimePahe Improvements] Could not get anime cover with AniList. Trying Google.');
