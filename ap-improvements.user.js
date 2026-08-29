@@ -8143,13 +8143,13 @@ async function addContinueWatchingEpisodes(storage, episodeCount, clearAll = fal
         <div class="episode-snapshot">
           <img src="${img}" class="ls-is-cached lazyloaded" alt="">
           <svg class="play-button" viewBox="0 0 150 150" alt="Play Video"><polygon points="20, 20, 20, 140, 120, 80" fill="#fff"></polygon></svg>
-          <a href="${href}" class="play">Watch ${ep.title} - <span>${epValue}</span> Online</a>
+          <a href="${href}" class="play">Watch ${toHtmlCodes(ep.title)} - <span>${epValue}</span> Online</a>
         </div><div class="episode-label-wrap">
         <div class="episode-label">
           <div class="episode-title-wrap">
             ${ep.duration ? `<span class="episode-duration">${secondsToHMS(ep.duration)}</span>` : ''}
             <span class="episode-title">
-              <a href="${animeHref}" title="${toHtmlCodes(ep.title)}">${ep.title}</a>
+              <a href="${animeHref}" title="${toHtmlCodes(ep.title)}">${toHtmlCodes(ep.title)}</a>
             </span>
           </div>
           <div class="episode-number-wrap">
@@ -8161,7 +8161,8 @@ async function addContinueWatchingEpisodes(storage, episodeCount, clearAll = fal
     </div>`)
     .data('ep', ep.episode).data('ep2', ep.episode2).data('firstEp', ep.firstEpisode)
     .data('videoTimeName',ep.videoTimeName).data('videoTimeEpisode',ep.videoTimeEpisode)
-    .data('animeId', ep.animeId).data('duration', ep.duration);
+    .data('animeId', ep.animeId).data('duration', ep.duration)
+    .data('title',ep.title).data('animeSession',ep.animeSession);
 
     const skeleton = $('.anitracker-continue-watching-skeleton')[0];
     elem.insertBefore(skeleton);
@@ -8629,7 +8630,14 @@ function setRelativeEpNums(on) {
     for (const entry of continueWatchingEps) {
       const elem = $(entry);
       const firstEp = elem.data('firstEp');
-      updateContinueWatchingEpisodeValue(elem, on ? firstEp : undefined);
+      if (!firstEp && on) getFirstEpisodeEntry({
+        session: elem.data('animeSession'),
+        name: elem.data('title'),
+        id: elem.data('animeId'),
+      }).then(firstEpEntry => {
+        updateContinueWatchingEpisodeValue(elem, firstEpEntry?.first_episode);
+      });
+      else updateContinueWatchingEpisodeValue(elem, on ? firstEp : undefined);
     }
     return;
   }
