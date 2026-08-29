@@ -7423,8 +7423,9 @@ function bytesToBase64(bytes) {
 
 function download(filename, text, dataType = 'text/plain') {
   const element = document.createElement('a');
-  const bytes = new TextEncoder().encode(text);
-  element.setAttribute('href', `data:${dataType};base64,${bytesToBase64(bytes)}`);
+
+  const blob = new Blob([text], {type: dataType});
+  element.setAttribute('href', URL.createObjectURL(blob));
   element.setAttribute('download', filename);
 
   element.click();
