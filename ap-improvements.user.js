@@ -3109,6 +3109,7 @@ const siteVars = {
 const continueWatchingStatus = {
   queue: [],
   displayedEps: [],
+  firstEpRequests: new Set(),
   inProgress: false,
 };
 
@@ -7766,8 +7767,8 @@ if (isHome()) {
 
   siteVars.episodePages.push({
     element: $('.episode-list-wrapper'),
-    apiFunction: (pageNum) => {
-      return asyncGetResponseData(`/api?m=airing&page=${pageNum}`);
+    apiFunction: (options) => {
+      return asyncGetResponseData(`/api?m=airing&page=${options.pageNum}`);
     },
     mode: 'multi',
     features: {
@@ -8183,11 +8184,13 @@ async function addContinueWatchingEpisodes(storage, episodeCount, clearAll = fal
     applyEpisodeOptionsEvents(elem);
 
     if (storage.settings.relativeEpNums && !ep.firstEpisode) {
+      markContinueWatchingMiscRequestStart(ep.title);
       getFirstEpisodeEntry({
         id: ep.animeId,
         session: ep.animeSession,
         name: ep.title,
       }).then(firstEpEntry => {
+        markContinueWatchingMiscRequestEnd(ep.title);
         if (!firstEpEntry) return;
         elem.data('firstEp', firstEpEntry.first_episode);
         updateContinueWatchingEpisodeValue(elem, firstEpEntry.first_episode);
@@ -8220,6 +8223,18 @@ function updateContinueWatchingEpisodeValue(elem, firstEp) {
     return this.nodeType === 3;
   })[0].textContent = epValue;
   elem.find('a.play>span').text(epValue);
+}
+
+function markContinueWatchingMiscRequestStart(identifier) {
+  continueWatchingStatus.firstEpRequests.add(identifier);
+  if ($('#anitracker-continue-watching-misc-spinner').length) return;
+  addTitleSpinner($('#anitracker-continue-watching-section h2'), "Getting relative episode numbers...")
+  .attr('id', 'anitracker-continue-watching-misc-spinner');
+}
+
+function markContinueWatchingMiscRequestEnd(identifier) {
+  continueWatchingStatus.firstEpRequests.delete(identifier);
+  if (!continueWatchingStatus.firstEpRequests.size) $('#anitracker-continue-watching-misc-spinner').remove();
 }
 
 function getPageNum(elem = $('.pagination')) {
@@ -8630,13 +8645,18 @@ function setRelativeEpNums(on) {
     for (const entry of continueWatchingEps) {
       const elem = $(entry);
       const firstEp = elem.data('firstEp');
-      if (!firstEp && on) getFirstEpisodeEntry({
-        session: elem.data('animeSession'),
-        name: elem.data('title'),
-        id: elem.data('animeId'),
-      }).then(firstEpEntry => {
-        updateContinueWatchingEpisodeValue(elem, firstEpEntry?.first_episode);
-      });
+      if (!firstEp && on) {
+        const title = elem.data('title');
+        markContinueWatchingMiscRequestStart(title);
+        getFirstEpisodeEntry({
+          name: title,
+          session: elem.data('animeSession'),
+          id: elem.data('animeId'),
+        }).then(firstEpEntry => {
+          markContinueWatchingMiscRequestEnd(title);
+          updateContinueWatchingEpisodeValue(elem, firstEpEntry?.first_episode);
+        });
+      }
       else updateContinueWatchingEpisodeValue(elem, on ? firstEp : undefined);
     }
     return;
@@ -9272,7 +9292,14 @@ async function updateEpisodePage(entry, allowCache = true) {
 
   // Only situation where cache isn't allowed is when the page has changed
   const cachedList = allowCache ? entry.cachedList : undefined;
-  const episodes = cachedList ?? await entry.apiFunction(pageNum, animeSession, episodeSort);
+  const initialSpinner = addTitleSpinner(entry.mode === 'multi' ? entry.element.parent().find('>h2') : $('.episode-count'), 'Loading episodes...', 'anitracker-spinner');
+  const episodes = cachedList ?? await entry.apiFunction({
+    pageNum: pageNum,
+    session: animeSession,
+    sort: episodeSort,
+    allowCache: allowCache, 
+  });
+  initialSpinner.remove();
   if (episodes === undefined) return undefined;
   entry.cachedList = episodes;
   if (!episodes.length) return undefined;
@@ -9373,6 +9400,8 @@ async function updateEpisodePage(entry, allowCache = true) {
   applyEpisodeOptionsEvents(episodeElements);
 
   // Second loop for episode number correction, because otherwise the await could slow down the other visuals
+  const relEpSpinner = entry.mode === 'multi' && addTitleSpinner(entry.element.parent().find('>h2'), "Getting relative episode numbers...");
+
   let firstEpisodeEntry = (entry.mode === 'multi' || !storage.settings.relativeEpNums)
     ? undefined
     : await getFirstEpisodeEntry({
@@ -9398,6 +9427,16 @@ async function updateEpisodePage(entry, allowCache = true) {
       return this.nodeType === 3;
     })[0].textContent = getEpisodeValue(ep, ep2, firstEpisodeEntry?.first_episode);
   }
+  if (relEpSpinner) relEpSpinner.remove();
+}
+
+function addTitleSpinner(elem, text = '', colorClass = 'text-secondary') {
+  return $(`
+  <div class="${colorClass}" style="display:inline;vertical-align:top;max-height:100%;" title="${toHtmlCodes(text)}">
+    <div class="spinner-border" role="status" style="border-width: 5px;height: 20px;width: 20px;">
+      <span class="sr-only">Loading...</span>
+    </div>
+  </div>`).appendTo(elem);
 }
 
 function addTitleIcons(animeid) {
@@ -9579,8 +9618,10 @@ if (isAnime()) {
 
   siteVars.episodePages.push({
     element: $('.episode-list-wrapper'),
-    apiFunction: async (pageNum, animeSession, sortDir) => {
-      const response = await getEpisodePageResponse(animeSession, pageNum, `episode_${sortDir}`);
+    apiFunction: async (options) => {
+      const response = await getEpisodePageResponse(options.session, options.pageNum, `episode_${options.sort}`, {
+        noCache: !options.allowCache
+      });
       return response?.data;
     },
     mode: 'single',
