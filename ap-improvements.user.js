@@ -3503,7 +3503,7 @@ const animeInfoFunctions = [
     "outputs": ["session","name","id","anidb_id","poster"],
     "fn": async (iinfo = {}, config = {}) => {
       if (!iinfo.session) return undefined;
-      const data = getPageDataFromSession(iinfo.session);
+      const data = await getPageDataFromSession(iinfo.session);
       if (!data) return undefined;
       return {
         old: {},
@@ -3547,7 +3547,7 @@ const animeInfoFunctions = [
     "outputs": ["first_episode","id","session"],
     "instant": true,
     "fn": async (iinfo = {}, config = {}) => {
-      const firstEpEntry = await getCachedFirstEpisodeEntry(iinfo);
+      const firstEpEntry = getCachedFirstEpisodeEntry(iinfo);
       if (!firstEpEntry) return undefined;
       return {
         old: {
