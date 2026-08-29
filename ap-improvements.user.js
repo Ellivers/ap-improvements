@@ -4168,6 +4168,7 @@ function importData(data, importedData, save = true, ignored = {settings:{}}, fr
       if (value.anime) value.anime.forEach(g => {
         if (data.notifications.anime.find(h => h.id === g.id) !== undefined) return;
         if (data.notifications.anime.length >= getStorageLimits().notifications.anime) return;
+        delete g.hasFirstEpisode;
         data.notifications.anime.push(g);
         changed.notificationsAdded++;
 
