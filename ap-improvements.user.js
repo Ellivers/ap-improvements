@@ -9404,7 +9404,7 @@ async function updateEpisodePage(entry, allowCache = true) {
   applyEpisodeOptionsEvents(episodeElements);
 
   // Second loop for episode number correction, because otherwise the await could slow down the other visuals
-  if (hasTitleSpinner(elem)) return;
+  if (hasTitleSpinner(entry.element)) return;
   const relEpSpinner = entry.mode === 'multi' && addTitleSpinner(entry.element.parent().find('>h2'), "Getting relative episode numbers...");
 
   let firstEpisodeEntry = (entry.mode === 'multi' || !storage.settings.relativeEpNums)
