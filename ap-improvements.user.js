@@ -3504,6 +3504,67 @@ const animeInfoFunctions = [
     }
   },
   {
+    "id": "cached_anime_page",
+    "outputs": ["session","name","id","anidb_id","poster"],
+    "instant": true,
+    "fn": (iinfo = {}, config = {}) => {
+      if (!iinfo.session) return undefined;
+      const cached = siteVars.cached.page[`/anime/${iinfo.session}`];
+      if (!cached) return undefined;
+      const data = getAnimeDataFromPage(wrapPageText(cached), false);
+      if (!data) return undefined;
+      return {
+        old: {
+          session: iinfo.session,
+          name: data.name,
+          poster: data.poster,
+        },
+        new: {
+          id: data.id,
+          anidb_id: data.anidb_id,
+        }
+      }
+    }
+  },
+  {
+    "id": "cached_first_episode_entry",
+    "outputs": ["first_episode","id","session"],
+    "instant": true,
+    "fn": async (iinfo = {}, config = {}) => {
+      const firstEpEntry = getCachedFirstEpisodeEntry(iinfo);
+      if (!firstEpEntry) return undefined;
+      return {
+        old: {
+          session: firstEpEntry.session,
+        },
+        new: {
+          id: firstEpEntry.id,
+          first_episode: firstEpEntry.first_episode,
+        }
+      }
+    }
+  },
+  {
+    "id": "cached_index",
+    "outputs": ["session","name"],
+    "instant": true,
+    "fn": (iinfo = {}, config = {}) => {
+      const cached = siteVars.cached.animeSession.find(a => matchDataPartial(a,iinfo,["name","session"]));
+      if (!cached) return undefined;
+      return {old:{},new:{...cached}};
+    }
+  },
+  {
+    "id": "cached_search_query",
+    "outputs": ["name","id","session","poster"],
+    "instant": true,
+    "fn": (iinfo = {}, config = {}) => {
+      const cached = siteVars.cached.animeSearch.find(a => matchDataPartial(a,iinfo,["id","name","session","poster"]));
+      if (!cached) return undefined;
+      return {old:{},new:{...cached}};
+    }
+  },
+  {
     "id": "anime_page",
     "outputs": ["session","name","id","anidb_id","poster"],
     "fn": async (iinfo = {}, config = {}) => {
@@ -3525,7 +3586,6 @@ const animeInfoFunctions = [
   {
     "id": "index",
     "outputs": ["session","name"],
-    "instant": true,
     "fn": getAnimeSession,
   },
   {
@@ -3545,24 +3605,6 @@ const animeInfoFunctions = [
           id: response[0].anime_id,
         }
       };
-    }
-  },
-  {
-    "id": "cached_first_episode_entry",
-    "outputs": ["first_episode","id","session"],
-    "instant": true,
-    "fn": async (iinfo = {}, config = {}) => {
-      const firstEpEntry = getCachedFirstEpisodeEntry(iinfo);
-      if (!firstEpEntry) return undefined;
-      return {
-        old: {
-          session: firstEpEntry.session,
-        },
-        new: {
-          id: firstEpEntry.id,
-          first_episode: firstEpEntry.first_episode,
-        }
-      }
     }
   },
   {
@@ -3644,15 +3686,13 @@ const animeInfoFunctions = [
 ]
 // Gets any anime info except for video player stuff
 // Available inputs & outputs: name, id, session, poster
-// TODO:
-// - add bookmark source function
-// - something with anidb_id?
 async function getAnimeData(_iinfo = {}, _reqinfo = [], config = {}) {
-  /* - have a list of each info-getting function, ordered in speed with fastest first. each entry has a list of output keys
-  - do a while loop while reqdata length is > 0.
-  find out which function encompasses the most of reqdata by making a .map and sort the map by amount of reqdata support, then use the function.
-  at the end of each loop, if the function was successful, remove all data from reqdata that the function outputs.
-  make sure that function isn't run again, no matter the outcome
+  /* - has a list of each info-getting function, ordered in speed with fastest first. each entry has a list of output keys
+  - does a while loop while reqdata length is > 0.
+  finds out which function encompasses the most of reqdata by making a .map and sorts the map by amount of reqdata support,
+  then sorts by instant first, then uses the function.
+  at the end of each loop, if the function was successful, removes all data from reqdata that the function outputs.
+  makes sure that function isn't run again, no matter the outcome
   */
   const iinfo = copyObj(_iinfo);
   let reqinfo = copyObj(_reqinfo);
@@ -3668,15 +3708,21 @@ async function getAnimeData(_iinfo = {}, _reqinfo = [], config = {}) {
   for (let i = 0; i < 1; i++) {
     while (reqinfo.length) {
       // Find out which function is the most appropriate for the needed data
+      // Run instant functions first, no matter what
       const chosenFunction = candidateFunctions.map(a => {
         const matches = used.includes(a.id) ? 0 : a.outputs.filter(g => reqinfo.includes(g)).length;
         return {
           fn: a.fn,
           matches: matches ? Math.max(1, matches - (a.cost ?? 0)) : 0,
           id: a.id,
+          instant: a.instant,
         };
-      }).sort((a,b) => b.matches - a.matches)[0];
-      if (!chosenFunction.matches) {
+      }).filter(a => a.matches).sort((a,b) => b.matches - a.matches).sort((a,b) => {
+        if (a.instant === b.instant) return 0;
+        if (!a.instant) return 1;
+        if (!b.instant) return -1;
+      })[0];
+      if (!chosenFunction?.matches) {
         console.warn(`[AnimePahe Improvements] After ${used.length} functions, no remaining function matched ${reqinfo}`);
         break;
       }
@@ -7522,7 +7568,7 @@ function sortAnimesChronologically(animeList) {
 
 async function asyncGetPage(qurl) {
   const cached = siteVars.cached.page[qurl];
-  if (cached) return wrapPage(cached);
+  if (cached) return wrapPageText(cached);
 
   const req = new XMLHttpRequest();
   req.open('GET', qurl, true);
@@ -7530,19 +7576,19 @@ async function asyncGetPage(qurl) {
     req.onload = () => {
       if (req.status === 200) {
         if (!qurl.endsWith('anime')) siteVars.cached.page[qurl] = req.responseText;
-        resolve(wrapPage(req.responseText));
+        resolve(wrapPageText(req.responseText));
         return;
       }
       resolve(undefined);
     }
     req.send();
   });
+}
 
-  function wrapPage(responseText) {
-    const wrappedPage = $('<html></html>');
-    $(responseText).appendTo(wrappedPage);
-    return wrappedPage;
-  }
+function wrapPageText(responseText) {
+  const wrappedPage = $('<html></html>');
+  $(responseText).appendTo(wrappedPage);
+  return wrappedPage;
 }
 
 async function getEpisodePageResponse(session, pageNum = 1, sort = 'episode_asc', options = {}) {
