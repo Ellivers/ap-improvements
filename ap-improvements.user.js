@@ -166,6 +166,7 @@ function getDefaultData() {
     },
     cached: {
       firstEpisode: [],
+      poster: [],
     }
   };
 }
@@ -271,6 +272,10 @@ function getStorage() {
     if (res.settings[key] !== undefined) continue;
     res.settings[key] = defa.settings[key];
   }
+  for (const key of Object.keys(defa.cached)) {
+    if (res.cached[key] !== undefined) continue;
+    res.cached[key] = defa.cached[key];
+  }
 
   if (oldVersion !== defa.version) {
     upgradeData(res, oldVersion);
@@ -296,6 +301,7 @@ function getStorageLimits() {
     videoSpeed: 1000,
     cached: {
       firstEpisode: 200,
+      poster: 100,
     },
   }
 }
@@ -1940,6 +1946,9 @@ const _css = `
   display: flex;
   align-items: center;
 }
+.anitracker-big-list-item .anitracker-image-wrapper.anitracker-inline {
+  display: inline-flex;
+}
 .anitracker-big-list-item img {
   width: 100%;
   height: auto;
@@ -2453,9 +2462,6 @@ a.youtube-preview::before {
 }
 .anitracker-notification-item .anitracker-main-text {
   color: rgb(153, 153, 153);
-}
-.anitracker-notification-item .anitracker-image-wrapper {
-  display: inline-flex !important;
 }
 .anitracker-notification-item-unwatched {
   background-color: rgb(82, 45, 50);
@@ -3103,6 +3109,7 @@ const siteVars = {
   cached: {
     animeSearch: [],
     firstEpisode: initialStorage.cached.firstEpisode,
+    poster: initialStorage.cached.poster,
     episodePage: [],
     animeId: {},
     animeSession: [],
@@ -3252,6 +3259,7 @@ function getCachedFirstEpisodeEntry(iinfo) {
 }
 
 function cacheFirstEpisode(ep, iinfo, storage) {
+  if (ep === undefined) return;
   const exists = (iinfo.id && getCachedFirstEpisodeEntry({id: iinfo.id})) || (iinfo.session && getCachedFirstEpisodeEntry({session: iinfo.session}));
 
   if ((iinfo.id || iinfo.session) && !exists && siteVars.cached.firstEpisode.length < getStorageLimits().cached.firstEpisode) {
@@ -3279,6 +3287,48 @@ function parseCachedFirstEpisodeEntry(entry) {
     id: parseInt(entry[1], 36),
     session: entry[2],
   };
+}
+
+function getCachedPoster(iinfo) {
+  if (!iinfo.id && !iinfo.poster) return undefined;
+  const entry = siteVars.cached.poster.find(g => (parseInt(g[1], 36) === iinfo.id && iinfo.id) || g[0] === iinfo.poster);
+  if (!entry) return undefined;
+  return {
+    poster: entry[0],
+    id: parseInt(entry[1], 36),
+  }
+}
+
+function cachePoster(poster, iinfo, storage) {
+  if (!poster) return;
+  const exists = getCachedPoster(iinfo);
+
+  if (iinfo.id && !exists && siteVars.cached.poster.length < getStorageLimits().cached.poster) {
+    const entry = [poster, iinfo.id.toString(36), Date.now().toString(36)];
+    siteVars.cached.poster.push(entry);
+    storage.cached.poster.push(entry);
+  }
+
+  updatePosterCache(storage); // Saves storage as well
+}
+
+function invalidatePosterCache(poster, storage) {
+  const existing = getCachedPoster({poster: poster});
+  if (!existing) return;
+  siteVars.cached.poster = siteVars.cached.poster.filter(g => g[0] !== poster);
+  storage.cached.poster = storage.cached.poster.filter(g => g[0] !== poster);
+  saveData(storage);
+}
+
+function updatePosterCache(storage) {
+  const compareDate = Date.now() - (1000 * 60 * 60 * 48); // 2 days old
+  for (let i = 0; i < siteVars.cached.poster.length; i++) {
+    if (parseInt(siteVars.cached.poster[i][2], 36) >= compareDate) continue;
+    siteVars.cached.poster.splice(i,1);
+    storage.cached.poster.splice(i,1);
+    i--;
+  }
+  saveData(storage);
 }
 
 // Things that update when focusing this tab
@@ -3309,7 +3359,7 @@ function updatePage() {
 
   if ($('.anitracker-view-notif-animes').length) {
     for (const item of $('.anitracker-notification-item')) {
-      const entry = storage.notifications.episodes.find(a => a.animeId === +$(item).attr('anime-data') && a.episode === +$(item).attr('episode-data'));
+      const entry = storage.notifications.episodes.find(a => a.animeId === +$(item).attr('anime-id') && a.episode === +$(item).attr('episode-data'));
       if (!entry || entry.watched !== $(item).hasClass('anitracker-notification-item-unwatched')) continue;
 
       $(item).toggleClass('anitracker-notification-item-unwatched');
@@ -3389,6 +3439,7 @@ const animeInfoFunctions = [
     "fn": (iinfo = {}, config = {}) => {
       if ((!isAnime() && !isEpisode()) || is404) return undefined;
       const data = getAnimeDataFromPage($(document), isEpisode());
+      cachePoster(data?.poster, {...data}, getStorage());
       data.session = getAnimeSessionFromUrl();
       // Require at least one part of iinfo to match
       if (!matchDataPartial(iinfo, data, ["name","session","id","anidb_id","poster"])) return undefined;
@@ -3483,6 +3534,23 @@ const animeInfoFunctions = [
           id: found.id,
         }
       };
+    }
+  },
+  {
+    "id": "cached_poster",
+    "outputs": ["id","poster"],
+    "instant": true,
+    "fn": (iinfo = {}, config = {}) => {
+      const found = getCachedPoster(iinfo);
+      if (!found) return undefined;
+      return {
+        old: {
+          poster: found.poster,
+        },
+        new: {
+          id: found.id,
+        }
+      }
     }
   },
   {
@@ -3916,6 +3984,7 @@ if (isEpisode()) {
       }
       else if (data.type === 'anidb_id') {
         const pageData = getAnimeDataFromPage($(document), true);
+        cachePoster(pageData?.poster, pageData, getStorage());
         sendMessage({action:"response",type:'anidb_id',value:pageData.anidb_id});
       }
       else if (data.type === 'name') {
@@ -5479,9 +5548,9 @@ function openNotificationsModal() {
 
       const releaseTime = toUTCDate(ep.time);
       const elem = $(`
-      <div class="anitracker-big-list-item anitracker-notification-item${ep.watched ? "" : " anitracker-notification-item-unwatched"} anitracker-temp" anime-data="${data.id}" episode-data="${ep.episode}">
+      <div class="anitracker-big-list-item anitracker-notification-item${ep.watched ? "" : " anitracker-notification-item-unwatched"} anitracker-temp" anime-id="${data.id}" episode-data="${ep.episode}">
         <a href="/anitracker-redirect?s=${data.session}&a=${toHtmlCodes(encodeURIComponent(data.name))}&e=${ep.episode}" target="_blank" title="${toHtmlCodes(data.name)}">
-          <div class="anitracker-image-wrapper">
+          <div class="anitracker-image-wrapper anitracker-inline">
             <img src="${makePosterUrl(data.poster,'th')}" referrerpolicy="no-referrer" alt="[Thumbnail of ${toHtmlCodes(data.name)}]"}>
           </div>
           <i class="fa ${ep.watched ? 'fa-eye-slash' : 'fa-eye'} anitracker-watched-toggle" tabindex="0" aria-hidden="true" title="Mark this episode as ${ep.watched ? 'unwatched' : 'watched'}"></i>
@@ -5513,7 +5582,7 @@ function openNotificationsModal() {
       const storage = getStorage();
       const elem = $(e.currentTarget);
       const parent = elem.parents().eq(1);
-      const animeId = +parent.attr('anime-data');
+      const animeId = +parent.attr('anime-id');
       const episode = +parent.attr('episode-data');
       const ep = storage.notifications.episodes.find(a => a.animeId === animeId && a.episode === episode);
       if (ep === undefined) {
@@ -5546,6 +5615,32 @@ function openNotificationsModal() {
     });
 
     $('.anitracker-notification-item.anitracker-temp').removeClass('anitracker-temp'); // Temporary class for adding event listeners
+    
+    for (const data of animeData) {
+      const elems = $(`.anitracker-notification-item[anime-id="${data.id}"]`);
+      if (!elems.length || $(elems[0]).hasClass('anitracker-has-img-error-event')) continue;
+      $(elems[0]).addClass('anitracker-has-img-error-event');
+      $(elems[0]).find('img').data('anime-data', data).on('error', function() {
+        $(this).off('error');
+        const oldData = $(this).data('anime-data');
+        invalidatePosterCache(oldData.poster, getStorage());
+        addImageSpinner(elems.find('.anitracker-image-wrapper'));
+        getAnimeData(oldData, ["poster"], {requireNew: true}).then(newData => {
+          removeImageSpinner(elems.find('.anitracker-image-wrapper'));
+          if (!newData?.poster) return;
+          
+          $(`.anitracker-notification-item[anime-id="${data.id}"]`).find('img').attr('src', makePosterUrl(newData.poster,'th'));
+          const storage = getStorage();
+          const found = storage.notifications.anime.find(a => a.id === oldData.id);
+          const foundTemp = animeData.find(a => a.id === oldData.id);
+          foundTemp.poster = newData.poster;
+          if (found) {
+            found.poster = newData.poster;
+            saveData(storage);
+          }
+        });
+      });
+    }
   }
 
   addModalEvent($('#anitracker-modal-body'), 'scroll', function() {
@@ -5683,9 +5778,9 @@ function openBookmarksModal() {
         elem.find('img').on('load', function() {$(this).css('opacity', '1')});
         if (g.posterUrl === undefined) {
           getBookmarkImage(elem, g, session);
-          return;
         }
-        elem.find('img').on('error', function() {
+        else elem.find('img').on('error', function() {
+          invalidatePosterCache(g.posterUrl, getStorage());
           getBookmarkImage(elem, g, session);
           $(this).off('error');
         });
@@ -5998,22 +6093,33 @@ function openBookmarksModal() {
   }, 0);
 }
 
-function getBookmarkImage(elem, bookmark, session = undefined) {
+// imgWrapper cannot have inlined "display" styling
+function addImageSpinner(imgWrapper) {
+  imgWrapper.css('display','revert');
   $(`
   <div class="anitracker-spinner-parent" style="position: relative;">
     <div class="anitracker-spinner anitracker-center-content" style="position: absolute;width: 100%;align-items: center;aspect-ratio: 1;">
       <div class="spinner-border" role="status" style="">
         <span class="sr-only">Loading...</span>
       </div>
-  </div></div>`).prependTo(elem);
+  </div></div>`).prependTo(imgWrapper);
+}
+
+function removeImageSpinner(imgWrapper) {
+  imgWrapper.css('display', '');
+  imgWrapper.find('.anitracker-spinner-parent').remove();
+}
+
+function getBookmarkImage(elem, bookmark, session = undefined) {
+  addImageSpinner(elem.find('.anitracker-big-poster-icon'));
 
   setTimeout(async () => {
     const data = await getAnimeData({
       name: bookmark.name,
       id: bookmark.id,
       session: session,
-    }, ['poster'], {ignored:['storage_bookmark']});
-    elem.find('.anitracker-spinner-parent').remove();
+    }, ['poster'], {ignored:['storage_bookmark'],requireNew:true});
+    removeImageSpinner(elem.find('.anitracker-big-poster-icon'));
 
     if (!data.poster) return;
     elem.find('img').attr('src', makePosterUrl(data.poster,'md'));
@@ -6117,7 +6223,11 @@ function openBookmarkStatusEditModal(id, adding=false) {
     getBookmarkImage(imgElem, entry, session);
     return;
   }
-  imgElem.find('img').on('error', () => {getBookmarkImage(imgElem, entry, session)});
+  imgElem.find('img').on('error', function() {
+    invalidatePosterCache(entry.posterUrl, getStorage());
+    getBookmarkImage(imgElem, entry, session);
+    $(this).off('error');
+  });
 }
 
 $('.anitracker-header-bookmark').on('click', openBookmarksModal);
@@ -7745,6 +7855,7 @@ async function getAnimeDataFromSearch(iinfo = {}, config = {}) {
     session: data.session,
     poster: trimPosterUrl(data.poster),
   }
+  cachePoster(rValue.poster, rValue, getStorage());
   siteVars.cached.animeSearch.push(rValue);
   return {old:{},new:{...rValue}};
 }
@@ -8232,6 +8343,25 @@ async function addContinueWatchingEpisodes(storage, episodeCount, clearAll = fal
       'anime-id': ep.animeId
     });
     applyEpisodeOptionsEvents(elem);
+
+    elem.find('img').on('error', function() {
+      invalidatePosterCache(ep.snapshot, getStorage());
+      const spinner = $(`
+        <div class="anitracker-spinner anitracker-episode-spinner">
+          <div class="spinner-border" role="status">
+            <span class="sr-only">Loading...</span>
+          </div>
+        </div>`).prependTo($(this).parents(':eq(1)'));
+      getAnimeData({
+        id: ep.animeId,
+        session: ep.animeSession,
+        name: ep.title,
+      }, ["poster"], {requireNew: true}).then(data => {
+        spinner.remove();
+        if (!data?.poster) return;
+        this.src = makePosterUrl(data.poster);
+      });
+    });
 
     if (storage.settings.relativeEpNums && !ep.firstEpisode) {
       markContinueWatchingMiscRequestStart(ep.title);
@@ -8915,7 +9045,10 @@ function setRelationLink(relationData, type) {
 
 async function getPageDataFromSession(session, isEpisode = false) {
   const page = await asyncGetPage(`/anime/${session}`);
-  return page ? getAnimeDataFromPage(page, isEpisode) : undefined;
+  const data = page ? getAnimeDataFromPage(page, isEpisode) : undefined;
+  if (!data) return undefined;
+  cachePoster(data.poster, data, getStorage());
+  return data;
 }
 
 if (isEpisode()) {
