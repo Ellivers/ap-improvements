@@ -9404,6 +9404,7 @@ async function updateEpisodePage(entry, allowCache = true) {
   applyEpisodeOptionsEvents(episodeElements);
 
   // Second loop for episode number correction, because otherwise the await could slow down the other visuals
+  if (hasTitleSpinner(elem)) return;
   const relEpSpinner = entry.mode === 'multi' && addTitleSpinner(entry.element.parent().find('>h2'), "Getting relative episode numbers...");
 
   let firstEpisodeEntry = (entry.mode === 'multi' || !storage.settings.relativeEpNums)
@@ -9436,11 +9437,15 @@ async function updateEpisodePage(entry, allowCache = true) {
 
 function addTitleSpinner(elem, text = '', colorClass = 'text-secondary') {
   return $(`
-  <div class="${colorClass}" style="display:inline;vertical-align:top;max-height:100%;" title="${toHtmlCodes(text)}">
+  <div class="${colorClass} anitracker-title-spinner" style="display:inline;vertical-align:top;max-height:100%;" title="${toHtmlCodes(text)}">
     <div class="spinner-border" role="status" style="border-width: 5px;height: 20px;width: 20px;">
       <span class="sr-only">Loading...</span>
     </div>
   </div>`).appendTo(elem);
+}
+
+function hasTitleSpinner(elem) {
+  return elem.find('.anitracker-title-spinner').length;
 }
 
 function addTitleIcons(animeid) {
