@@ -1,8 +1,8 @@
 ### 4.12.0 (in development)
 - Due to site changes slowing things down significantly:
   - The Continue Watching section will now only show anime posters, and no longer show episode snapshots
-  - The Relative Episode Numbers option will no longer work on the homepage
   - The Episode Feed menu has been reworked and shows when loading is stalled
+  - Episode lists now show an indicator when something is loading
 - Added keybinds for going to the start and end of a video
   - Default keybinds are Home and End, respectively
 - Made the keybind for going to the previous modal menu modifiable
@@ -15,12 +15,13 @@
 - Updated Continue Watching section
   - Updated loading styling
   - It now shows each episode as it's loaded
+  - It now respects the Relative Episode Numbers option
   - Loading is now faster than before, in many cases
 - Changed the way modal menus are laid out
   - In most menus, the close/back button now shares space with the menu title
   - Menu titles and subtitles are now centered and always at the top of the modal
   - Most menus now have titles
-- Updated the manage Data menu
+- Updated the Manage Data menu
   - Changed the layout of buttons at the bottom
   - Added an animation for expanding/retracting storage entries
   - Using Clean Up now shows how many entries will be cleaned up before confirming
@@ -32,6 +33,7 @@
 - Made the section text of the Options menu bold
 - Fixed various loading issues from site changes
 - Fixed session refreshing sometimes not working properly
+- Fixed exporting data not working on Safari iOS
 - Fixed the no bookmarks text disappearing when changing the bookmark sorting/layout
 - Fixed some links in the Manage Data menu still using IDs instead of names
 - Fixed potential anime data issue for certain anime
