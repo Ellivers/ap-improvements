@@ -164,7 +164,9 @@ function getDefaultData() {
         interval: 300
       }
     },
-    firstEpisodeCache: [],
+    cached: {
+      firstEpisode: [],
+    }
   };
 }
 
@@ -292,7 +294,9 @@ function getStorageLimits() {
       episodes: 150
     },
     videoSpeed: 1000,
-    firstEpisodeCache: 200,
+    cached: {
+      firstEpisode: 200,
+    },
   }
 }
 
@@ -3098,7 +3102,7 @@ const siteVars = {
   stalledRequests: [], // List of URLs
   cached: {
     animeSearch: [],
-    firstEpisode: initialStorage.firstEpisodeCache,
+    firstEpisode: initialStorage.cached.firstEpisode,
     episodePage: [],
     animeId: {},
     animeSession: [],
@@ -3250,10 +3254,10 @@ function getCachedFirstEpisodeEntry(iinfo) {
 function cacheFirstEpisode(ep, iinfo, storage) {
   const exists = (iinfo.id && getCachedFirstEpisodeEntry({id: iinfo.id})) || (iinfo.session && getCachedFirstEpisodeEntry({session: iinfo.session}));
 
-  if ((iinfo.id || iinfo.session) && !exists && siteVars.cached.firstEpisode.length < getStorageLimits().firstEpisodeCache) {
+  if ((iinfo.id || iinfo.session) && !exists && siteVars.cached.firstEpisode.length < getStorageLimits().cached.firstEpisode) {
     const entry = [ep, iinfo.id?.toString(36), iinfo.session, Date.now().toString(36)];
     siteVars.cached.firstEpisode.push(entry);
-    storage.firstEpisodeCache.push(entry);
+    storage.cached.firstEpisode.push(entry);
   }
   updateFirstEpisodeCache(storage); // Saves storage as well
 }
@@ -3263,7 +3267,7 @@ function updateFirstEpisodeCache(storage) {
   for (let i = 0; i < siteVars.cached.firstEpisode.length; i++) {
     if (parseInt(siteVars.cached.firstEpisode[i][3], 36) >= compareDate) continue;
     siteVars.cached.firstEpisode.splice(i,1);
-    storage.firstEpisodeCache.splice(i,1);
+    storage.cached.firstEpisode.splice(i,1);
     i--;
   }
   saveData(storage);
