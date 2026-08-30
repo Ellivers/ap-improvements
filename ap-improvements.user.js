@@ -8702,7 +8702,7 @@ function setRelativeEpNums(on) {
     const firstEpEntry = await getFirstEpisodeEntry({
       session: animeSession,
       name: getAnimeName(),
-      id: sessionEntry.animeId,
+      id: sessionEntry?.animeId,
     });
     if (!firstEpEntry) return undefined;
 
