@@ -6140,7 +6140,7 @@ function openBookmarkStatusEditModal(id, adding=false) {
 
   $(`
   <div style="display:flex;gap:10px;">
-    <div class="anitracker-bookmark-edit-side" style="max-width:12em;min-width:10em;">
+    <div class="anitracker-bookmark-edit-side" style="width:12em;max-width:12em;">
       <div><span style="display:inline-block;width:100%;">${toHtmlCodes(entry.name)}</span></div>
       <button class="btn dropdown-toggle btn-secondary anitracker-status-dropdown-button" data-bs-toggle="dropdown" data-toggle="dropdown" data-value="${status}" title="Select anime watching status" style="background-color: ${statusAttrs[1]};width:100%;display:block;margin-bottom:16px;">${statusAttrs[0]}</button>
       <div class="dropdown-menu anitracker-dropdown-content anitracker-status-dropdown" style="width:12em;"></div>
