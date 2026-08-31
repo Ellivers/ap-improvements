@@ -3262,23 +3262,27 @@ function cacheFirstEpisode(ep, iinfo, storage) {
   if (ep === undefined) return;
   const exists = (iinfo.id && getCachedFirstEpisodeEntry({id: iinfo.id})) || (iinfo.session && getCachedFirstEpisodeEntry({session: iinfo.session}));
 
-  if ((iinfo.id || iinfo.session) && !exists && siteVars.cached.firstEpisode.length < getStorageLimits().cached.firstEpisode) {
+  if ((iinfo.id || iinfo.session) && !exists) {
     const entry = [ep, iinfo.id?.toString(36), iinfo.session, Date.now().toString(36)];
-    siteVars.cached.firstEpisode.push(entry);
     storage.cached.firstEpisode.push(entry);
   }
-  updateFirstEpisodeCache(storage); // Saves storage as well
+
+  updateCache('firstEpisode',3,storage); // Saves storage as well
 }
 
-function updateFirstEpisodeCache(storage) {
+function updateCache(key, timeIndex, storage) {
   const compareDate = Date.now() - (1000 * 60 * 60 * 48); // 2 days old
-  for (let i = 0; i < siteVars.cached.firstEpisode.length; i++) {
-    if (parseInt(siteVars.cached.firstEpisode[i][3], 36) >= compareDate) continue;
-    siteVars.cached.firstEpisode.splice(i,1);
-    storage.cached.firstEpisode.splice(i,1);
+  for (let i = 0; i < storage.cached[key].length; i++) {
+    if (parseInt(storage.cached[key][i][timeIndex], 36) >= compareDate) continue;
+    storage.cached[key].splice(i,1);
     i--;
   }
+  const length = storage.cached[key].length;
+  const limit = getStorageLimits().cached[key];
+  if (length > limit) storage.cached[key].splice(0, length - limit);
   saveData(storage);
+  
+  siteVars.cached[key] = storage.cached[key];
 }
 
 function parseCachedFirstEpisodeEntry(entry) {
@@ -3303,32 +3307,20 @@ function cachePoster(poster, iinfo, storage) {
   if (!poster) return;
   const exists = getCachedPoster(iinfo);
 
-  if (iinfo.id && !exists && siteVars.cached.poster.length < getStorageLimits().cached.poster) {
+  if (iinfo.id && !exists) {
     const entry = [poster, iinfo.id.toString(36), Date.now().toString(36)];
-    siteVars.cached.poster.push(entry);
     storage.cached.poster.push(entry);
   }
 
-  updatePosterCache(storage); // Saves storage as well
+  updateCache('poster',2,storage); // Saves storage as well
 }
 
 function invalidatePosterCache(poster, storage) {
   const existing = getCachedPoster({poster: poster});
   if (!existing) return;
-  siteVars.cached.poster = siteVars.cached.poster.filter(g => g[0] !== poster);
   storage.cached.poster = storage.cached.poster.filter(g => g[0] !== poster);
-  saveData(storage);
-}
-
-function updatePosterCache(storage) {
-  const compareDate = Date.now() - (1000 * 60 * 60 * 48); // 2 days old
-  for (let i = 0; i < siteVars.cached.poster.length; i++) {
-    if (parseInt(siteVars.cached.poster[i][2], 36) >= compareDate) continue;
-    siteVars.cached.poster.splice(i,1);
-    storage.cached.poster.splice(i,1);
-    i--;
-  }
-  saveData(storage);
+  
+  updateCache('poster',2,storage);
 }
 
 // Things that update when focusing this tab
