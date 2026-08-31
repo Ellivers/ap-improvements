@@ -1,4 +1,4 @@
-### 4.12.0 (in development)
+### 4.12.0 (2026-08-31)
 - Due to site changes slowing things down significantly:
   - The Continue Watching section will now only show anime posters, and no longer show episode snapshots
   - The Episode Feed menu has been reworked and shows when loading is stalled
