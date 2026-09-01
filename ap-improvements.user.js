@@ -8444,7 +8444,7 @@ async function getEpisodeData(aSession, episodeNum) {
 */
 async function refreshSession(from404 = false) {
   const storage = getStorage();
-  const storedSession = storage.linkList.find(g => g.animeSession === animeSession);
+  const storedSession = getStoredLinkData(storage) || storage.linkList.find(g => g.animeSession === animeSession);
 
   if (!storedSession && from404) return 1;
   
