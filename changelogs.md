@@ -1,3 +1,6 @@
+### 4.12.1 (2026-09-03)
+- Fixed session refreshing for episode pages sometimes not working correctly
+
 ### 4.12.0 (2026-08-31)
 - Due to site changes slowing things down significantly:
   - The Continue Watching section will now only show anime posters, and no longer show episode snapshots
