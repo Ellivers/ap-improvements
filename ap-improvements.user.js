@@ -1493,6 +1493,7 @@ const _css = `
       const elem = $('.anitracker-progress-tooltip');
       const seekElem = $(`#plyr-seek-${settingsContainerId}`);
       let currentTime = 0;
+      let seekTimeout;
       new MutationObserver(function() {
         if (!enabled) return;
 
@@ -1511,25 +1512,25 @@ const _css = `
         elem.css('left', seekValue + '%');
 
         if (roundedTime === getThumbnailTime(currentTime, timeBetweenThumbnails, fullDuration)) return;
+        currentTime = time;
 
         const cached = thumbnails.find(a => a.time === timeSlot);
-        if (cached) {
-          elem.find('img').attr('src', cached.data);
-        }
-        else {
-          elem.find('img').css('display', 'none');
+        if (cached) return elem.find('img').attr('src', cached.data);
+
+        elem.find('img').css('display', 'none');
+        clearTimeout(seekTimeout);
+        seekTimeout = setTimeout(() => {
           getFrame(bgVid, roundedTime, {y: resolution, x: resolution*aspectRatio}).then((response) => {
             thumbnails.push({
               time: timeSlot,
               data: response
             });
 
+            if (roundedTime !== getThumbnailTime(currentTime, timeBetweenThumbnails, fullDuration)) return;
             if (initialStorage.debug?.seekThumbnails) console.log('thumb:',timeSlot,response);
-            elem.find('img').css('display', 'none');
             elem.find('img').attr('src', response);
           });
-        }
-        currentTime = time;
+        }, 50);
       }).observe(seekElem[0], { attributes: true });
 
       seekElem.on('mouseleave blur', (e) => {
