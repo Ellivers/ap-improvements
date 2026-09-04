@@ -1515,6 +1515,7 @@ const _css = `
         const cached = thumbnails.find(a => a.time === timeSlot);
         if (cached) {
           elem.find('img').attr('src', cached.data);
+          currentTime = time;
         }
         else {
           elem.find('img').css('display', 'none');
@@ -1527,9 +1528,9 @@ const _css = `
             if (initialStorage.debug?.seekThumbnails) console.log('thumb:',timeSlot,response);
             elem.find('img').css('display', 'none');
             elem.find('img').attr('src', response);
+            currentTime = time;
           });
         }
-        currentTime = time;
       }).observe(seekElem[0], { attributes: true });
 
       seekElem.on('mouseleave blur', (e) => {
