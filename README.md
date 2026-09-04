@@ -73,3 +73,6 @@ The development version of the script may contain major bugs or issues from code
 You can take a look at [the latest changelog](https://github.com/Ellivers/ap-improvements/blob/dev/changelogs.md) to see what is currently being worked on.
 
 [Click here](https://raw.githubusercontent.com/Ellivers/ap-improvements/refs/heads/dev/ap-improvements.user.js) to install from the latest dev branch commit, but be aware that, depending on your userscript manager, it **might not be automatically updated**, unlike the stable version.
+
+##
+No generative AI or coding assistant was used in the making of this script and its surrounding assets.
