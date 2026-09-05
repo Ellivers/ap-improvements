@@ -616,23 +616,23 @@ function validateQuantityExpression(qExpr) {
     if (char === '(') {
       openBrackets++;
       if (qExpr[i+1] === ')') errors.add(`Cannot have empty group (column ${i+1})`);
-      if (!qExpr[i+1] || (qExpr[i-1] && (qExpr[i-1] === ')' || !/[|&(]/.test(qExpr[i-1])))) errors.add(`Invalid opening parenthesis in column ${i+1}`);
+      if (!qExpr[i+1] || (qExpr[i-1] && (qExpr[i-1] === ')' || !/[|&(!]/.test(qExpr[i-1])))) errors.add(`Invalid opening parenthesis in column ${i+1}`);
     }
     if (char === ')') {
       closedBrackets++;
       if (!qExpr[i-1] || (qExpr[i+1] && (qExpr[i+1] === '(' || !/[|&)]/.test(qExpr[i+1])))) errors.add(`Invalid closing parenthesis in column ${i+1}`);
     }
     if (/[|&]/.test(char)) {
-      if (!qExpr[i-1] || /[|&(]/.test(qExpr[i-1])) errors.add(`Separator character ${char} in invalid position (column ${i+1})`);
+      if (!qExpr[i-1] || /[|&(!]/.test(qExpr[i-1])) errors.add(`Separator character ${char} in invalid position (column ${i+1})`);
       if (!qExpr[i+1] || /[|&)]/.test(qExpr[i+1])) errors.add(`Separator character ${char} in invalid position (column ${i+1})`);
     }
   }
-  for (const part of qExpr.split(/[|&()]/)) {
+  for (const part of qExpr.split(/[|&)]|!?\(/)) {
     if (part === 'else') {
       errors.add('"else" cannot be mixed with other expression parts');
       continue;
     }
-    if (!/^([<>]=?\d+|=\d+|%\d+=\d+|)$/.test(part)) errors.add(`Invalid expression part "${part}"`);
+    if (!/^((%\d+)?[<>]=?\d+|(%\d+)?!?=\d+|)$/.test(part)) errors.add(`Invalid expression part "${part}"`);
   }
   if (openBrackets !== closedBrackets) errors.add("Mismatched parentheses");
   return Array.from(errors);
@@ -679,32 +679,36 @@ function matchesQuantityExpression(qExpr, toMatch) {
   if (qExpr === 'else') return false;
 
   const parsed = parseQuantityExpression(qExpr);
-  if (!/[|&]|root/.test(parsed.type)) return matchPart(parsed);
-  return matchList(parsed);
+  return matchListOrPart(parsed);
+
+  function matchListOrPart(obj) {
+    const result = /[|&]|root/.test(obj.type) ? matchList(obj) : matchPart(obj);
+    if (obj.inverted) return !result;
+    return result;
+  }
 
   function matchList(list) {
     const matches = [];
-    for (const part of list.list) {
-      if (/[|&]/.test(part.type)) matches.push(matchList(part));
-      else matches.push(matchPart(part));
+    for (const obj of list.list) {
+      matches.push(matchListOrPart(obj));
     }
     if (list.type === '|') return matches.includes(true);
     else return !matches.includes(false);
   }
 
   function matchPart(part) {
-    if (part.type === '=') return toMatch === part.matches;
-    if (part.type === '>') return toMatch > part.matches;
-    if (part.type === '<') return toMatch < part.matches;
-    if (part.type === '>=') return toMatch >= part.matches;
-    if (part.type === '<=') return toMatch <= part.matches;
-    if (part.type === '%') return toMatch % part.modulus === part.matches;
+    let converted = toMatch;
+    if (part.operation === '%') converted %= part.operand;
+    if (part.type === '=') return converted === part.matches;
+    if (part.type === '>') return converted > part.matches;
+    if (part.type === '<') return converted < part.matches;
+    if (part.type === '>=') return converted >= part.matches;
+    if (part.type === '<=') return converted <= part.matches;
   }
 }
 
 function parseQuantityExpression(qExpr) {
   qExpr = qExpr.replaceAll(' ','');
-  if (!/[|&]/.test(qExpr)) return parsePart(qExpr);
 
   const obj = {
     type: 'root',
@@ -717,11 +721,12 @@ function parseQuantityExpression(qExpr) {
     if (separator && obj.type === 'root') obj.type = separator;
 
     const part = /^([^|&]+)/.exec(qExpr)?.at(1);
-    const startGroup = part.startsWith('(');
-    if (!['root',separator].includes(obj.type) || startGroup) {
+    const startGroupChars = /^!?\(/.exec(part);
+    if (!['root',separator].includes(obj.type) || startGroupChars) {
       // Parse another group
+      let startIndex = startGroupChars?.at(0)?.length;
       let endIndex;
-      if (startGroup) {
+      if (startGroupChars) {
         let groupCount = 0;
         for (const char of qExpr) {
           if (char === '(') groupCount++;
@@ -736,10 +741,11 @@ function parseQuantityExpression(qExpr) {
           }
         }
       }
-      const groupedPart = qExpr.split('').slice(startGroup ? 1 : 0, endIndex).join('');
+      const groupedPart = qExpr.split('').slice(startIndex, endIndex).join('');
       const addedList = parseQuantityExpression(groupedPart);
+      if (part.startsWith('!')) addedList.inverted = !addedList.inverted;
       obj.list.push(addedList);
-      qExpr = removeFromString(qExpr,0,groupedPart.length + (startGroup ? 2 : 0));
+      qExpr = removeFromString(qExpr,0,groupedPart.length + (startGroupChars ? startIndex + 1 : 0));
       continue;
     }
     if (!separator) return parsePart(part);
@@ -752,17 +758,25 @@ function parseQuantityExpression(qExpr) {
   // Does not parse "else"
   function parsePart(qExpr) {
     qExpr = /^\(*([^()]+)\)*$/.exec(qExpr)[1];
+    const obj = {};
     let match;
-    match = /^([<>]?=?)(\d+)$/.exec(qExpr);
-    if (match) return {
-      type: match[1],
-      matches: +match[2],
+    match = /^%(\d+)[<>]?!?=?\d+$/.exec(qExpr);
+    if (match) {
+      obj.operation = '%';
+      obj.operand = +match[1];
     }
-    match = /^%(\d+)=(\d+)$/.exec(qExpr);
-    if (match) return {
-      type: "%",
-      modulus: +match[1],
-      matches: +match[2],
+    match = /!=(\d+)$/.exec(qExpr);
+    if (match) {
+      obj.type = '=';
+      obj.matches = +match[1];
+      obj.inverted = true;
+      return obj;
+    }
+    match = /([<>]?=?)(\d+)$/.exec(qExpr);
+    if (match) {
+      obj.type = match[1];
+      obj.matches = +match[2];
+      return obj;
     }
   }
 }
