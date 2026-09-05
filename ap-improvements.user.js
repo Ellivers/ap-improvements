@@ -315,11 +315,8 @@ const translations = {
     "name_en": "English (US)",
     "name": "English (US)",
 
-    "default.status.currently_airing": "Currently Airing",
-    "default.status.finished_airing": "Finished Airing",
-    "default.status.not_yet_aired": "Not yet aired",
-
     "generic.episode": "Episode %1",
+    "header.continue_watching": "Continue Watching",
     "modal_title.timestamp_edit_done": "Timestamp Results",
     "modal_title.collection": "Collection - %d Entries",
     "modal_title.episode_feed": "Episode Feed",
@@ -327,16 +324,28 @@ const translations = {
     "modal_title.bookmarks.share_result": "Share Result",
     "modal_title.bookmarks.add": "Add Bookmark",
     "modal_title.bookmarks.edit": "Edit Bookmark",
+    "modal_subtitle.collection": "May not be entirely accurate",
     "button.remove": "Remove",
+    "button.save": "Save",
+    "button.clear_session": "Clear Session",
+    "button.continue_watching.show_more": "Show More...",
+    "button.video_progress.mark_watched": "Watched",
+    "button.video_progress.remove": "Remove",
     "button.dismiss": "Dismiss",
-    "button.manage_feed": "Manage Feed...",
+    "button.episode_feed.manage_feed": "Manage Feed...",
+    "button.episode_feed.refresh": "Refresh",
     "button.manage_feed.get_all": "Get All",
-    "button.dropdown.bookmarks.share.image": "Image",
-    "button.dropdown.bookmarks.share.text": "Text",
     "button.bookmarks.add": "Add Bookmark",
     "button.index.reset_filters": "Reset",
     "button.index.apply_filters": "Apply",
     "button.index.random_anime": "Random Anime",
+    "button.index.rule_type.and": "and",
+    "button.index.rule_type.or": "or",
+    "button.index.reset_rules": "Reset",
+    "button.dropdown.bookmarks.share.image": "Image",
+    "button.dropdown.bookmarks.share.text": "Text",
+    "button.dropdown.episode.previous_anime": "Previous Anime",
+    "button.dropdown.episode.next_anime": "Next Anime",
     "result_type.collection": "Collection",
     "result_info.collection_entries": "%d Entries",
     "list_info.episodes": {
@@ -345,20 +354,32 @@ const translations = {
     },
     "page_status.redirecting": "Redirecting...",
     "page_status.redirect_failed": "Failed: Couldn't find anime",
+    "page_status.refreshing": "Refreshing session, please wait...",
+    "page_status.refresh.not_found": "Couldn't refresh session: Link not found in tracker",
+    "page_status.refresh.no_data": "Couldn't refresh session: Couldn't get anime data",
+    "page_status.refresh.no_episode_data": "Couldn't refresh session: Couldn't get episode data",
+    "page_status.refresh.unknown_error": "Couldn't refresh session: An unknown error occurred",
     "tab_title.redirect_failed": "Couldn't find anime",
+    "tab_title.refreshing": "Refreshing session...",
     "alt.thumbnail": "[Thumbnail of %1]",
     "screenreader.loading": "Loading...",
+    "title.button.clear_session": "Remove this page from the session tracker",
     "title.button.modal.close": "Close modal",
     "title.button.modal.back": "Go back to previous menu",
-    "title.button.list.reverse_sort": "Sort direction (down is default)",
+    "title.button.list.reverse_sort": "Sort direction (down is default, and means newest first)",
+    "title.button.continue_watching.show_more": "View all episodes with saved progress",
+    "title.button.video_progress.mark_watched": "Mark as watched and remove",
+    "title.button.video_progress.remove": "Remove video progress",
     "title.button.episode_feed.mark_episode.watched": "Mark this episode as watched",
     "title.button.episode_feed.mark_episode.unwatched": "Mark this episode as unwatched",
     "title.button.header.episode_feed": "View episode feed",
     "title.button.header.bookmarks": "View bookmarks",
     "title.button.episode_feed.manage_feed": "View schedule and remove anime from the feed",
+    "title.button.episode_feed.refresh": "Refresh the feed",
     "title.button.manage_feed.schedule.starting_day": "Select which day the schedule should start",
     "title.button.manage_feed.remove": "Remove this anime from the episode feed",
     "title.button.manage_feed.get_all": "Add all episodes to the feed",
+    "title.button.bookmarks.reverse_sort": "Sort direction (down is default)",
     "title.button.bookmarks.sort.recent": "Sort by recently added",
     "title.button.bookmarks.sort.alphabetical": "Sort alphabetically",
     "title.button.bookmarks.sort.status": "Sort by watching status",
@@ -375,19 +396,46 @@ const translations = {
     "title.button.index.reset_filters": "Reset filters",
     "title.button.index.apply_filters": "Apply selected filters",
     "title.button.index.random_anime": "Open a random anime from within the selected filters",
+    "title.button.index.rule_type": "Select this rule type",
+    "title.button.index.reset_rules": "Reset to defaults",
+    "title.button.index.season_filter.copy_to_lower": "Copy the 'from' season to the 'to' season",
+    "title.button.index.season_filter.season.from": "Select start season quarter",
+    "title.button.index.season_filter.season.to": "Select end season quarter",
+    "title.button.index.season_filter.save": "Save changes to season range",
+    "title.button.episode.provider_dropdown": "Change video provider",
+    "title.button.episode.episode_dropdown": "Go to episode",
+    "title.button.episode.sub_dropdown": "Change resolution and sub/dub source",
+    "title.button.episode.download_dropdown": "Download video",
     "title.button.dropdown.bookmarks.share.image": "Share the bookmark list as an image",
     "title.button.dropdown.bookmarks.share.text": "Share the bookmark list as a text file",
     "title.button.dropdown.bookmarks.status": "Change watching status to %1",
     "title.input.site_search": "Search for anime",
     "title.input.index.search": "Search within applied filters",
+    "title.switch.index.season_filter.enable": "Enable season range filter",
+    "title.switch.index.season_filter.invert": "Invert season range",
+    "title.label.index.season_filter.from": "Select start season year",
+    "title.label.index.season_filter.to": "Select end season year",
+    "title.info.episode_feed.last_refreshed.never": "Not yet refreshed",
     "title.search_result.collection": "%1 - Collection",
+    "title.spinner.episode_list.relative_episodes": "Getting relative episode numbers...",
+    "title.link.episode.previous_anime": "Play Last Episode of %1",
+    "title.link.episode.next_anime": "Play First Episode of %1",
     "label.manage_feed.schedule.starting_day": "Start from:",
     "label.dropdown.bookmarks.share": "Share through",
+    "label.index.rule.include": "Include:",
+    "label.index.rule.exclude": "Exclude:",
+    "label.index.season_filter.from": "From:",
+    "label.index.season_filter.to": "To:",
+    "switch.index.season_filter.enable": "Enable",
+    "switch.index.season_filter.invert": "Invert",
+    "info.continue_watching.empty": "Nothing to continue watching!",
     "info.index.filter_results": "Filter results: %1",
     "info.timestamp_edit_done": "You can open an issue %1 to get these added.",
-    "info.episode_feed.no_entries": "Use the %1 button on an ongoing anime to add it to the feed.",
+    "info.manage_feed.empty": "Use the %1 button on an ongoing anime to add it to the feed.",
     "info.manage_feed.latest_episode": "Latest episode: %1",
     "info.manage_feed.latest_episode.none_found": "None found",
+    "info.episode_feed.last_refreshed": "Last refreshed: %1",
+    "info.episode_feed.last_refreshed.never": "Never",
     "info.episode_feed.error": "An error occurred with the following anime:",
     "info.episode_feed.empty": "Nothing here yet!",
     "info.bookmarks.empty": "No bookmarks yet!",
@@ -397,8 +445,16 @@ const translations = {
     "info.bookmarks.add.too_many": "You already have too many bookmarks",
     "info.share_link.replace_warning": "Due to coming from a share link, the current episode data for this anime was not replaced.",
     "info.share_link.replace_warning.instruction": "Refresh this page to replace it.",
+    "info.index.no_results": "No results found.",
+    "info.refresh.failed.find_anime": "Try finding the anime using the following info:",
+    "info.refresh.failed.find_episode": "Try finding the episode using the following info:",
+    "info.refresh.failed.anime": "Anime name: %1",
+    "info.refresh.failed.episode": "Episode: %1",
     "link.timestamp_edit_done.open_issue": "here",
+    "link.full_poster": "View full poster",
     "toast.removed_anime": "Removed \"%1\"",
+    "toast.video_progress.marked_watched": "Marked \"%1\" episode %2 as watched",
+    "toast.video_progress.removed": "Removed \"%1\" episode %2",
     "toast.sync.major_deletion": "Potential sync issue. Check the log!",
     "toast.sync.major_deletion.restored": "Restored data",
     "toast.manage_data.get_all": "Added all episodes to feed",
@@ -415,7 +471,12 @@ const translations = {
     "message.sync.major_deletion.footer": "If you believe this is an error, click OK to restore the removed data.",
     "message.index.page_fail": "Page loading failed.",
     "message.redirect.name_not_found": "Couldn't find any anime with name \"%1\".\nGo to \"%2\" instead?",
+    "message.refresh_session.name_not_found": "An exact match with the anime name \"%1\" couldn't be found. Go to \"%2\" instead?",
     "message.episode_feed.remove_old": "The latest episode for \"%1\" was more than 2 weeks ago. Remove it from the feed?\n\nThis prompt will not be shown again.",
+    "message.index.season_filter.invalid_year": "Year values must both be 4 numbers.",
+    "message.index.season_filter.invalid_season_order": "Season times must be from oldest to newest.",
+    "message.index.season_filter.invalid_season_order.tip": "(Winter is the first quarter of the year)",
+    "message.index.season_filter.too_broad": "Year interval cannot be more than 100 years.",
     "message.manage_data.clean_up.session": {
       "=1": "Clean up %d older duplicate entry?",
       "else": "Clean up %d older duplicate entries?"
@@ -426,6 +487,7 @@ const translations = {
     "placeholder.index.filter.theme": "Theme",
     "placeholder.index.filter.type": "Type",
     "placeholder.index.filter.demographic": "Demographic",
+    "placeholder.index.season_filter.year": "Year",
     "bookmark_status.watching": "Watching",
     "bookmark_status.planning_to_watch": "Planning to Watch",
     "bookmark_status.on_hold": "On Hold",
@@ -9101,7 +9163,7 @@ async function refreshSession(from404 = false) {
 }
 
 function refreshGuessWarning(name, title) {
-  return confirm(`[AnimePahe Improvements]\n\nAn exact match with the anime name "${name}" couldn't be found. Go to "${title}" instead?`); 
+  return confirm(`[AnimePahe Improvements]\n\n${toHtmlCodes(getText('message.refresh_session.name_not_found',[name,title]))}`);
 }
 
 const obj = getStoredLinkData(initialStorage);
@@ -9110,10 +9172,10 @@ if (isEpisode() && !is404) {
   theatreMode(initialStorage.settings.theatreMode);
   $('#downloadMenu').changeElementType('button');
 
-  $('#providerMenu').attr('title','Change video provider');
-  $('#episodeMenu').attr('title','Go to episode');
-  $('#fansubMenu').attr('title','Change resolution and sub/dub source');
-  $('#downloadMenu').attr('title','Download video');
+  $('#providerMenu').attr('title',getText('title.button.episode.provider_dropdown'));
+  $('#episodeMenu').attr('title',getText('title.button.episode.episode_dropdown'));
+  $('#fansubMenu').attr('title',getText('title.button.episode.sub_dropdown'));
+  $('#downloadMenu').attr('title',getText('title.button.episode.download_dropdown'));
 }
 else if (isAnime() && !is404) {
   getFirstEpisodeEntry({
@@ -9210,11 +9272,11 @@ if (!obj && !is404) {
   if (!isRandomAnime()) setSessionData();
 }
 else if (is404) {
-  document.title = "Refreshing session... :: animepahe";
-  $('.text-center h1').text('Refreshing session, please wait...');
+  document.title = getText('tab_title.refreshing') + " :: animepahe";
+  $('.text-center h1').text(getText('page_status.refreshing'));
   refreshSession(true).then(code => {
     if (code === 1) {
-      $('.text-center h1').text('Couldn\'t refresh session: Link not found in tracker');
+      $('.text-center h1').text(getText('page_status.refresh.not_found'));
       if (isReferrerGood(document.referrer)) {
         const prevUrl = parseUrl(document.referrer);
         const params = new URLSearchParams(prevUrl);
@@ -9223,22 +9285,22 @@ else if (is404) {
         windowOpen(prevUrl.toString(), '_self');
       }
     }
-    else if (code === 2) $('.text-center h1').text('Couldn\'t refresh session: Couldn\'t get anime data');
-    else if (code === 3) $('.text-center h1').text('Couldn\'t refresh session: Couldn\'t get episode data');
-    else if (code !== 0) $('.text-center h1').text('Couldn\'t refresh session: An unknown error occurred');
+    else if (code === 2) $('.text-center h1').text(getText('page_status.refresh.no_data'));
+    else if (code === 3) $('.text-center h1').text(getText('page_status.refresh.no_episode_data'));
+    else if (code !== 0) $('.text-center h1').text(getText('page_status.refresh.unknown_error'));
 
     if ([2,3].includes(code)) {
       if (obj.episodeNum !== undefined) {
         $(`<h3>
-            Try finding the episode using the following info:
-            <br>Anime name: ${obj.animeName}
-            <br>Episode: ${obj.episodeNum}
+            ${toHtmlCodes(getText('info.refresh.failed.find_episode'))}
+            <br>${toHtmlCodes(getText('info.refresh.failed.anime',[obj.animeName]))}
+            <br>${toHtmlCodes(getText('info.refresh.failed.episode',[obj.episodeNum]))}
           </h3>`).insertAfter('.text-center h1');
       }
       else {
         $(`<h3>
-          Try finding the anime using the following info:
-          <br>Anime name: ${obj.animeName}
+          ${toHtmlCodes(getText('info.refresh.failed.find_anime'))}
+          <br>${toHtmlCodes(getText('info.refresh.failed.anime',[obj.animeName]))}
         </h3>`).insertAfter('.text-center h1');
       }
     }
@@ -9573,11 +9635,11 @@ if (isEpisode()) {
 
   $(`
   <span relationType="prequel" class="dropdown-item anitracker-relation-link" id="anitracker-prequel-link" tabindex="0">
-    Previous Anime
+    ${toHtmlCodes(getText('button.dropdown.episode.previous_anime'))}
   </span>`).prependTo('.episode-menu #scrollArea');
   $(`
   <span relationType="sequel" class="dropdown-item anitracker-relation-link" id="anitracker-sequel-link" tabindex="0">
-    Next Anime
+    ${toHtmlCodes(getText('button.dropdown.episode.next_anime'))}
   </span>`).appendTo('.episode-menu #scrollArea');
 
   $('.anitracker-relation-link').on('click keydown', function(e) {
@@ -9625,11 +9687,12 @@ function setRelationLink(relationData, type) {
   const linkElem = $(`#anitracker-${type}-link`);
   if (relationData === undefined) return linkElem.remove();
   
+  const title = toHtmlCodes(getText((type === 'prequel' ? 'title.link.episode.previous_anime' : 'title.link.episode.next_anime'), [relationData.title]));
   const index = type === 'prequel' ? relationData.episodeList.length - 1 : 0;
   const href = `/play/${relationData.session}/${relationData.episodeList[index].session}`;
   $(`
   <div class="${type} hidden-sm-down anitracker-thumbnail">
-    <a href="${href}" title="Play ${type === 'prequel' ? 'Last Episode' : 'First Episode'} of ${toHtmlCodes(relationData.title)}">
+    <a href="${href}" title="${title}">
       <img class="anitracker-relation-poster" src="${relationData.poster}" data-src="${relationData.poster}" alt="">
     </a>
     <i class="fa fa-chevron-${type === 'prequel' ? 'left' : 'right'}" aria-hidden="true"></i>
@@ -9769,7 +9832,7 @@ function showButtonSpinner(elem) {
   $(elem).find('i').hide();
   return $(`
   <div class="spinner-border anitracker-button-spinner" role="status">
-    <span class="sr-only">Loading...</span>
+    <span class="sr-only">${toHtmlCodes(getText('screenreader.loading'))}</span>
   </div>`).prependTo(elem);
 }
 
@@ -9779,9 +9842,9 @@ function hideButtonSpinner(elem) {
 }
 
 $(`
-<button class="btn btn-dark" id="anitracker-clear-from-tracker" title="Remove this page from the session tracker">
+<button class="btn btn-dark" id="anitracker-clear-from-tracker" title="${toHtmlCodes(getText('title.button.clear_session'))}">
   <i class="fa fa-trash" aria-hidden="true"></i>
-  &nbsp;Clear Session
+  &nbsp;${toHtmlCodes(getText('button.clear_session'))}
 </button>`).appendTo('#anitracker');
 
 $('#anitracker-clear-from-tracker').on('click', function() {
@@ -9835,7 +9898,7 @@ function improvePoster() {
   $('.anime-poster .youtube-preview').removeAttr('href');
   $(`
   <a class="anitracker-full-poster-link" target="_blank" href="${$('.anime-poster .youtube-preview img').attr('src').replace('.md','')}">
-    View full poster
+    ${toHtmlCodes(getText('link.full_poster'))}
   </a>`).appendTo('.anime-poster');
 }
 
