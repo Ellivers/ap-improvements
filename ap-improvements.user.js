@@ -5786,18 +5786,19 @@ function openNotificationsModal() {
     <div class="btn-group">
     <button class="btn btn-secondary anitracker-view-notif-animes" title="${toHtmlCodes(getText('title.button.episode_feed.manage_feed'))}">
       <i class="fa fa-calendar" aria-hidden="true"></i>
-      &nbsp;${toHtmlCodes(getText('button.manage_feed'))}
+      &nbsp;${toHtmlCodes(getText('button.episode_feed.manage_feed'))}
     </button>
   </div>
     <div class="btn-group">
-      <button class="btn btn-secondary anitracker-refresh-notifs" title="Refresh the feed">
+      <button class="btn btn-secondary anitracker-refresh-notifs" title="${toHtmlCodes(getText('title.button.episode_feed.refresh'))}">
         <i class="fa fa-refresh" aria-hidden="true"></i>
-        &nbsp;Refresh
+        &nbsp;${toHtmlCodes(getText('button.episode_feed.refresh'))}
       </button>
     </div>
   </div>
-  <span title="${getLastRefreshedTitle(oldStorage.notifications.lastUpdated)}" style="display: block;text-align: center;margin-bottom: 5px;overflow:hidden;">
-    Last refreshed: <span class="anitracker-last-refreshed">${getLastRefreshedText(oldStorage.notifications.lastUpdated)}</span>
+  <span title="${toHtmlCodes(getLastRefreshedTitle(oldStorage.notifications.lastUpdated))}" style="display: block;text-align: center;margin-bottom: 5px;overflow:hidden;">
+    ${toHtmlCodes(getText('info.episode_feed.last_refreshed',['HTML']))
+      .replace('HTML',`<span class="anitracker-last-refreshed">${toHtmlCodes(getLastRefreshedText(oldStorage.notifications.lastUpdated))}</span>`)}
   </span>
   <div class="anitracker-modal-list-container">
     <div class="anitracker-modal-list" style="min-height: 100px;min-width: 200px;"></div>
@@ -6044,13 +6045,13 @@ function openNotificationsModal() {
   }
 
   function getLastRefreshedTitle(value) {
-    if (!value) return "Not yet refreshed";
+    if (!value) return getText('title.info.episode_feed.last_refreshed.never');
     return new Date(value).toLocaleString();
   }
 
   function getLastRefreshedText(value) {
-    if (!value) return "Never";
-    return `${timeSince(value)} ago`;
+    if (!value) return getText('info.episode_feed.last_refreshed.never');
+    return timeAgoText(value);
   }
 
   function addToList(num) {
@@ -8773,7 +8774,7 @@ async function addContinueWatchingEpisodes(storage, episodeCount, clearAll = fal
       <div>
         <div class="anitracker-spinner" style="margin:auto;width:fit-content;">
           <div class="spinner-border" role="status">
-            <span class="sr-only">Loading...</span>
+            <span class="sr-only">${toHtmlCodes(getText('screenreader.loading'))}</span>
           </div>
         </div>
         <div class="anitracker-progress-bar" style="width:12rem;"><div></div></div>
@@ -8788,7 +8789,7 @@ async function addContinueWatchingEpisodes(storage, episodeCount, clearAll = fal
         ${clearAll ? '' : `
         <div class="anitracker-spinner anitracker-episode-spinner">
           <div class="spinner-border" role="status">
-            <span class="sr-only">Loading...</span>
+            <span class="sr-only">${toHtmlCodes(getText('screenreader.loading'))}</span>
           </div>
         </div>`}
         <div class="episode-snapshot" style="background-color:var(--dark);">
@@ -8943,7 +8944,7 @@ async function addContinueWatchingEpisodes(storage, episodeCount, clearAll = fal
       const spinner = $(`
         <div class="anitracker-spinner anitracker-episode-spinner">
           <div class="spinner-border" role="status">
-            <span class="sr-only">Loading...</span>
+            <span class="sr-only">${toHtmlCodes(getText('screenreader.loading'))}</span>
           </div>
         </div>`).prependTo($(this).parents(':eq(1)'));
       getAnimeData({
@@ -9002,7 +9003,7 @@ function updateContinueWatchingEpisodeValue(elem, firstEp) {
 function markContinueWatchingMiscRequestStart(identifier) {
   continueWatchingStatus.firstEpRequests.add(identifier);
   if ($('#anitracker-continue-watching-misc-spinner').length) return;
-  addTitleSpinner($('#anitracker-continue-watching-section h2'), "Getting relative episode numbers...")
+  addTitleSpinner($('#anitracker-continue-watching-section h2'), getText('title.spinner.episode_list.relative_episodes'))
   .attr('id', 'anitracker-continue-watching-misc-spinner');
 }
 
@@ -9100,7 +9101,7 @@ async function refreshSession(from404 = false) {
 }
 
 function refreshGuessWarning(name, title) {
-  return confirm(`[AnimePahe Improvements]\n\nAn exact match with the anime name "${name}" couldn't be found. Go to "${title}" instead?`);
+  return confirm(`[AnimePahe Improvements]\n\nAn exact match with the anime name "${name}" couldn't be found. Go to "${title}" instead?`); 
 }
 
 const obj = getStoredLinkData(initialStorage);
