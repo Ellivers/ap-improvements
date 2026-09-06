@@ -327,7 +327,10 @@ const translations = {
     "modal_subtitle.collection": "May not be entirely accurate",
     "button.remove": "Remove",
     "button.save": "Save",
+    "button.manage_data": "Manage Data...",
+    "button.options": "Options...",
     "button.clear_session": "Clear Session",
+    "button.clear_episode_sessions": "Clear Episode Sessions",
     "button.continue_watching.show_more": "Show More...",
     "button.video_progress.mark_watched": "Watched",
     "button.video_progress.remove": "Remove",
@@ -342,6 +345,22 @@ const translations = {
     "button.index.rule_type.and": "and",
     "button.index.rule_type.or": "or",
     "button.index.reset_rules": "Reset",
+    "button.random_result.reroll": "Reroll Anime",
+    "button.random_result.reroll.rerolling": "Rerolling...",
+    "button.random_result.save_session": "Save Session",
+    "button.random_result.save_session.saved": "Saved!",
+    "button.options.reset_player": "Reset Player",
+    "button.options.report_timestamp_issue_link": "Report Timestamp Issue",
+    "button.options.edit_timestamps": "Edit/add timestamps",
+    "button.options.edit_keybinds": "Edit Keybinds...",
+    "button.options.download_options": "Download Preferences...",
+    "button.options.mark_all_watched": "Mark As Watched",
+    "button.options.unmark_all_watched": "Unmark Watched Episodes",
+    "button.options.refresh_session": "Refresh Session",
+    "button.options.refresh_session.refreshing": "Refreshing...",
+    "button.options.refresh_session.failed_no_data": "Failed: Couldn't find session",
+    "button.options.refresh_session.failed": "Failed.",
+    "button.options.version_history": "Version History...",
     "button.dropdown.bookmarks.share.image": "Image",
     "button.dropdown.bookmarks.share.text": "Text",
     "button.dropdown.episode.previous_anime": "Previous Anime",
@@ -367,9 +386,19 @@ const translations = {
     "page_status.refresh.unknown_error": "Couldn't refresh session: An unknown error occurred",
     "tab_title.redirect_failed": "Couldn't find anime",
     "tab_title.refreshing": "Refreshing session...",
+    "tab_title.random_result": "Random result: %1",
     "alt.thumbnail": "[Thumbnail of %1]",
     "screenreader.loading": "Loading...",
+    "title.button.manage_data": "View and handle stored data",
+    "title.button.options": "Options",
     "title.button.clear_session": "Remove this page from the session tracker",
+    "title.button.clear_session.cleared": "Cleared!",
+    "title.button.clear_episode_sessions": "Clear all episodes from this anime from the session tracker",
+    "title.button.clear_episode_sessions.cleared": "Cleared!",
+    "title.button.title.bookmark": "Bookmark this anime",
+    "title.button.title.episode_feed": "Add to episode feed",
+    "title.button.title.copy_link": "Copy link to anime",
+    "title.button.title.copy_link.copied": "Copied!",
     "title.button.modal.close": "Close modal",
     "title.button.modal.back": "Go back to previous menu",
     "title.button.list.reverse_sort": "Sort direction (down is default, and means newest first)",
@@ -413,6 +442,17 @@ const translations = {
     "title.button.episode.sub_dropdown": "Change resolution and sub/dub source",
     "title.button.episode.download_dropdown": "Download video",
     "title.button.episode_options": "View episode options",
+    "title.button.random_result.reroll": "Go to another random anime",
+    "title.button.random_result.save_session": "Save this page's session",
+    "title.button.options.reset_player": "Reset the video player",
+    "title.button.options.report_timestamp_issue_link": "Open a new issue for incorrect or missing timestamps on this episode",
+    "title.button.options.edit_timestamps": "Edit timestamps for the current episode (advanced & desktop only)",
+    "title.button.options.edit_keybinds": "Edit site keybinds",
+    "title.button.options.download_options": "Change download options",
+    "title.button.options.mark_all_watched": "Mark all episodes of this anime as fully watched",
+    "title.button.options.unmark_all_watched": "Unmark all fully watched episodes of this anime",
+    "title.button.options.refresh_session": "Refresh the session for the current page",
+    "title.button.options.version_history": "Show previous changelogs",
     "title.button.dropdown.bookmarks.share.image": "Share the bookmark list as an image",
     "title.button.dropdown.bookmarks.share.text": "Share the bookmark list as a text file",
     "title.button.dropdown.bookmarks.status": "Change watching status to %1",
@@ -425,6 +465,20 @@ const translations = {
     "title.input.index.search": "Search within applied filters",
     "title.switch.index.season_filter.enable": "Enable season range filter",
     "title.switch.index.season_filter.invert": "Invert season range",
+    "title.switch.options.auto_play_video": "Automatically play the video when it is loaded. (You might need to tell your browser to allow auto-playing on this website)",
+    "title.switch.options.theater_mode": "Expand the video player for a better experience on bigger screens.",
+    "title.switch.options.best_quality": "Automatically select the best resolution quality available.",
+    "title.switch.options.seek_thumbnails": "Show thumbnail images while seeking through the progress bar. May cause performance issues on weak systems.",
+    "title.switch.options.seek_points": "Show points on the progress bar.",
+    "title.switch.options.skip_button": "Show a button to skip sections of episodes.",
+    "title.switch.options.copy_screenshots": "Copy screenshots to the clipboard, instead of downloading them.",
+    "title.switch.options.hide_thumbnails": "Hide thumbnails and preview images.",
+    "title.switch.options.relative_episode_numbers": "Don't continue episode numbers through sequels.",
+    "title.switch.options.auto_clear_episodes": "Only one episode of a series is stored in the tracker at a time.",
+    "title.switch.options.auto_download": "Automatically download the episode when visiting a download page.",
+    "title.switch.options.continue_watching_section": "Show the \"Continue Watching\" section on the homepage.",
+    "title.switch.options.reduce_motion": "Don't show animations for opening/closing modal menus.",
+    "title.switch.options.sticky_header": "Always keep the header at the top of the screen.",
     "title.label.index.season_filter.from": "Select start season year",
     "title.label.index.season_filter.to": "Select end season year",
     "title.info.episode_feed.last_refreshed.never": "Not yet refreshed",
@@ -438,8 +492,25 @@ const translations = {
     "label.index.rule.exclude": "Exclude:",
     "label.index.season_filter.from": "From:",
     "label.index.season_filter.to": "To:",
+    "section.options.player": "Video player:",
+    "section.options.site": "Site:",
+    "section.options.this_anime": "This anime:",
     "switch.index.season_filter.enable": "Enable",
     "switch.index.season_filter.invert": "Invert",
+    "switch.options.auto_play_video": "Auto-Play Video",
+    "switch.options.theater_mode": "Theatre Mode",
+    "switch.options.best_quality": "Default to Best Quality",
+    "switch.options.seek_thumbnails": "Seek Thumbnails",
+    "switch.options.seek_points": "Seek Points",
+    "switch.options.skip_button": "Skip Button",
+    "switch.options.copy_screenshots": "Copy Screenshots",
+    "switch.options.hide_thumbnails": "Hide Thumbnails",
+    "switch.options.relative_episode_numbers": "Relative Episode Numbers",
+    "switch.options.auto_clear_episodes": "Auto-Clear Episodes",
+    "switch.options.auto_download": "Automatic Download",
+    "switch.options.continue_watching_section": "Watching Section",
+    "switch.options.reduce_motion": "Reduce Motion",
+    "switch.options.sticky_header": "Header Follows",
     "info.continue_watching.empty": "Nothing to continue watching!",
     "info.index.filter_results": "Filter results: %1",
     "info.timestamp_edit_done": "You can open an issue %1 to get these added.",
@@ -468,6 +539,12 @@ const translations = {
     "toast.removed_anime": "Removed \"%1\"",
     "toast.removed_episode": "Removed \"%1\" episode %2",
     "toast.marked_watched": "Marked \"%1\" episode %2 as watched",
+    "toast.title.episode_feed.too_many": "Too many feeds!",
+    "toast.title.episode_feed.added": "Added to feed!",
+    "toast.title.episode_feed.removed": "Removed from feed",
+    "toast.random_anime.fail": "No matching anime found!",
+    "toast.options.marked_all_watched": "Marked all episodes as watched",
+    "toast.options.unmarked_all_watched": "Unmarked all watched episodes",
     "toast.sync.major_deletion": "Potential sync issue. Check the log!",
     "toast.sync.major_deletion.restored": "Restored data",
     "toast.manage_data.get_all": "Added all episodes to feed",
@@ -478,6 +555,7 @@ const translations = {
     "toast.episode_options.download.failed": "Downloading failed",
     "toast.episode_options.mark_watched.failed": "Error marking as watched",
     "message.refresh.from_404": "The session was outdated, and has been refreshed. Please try that link again.",
+    "message.title.episode_feed.too_many": "You already have too many episode feeds (maximum %d)",
     "message.sync.major_deletion.header": "Potential sync issue! The latest sync deleted the following amounts of data:",
     "message.sync.major_deletion.data.session": "Session entries: %d",
     "message.sync.major_deletion.data.video_progress": "Video progress entries: %d",
@@ -504,6 +582,7 @@ const translations = {
     "placeholder.index.filter.type": "Type",
     "placeholder.index.filter.demographic": "Demographic",
     "placeholder.index.season_filter.year": "Year",
+    "issue_placeholder.insert_info": "(Add more info here...)",
     "bookmark_status.watching": "Watching",
     "bookmark_status.planning_to_watch": "Planning to Watch",
     "bookmark_status.on_hold": "On Hold",
@@ -9890,7 +9969,7 @@ $('#anitracker-clear-from-tracker').on('click', function() {
         }
       }
       hideButtonSpinner(this);
-      temporaryHtmlChange($(this), 1500, 'Cleared!');
+      temporaryHtmlChange($(this), 1500, toHtmlCodes(getText('title.button.clear_session.cleared')));
     });
   }
   else {
@@ -10301,7 +10380,7 @@ function addTitleSpinner(elem, text = '', colorClass = 'text-secondary') {
   return $(`
   <div class="${colorClass} anitracker-title-spinner" style="display:inline;vertical-align:top;max-height:100%;" title="${toHtmlCodes(text)}">
     <div class="spinner-border" role="status" style="border-width: 5px;height: 20px;width: 20px;">
-      <span class="sr-only">Loading...</span>
+      <span class="sr-only">${toHtmlCodes(getText('screenreader.loading'))}</span>
     </div>
   </div>`).appendTo(elem);
 }
@@ -10329,15 +10408,15 @@ function addTitleIcons(animeid) {
     return false;
   })();
 
-  $(`<i title="Bookmark this anime" class="fa fa-bookmark anitracker-title-icon anitracker-bookmark-toggle" tabindex="0">
+  $(`<i title="${toHtmlCodes(getText('title.button.title.bookmark'))}" class="fa fa-bookmark anitracker-title-icon anitracker-bookmark-toggle" tabindex="0">
     <i style="display: none;" class="fa fa-check anitracker-title-icon-check" aria-hidden="true"></i>
   </i>`).appendTo(div)
-  if (notifIcon) $(`<i title="Add to episode feed" class="fa fa-bell anitracker-title-icon anitracker-notifications-toggle" tabindex="0">
+  if (notifIcon) $(`<i title="${toHtmlCodes(getText('title.button.title.episode_feed'))}" class="fa fa-bell anitracker-title-icon anitracker-notifications-toggle" tabindex="0">
     <i style="display: none;" class="fa fa-check anitracker-title-icon-check" aria-hidden="true"></i>
   </i>`).appendTo(div);
   $(`<div style="margin-left:1rem;display:inline-block;">
-    <div title="Copied!" data-placement="top"></div>
-    <i title="Copy link to anime" class="fa fa-link anitracker-title-icon anitracker-title-copy-link" tabindex="0" style="margin-left:0!important;"></i>
+    <div title="${toHtmlCodes(getText('title.button.title.copy_link.copied'))}" data-placement="top"></div>
+    <i title="${toHtmlCodes(getText('title.button.title.copy_link'))}" class="fa fa-link anitracker-title-icon anitracker-title-copy-link" tabindex="0" style="margin-left:0!important;"></i>
   </div>`).appendTo(div);
 
   if (initialStorage.bookmarks.find(g => g.id === animeid)) {
@@ -10358,18 +10437,18 @@ function addTitleIcons(animeid) {
     if (e.type === 'keydown' && e.key !== "Enter") return;
     const check = $(e.currentTarget).find('.anitracker-title-icon-check');
     if (!check.is(':visible') && getStorage().notifications.anime.length >= getStorageLimits().notifications.anime) {
-      alert(`[AnimePahe Improvements]\n\nYou already have too many episode feeds (maximum ${getStorageLimits().notifications.anime})`);
-      showMessage('Too many feeds!');
+      alert(`[AnimePahe Improvements]\n\n${getText('message.title.episode_feed.too_many',[getStorageLimits().notifications.anime])}`);
+      showMessage(getText('toast.title.episode_feed.too_many'));
       return;
     }
 
     if (toggleNotifications(animename, animeid)) {
       check.show();
-      showMessage('Added to feed!');
+      showMessage(getText('toast.title.episode_feed.added'));
       return;
     }
     check.hide();
-    showMessage('Removed from feed');
+    showMessage(getText('toast.title.episode_feed.removed'));
   });
   $('.anitracker-title-copy-link').parent().find('>div').tooltip({trigger: "manual"});
   $('.anitracker-title-copy-link').on('click keydown', function(e) {
@@ -10395,10 +10474,10 @@ if (isAnime()) {
   });
 
   $(`
-  <button class="btn btn-dark" id="anitracker-clear-episodes-from-tracker" title="Clear all episodes from this anime from the session tracker">
+  <button class="btn btn-dark" id="anitracker-clear-episodes-from-tracker" title="${toHtmlCodes(getText('title.button.clear_episode_sessions'))}">
     <i class="fa fa-trash" aria-hidden="true"></i>
     <i class="fa fa-window-maximize" aria-hidden="true"></i>
-    &nbsp;Clear Episode Sessions
+    &nbsp;${toHtmlCodes(getText('button.clear_episode_sessions'))}
   </button>`).appendTo('#anitracker');
 
   $('#anitracker-clear-episodes-from-tracker').on('click', function() {
@@ -10411,7 +10490,7 @@ if (isAnime()) {
       deleteEpisodesFromTracker(undefined, animeName, data.id);
 
       hideButtonSpinner(this);
-      temporaryHtmlChange($('#anitracker-clear-episodes-from-tracker'), 1500, 'Cleared!');
+      temporaryHtmlChange($(this), 1500, toHtmlCodes(getText('title.button.clear_episode_sessions.cleared')));
 
       updateEpisodePages();
     });
@@ -10429,7 +10508,7 @@ if (isAnime()) {
   }
   else { // If random anime
     window.history.replaceState({}, document.title, "/anime/" + animeSession);
-    document.title = 'Random result: ' + document.title;
+    document.title = getText('tab_title.random_result',[document.title]);
 
     const storage = getStorage();
     let preparedList = [];
@@ -10442,15 +10521,21 @@ if (isAnime()) {
     $(`
     <div class="anitracker-random-result-buttons">
       <div class="btn-group">
-        <button class="btn btn-dark" id="anitracker-reroll-button" title="Go to another random anime"><i class="fa fa-random" aria-hidden="true"></i>&nbsp;Reroll Anime</button>
+        <button class="btn btn-dark" id="anitracker-reroll-button" title="${toHtmlCodes(getText('title.button.random_result.reroll'))}">
+          <i class="fa fa-random" aria-hidden="true"></i>
+          &nbsp;${toHtmlCodes(getText('button.random_result.reroll'))}
+        </button>
       </div>
       <div class="btn-group">
-        <button class="btn btn-dark" id="anitracker-save-session-button" title="Save this page's session"><i class="fa fa-floppy-o" aria-hidden="true"></i>&nbsp;Save Session</button>
+        <button class="btn btn-dark" id="anitracker-save-session-button" title="${toHtmlCodes(getText('title.button.random_result.save_session'))}">
+          <i class="fa fa-floppy-o" aria-hidden="true"></i>
+          &nbsp;${toHtmlCodes(getText('button.random_result.save_session'))}
+        </button>
       </div>
     </div>`).appendTo('.title-wrapper');
 
     $('#anitracker-reroll-button').on('click', function() {
-      $(this).text('Rerolling...');
+      $(this).text(getText('button.random_result.reroll.rerolling'));
       const params = new URLSearchParams('anitracker-random=1');
 
       if (preparedList.length > 0) {
@@ -10475,7 +10560,7 @@ if (isAnime()) {
       showButtonSpinner(this);
       setSessionData().then(() => {
         $('#anitracker-save-session-button').off();
-        $(this).text('Saved!');
+        $(this).text(getText('button.random_result.save_session.saved'));
 
         updateAnimeCover();
 
@@ -10534,7 +10619,7 @@ if (isAnime()) {
 
 function getRandomAnime(list, args, openType = '_blank') {
   if (!list.length) {
-    showMessage("No matching anime found!");
+    showMessage(getText('toast.random_anime.fail'));
     return;
   }
   const random = randint(0, list.length-1);
@@ -10580,7 +10665,7 @@ function updateAnimeCover() {
 
   $(`<div id="anitracker-cover-spinner" class="anitracker-spinner">
     <div class="spinner-border" role="status">
-      <span class="sr-only">Loading...</span>
+      <span class="sr-only">${toHtmlCodes(getText('screenreader.loading'))}</span>
     </div>
   </div>`).prependTo('.anime-cover');
 
@@ -10830,46 +10915,48 @@ function resetPlayer() {
 // MARKER:OPTIONS AND MANAGE DATA
 function addGeneralButtons() {
   $(`
-  <button class="btn btn-dark" id="anitracker-show-data" title="View and handle stored data">
+  <button class="btn btn-dark" id="anitracker-show-data" title="${toHtmlCodes(getText('title.button.manage_data'))}">
     <i class="fa fa-floppy-o" aria-hidden="true"></i>
-    &nbsp;Manage Data...
+    &nbsp;${toHtmlCodes(getText('button.manage_data'))}
   </button>
-  <button class="btn btn-dark" id="anitracker-options" title="Options">
+  <button class="btn btn-dark" id="anitracker-options" title="${toHtmlCodes(getText('title.button.options'))}">
     <i class="fa fa-sliders" aria-hidden="true"></i>
-    &nbsp;Options...
+    &nbsp;${toHtmlCodes(getText('button.options'))}
   </button>`).appendTo('#anitracker');
 
   function openOptionsModal() {
     $('#anitracker-modal-body').empty();
 
-    $(`<div class="anitracker-dark-area" id="anitracker-player-options"><strong style="display:block;">Video player:</strong></div>`).appendTo('#anitracker-modal-body');
+    $(`<div class="anitracker-dark-area" id="anitracker-player-options">
+        <strong style="display:block;">${toHtmlCodes(getText('section.options.player'))}</strong>
+      </div>`).appendTo('#anitracker-modal-body');
 
-    addOptionSwitch('autoPlayVideo', 'Auto-Play Video', 'Automatically play the video when it is loaded. (You might need to tell your browser to allow auto-playing on this website)', '#anitracker-player-options');
-    addOptionSwitch('theatreMode', 'Theatre Mode', 'Expand the video player for a better experience on bigger screens.', '#anitracker-player-options');
-    addOptionSwitch('bestQuality', 'Default to Best Quality', 'Automatically select the best resolution quality available.', '#anitracker-player-options');
-    addOptionSwitch('seekThumbnails', 'Seek Thumbnails', 'Show thumbnail images while seeking through the progress bar. May cause performance issues on weak systems.', '#anitracker-player-options');
-    addOptionSwitch('seekPoints', 'Seek Points', 'Show points on the progress bar.', '#anitracker-player-options');
-    addOptionSwitch('skipButton', 'Skip Button', 'Show a button to skip sections of episodes.', '#anitracker-player-options');
-    addOptionSwitch('copyScreenshots', 'Copy Screenshots', 'Copy screenshots to the clipboard, instead of downloading them.', '#anitracker-player-options');
+    addOptionSwitch('autoPlayVideo', getText('switch.options.auto_play_video'), getText('title.switch.options.auto_play_video'), '#anitracker-player-options');
+    addOptionSwitch('theatreMode', getText('switch.options.theater_mode'), getText('title.switch.options.theater_mode'), '#anitracker-player-options');
+    addOptionSwitch('bestQuality', getText('switch.options.best_quality'), getText('title.switch.options.best_quality'), '#anitracker-player-options');
+    addOptionSwitch('seekThumbnails', getText('switch.options.seek_thumbnails'), getText('title.switch.options.seek_thumbnails'), '#anitracker-player-options');
+    addOptionSwitch('seekPoints', getText('switch.options.seek_points'), getText('title.switch.options.seek_points'), '#anitracker-player-options');
+    addOptionSwitch('skipButton', getText('switch.options.skip_button'), getText('title.switch.options.skip_button'), '#anitracker-player-options');
+    addOptionSwitch('copyScreenshots', getText('switch.options.copy_screenshots'), getText('title.switch.options.copy_screenshots'), '#anitracker-player-options');
 
     if (isEpisode()) {
       $(`
       <div class="btn-group">
-        <button class="btn btn-secondary" id="anitracker-reset-player" title="Reset the video player">
+        <button class="btn btn-secondary" id="anitracker-reset-player" title="${toHtmlCodes(getText('title.button.options.reset_player'))}">
           <i class="fa fa-rotate-right" aria-hidden="true"></i>
-          &nbsp;Reset Player
+          &nbsp;${toHtmlCodes(getText('button.options.reset_player'))}
         </button>
       </div><br>
-      <a class="btn-group" style="margin-top: 5px;" id="anitracker-report-timestamps" href="https://github.com/Ellivers/open-anime-timestamps/issues/new?title=Anime%20%22${encodeURIComponent(getAnimeName())}%22%20has%20incorrect%20timestamps&body=Anime%20ID:%20LOADING_ID%0AAffected%20episode(s):%20${getEpisodeNum()}%0A%0A(Add%20more%20info%20here...)" target="_blank">
-        <button class="btn btn-secondary anitracker-flat-button" title="Open a new issue for incorrect or missing timestamps on this episode">
+      <a class="btn-group" style="margin-top: 5px;" id="anitracker-report-timestamps" href="https://github.com/Ellivers/open-anime-timestamps/issues/new?title=Anime%20%22${encodeURIComponent(getAnimeName())}%22%20has%20incorrect%20timestamps&body=Anime%20ID:%20LOADING_ID%0AAffected%20episode(s):%20${getEpisodeNum()}%0A%0A${toHtmlCodes(encodeURIComponent(getText('issue_placeholder.insert_info')))}" target="_blank">
+        <button class="btn btn-secondary anitracker-flat-button" title="${toHtmlCodes(getText('title.button.options.report_timestamp_issue_link'))}">
           <i class="fa fa-external-link"></i>
-          &nbsp;Report Timestamp Issue
+          &nbsp;${toHtmlCodes(getText('button.options.report_timestamp_issue_link'))}
         </button>
       </a><br>
       <div class="btn-group" style="margin-top: 5px;">
-        <button class="btn btn-secondary anitracker-flat-button" id="anitracker-edit-timestamps" title="Edit timestamps for the current episode (advanced & desktop only)">
+        <button class="btn btn-secondary anitracker-flat-button" id="anitracker-edit-timestamps" title="${toHtmlCodes(getText('title.button.options.edit_timestamps'))}">
           <i class="fa fa-edit" aria-hidden="true"></i>
-          &nbsp;Edit/add timestamps
+          &nbsp;${toHtmlCodes(getText('button.options.edit_timestamps'))}
         </button>
       </div>`).appendTo('#anitracker-player-options');
 
@@ -10892,43 +10979,46 @@ function addGeneralButtons() {
       });
     }
 
-    $('<div class="anitracker-dark-area" id="anitracker-site-options" style="margin-top:10px;"><strong style="display:block;">Site:</strong></div>').appendTo('#anitracker-modal-body');
-    addOptionSwitch('hideThumbnails', 'Hide Thumbnails', 'Hide thumbnails and preview images.', '#anitracker-site-options');
-    addOptionSwitch('relativeEpNums', 'Relative Episode Numbers', 'Don\'t continue episode numbers through sequels.', '#anitracker-site-options');
-    addOptionSwitch('autoDelete', 'Auto-Clear Episodes', 'Only one episode of a series is stored in the tracker at a time.', '#anitracker-site-options');
-    addOptionSwitch('autoDownload', 'Automatic Download', 'Automatically download the episode when visiting a download page.', '#anitracker-site-options');
-    addOptionSwitch('showContinueWatching', 'Watching Section', 'Show the "Continue Watching" section on the homepage.', '#anitracker-site-options');
-    addOptionSwitch('reduceMotion', 'Reduce Motion', 'Don\'t show animations for opening/closing modal menus.', '#anitracker-site-options');
-    addOptionSwitch('stickyHeader', 'Header Follows', 'Always keep the header at the top of the screen.', '#anitracker-site-options');
+    $(`<div class="anitracker-dark-area" id="anitracker-site-options" style="margin-top:10px;">
+        <strong style="display:block;">${toHtmlCodes(getText('section.options.site'))}</strong>
+      </div>`).appendTo('#anitracker-modal-body');
+
+    addOptionSwitch('hideThumbnails', getText('switch.options.hide_thumbnails'), getText('title.switch.options.hide_thumbnails'), '#anitracker-site-options');
+    addOptionSwitch('relativeEpNums', getText('switch.options.relative_episode_numbers'), getText('title.switch.options.relative_episode_numbers'), '#anitracker-site-options');
+    addOptionSwitch('autoDelete', getText('switch.options.auto_clear_episodes'), getText('title.switch.options.auto_clear_episodes'), '#anitracker-site-options');
+    addOptionSwitch('autoDownload', getText('switch.options.auto_download'), getText('title.switch.options.auto_download'), '#anitracker-site-options');
+    addOptionSwitch('showContinueWatching', getText('switch.options.continue_watching_section'), getText('title.switch.options.continue_watching_section'), '#anitracker-site-options');
+    addOptionSwitch('reduceMotion', getText('switch.options.reduce_motion'), getText('title.switch.options.reduce_motion'), '#anitracker-site-options');
+    addOptionSwitch('stickyHeader', getText('switch.options.sticky_header'), getText('title.switch.options.sticky_header'), '#anitracker-site-options');
 
     $(`
     <div class="btn-group" style="margin-top: 5px;">
-      <button class="btn btn-secondary" id="anitracker-edit-keybinds" title="Edit site keybinds">
+      <button class="btn btn-secondary" id="anitracker-edit-keybinds" title="${toHtmlCodes(getText('title.button.options.edit_keybinds'))}">
         <i class="fa fa-edit" aria-hidden="true"></i>
-        &nbsp;Edit Keybinds...
+        &nbsp;${toHtmlCodes(getText('button.options.edit_keybinds'))}
       </button>
     </div>
     <div class="btn-group" style="display:block;margin-top: 5px;">
-      <button class="btn btn-secondary anitracker-flat-button" id="anitracker-dl-options" title="Change download options">
+      <button class="btn btn-secondary anitracker-flat-button" id="anitracker-dl-options" title="${toHtmlCodes(getText('title.button.options.download_options'))}">
         <i class="fa fa-download" aria-hidden="true"></i>
-        &nbsp;Download Preferences...
+        &nbsp;${toHtmlCodes(getText('button.options.download_options'))}
       </button>
     </div>`).appendTo('#anitracker-site-options');
 
     if (isAnime()) {
       $(`
       <div class="anitracker-dark-area" style="margin-top:10px;">
-        <strong style="display:block;">This anime:</strong>
+        <strong style="display:block;">${toHtmlCodes(getText('section.options.this_anime'))}</strong>
         <div class="btn-group">
-          <button class="btn btn-secondary" id="anitracker-mark-watched" title="Mark all episodes of this anime as fully watched">
+          <button class="btn btn-secondary" id="anitracker-mark-watched" title="${toHtmlCodes(getText('title.button.options.mark_all_watched'))}">
             <i class="fa fa-eye" aria-hidden="true"></i>
-            &nbsp;Mark As Watched
+            &nbsp;${toHtmlCodes(getText('button.options.mark_all_watched'))}
           </button>
         </div>
         <div class="btn-group" style="display:block;margin-top: 5px;">
-          <button class="btn btn-secondary" id="anitracker-unmark-watched" title="Unmark all fully watched episodes of this anime">
+          <button class="btn btn-secondary" id="anitracker-unmark-watched" title="${toHtmlCodes(getText('title.button.options.unmark_all_watched'))}">
             <i class="fa fa-eye-slash" aria-hidden="true"></i>
-            &nbsp;Unmark Watched Episodes
+            &nbsp;${toHtmlCodes(getText('button.options.unmark_all_watched'))}
           </button>
         </div>
       </div>`).appendTo('#anitracker-modal-body');
@@ -10968,7 +11058,7 @@ function addGeneralButtons() {
 
           closeModal();
           updateEpisodePages();
-          showMessage('Marked all episodes as watched');
+          showMessage(getText('toast.options.marked_all_watched'));
         });
       });
 
@@ -10984,34 +11074,36 @@ function addGeneralButtons() {
           closeModal();
           removeWatchedAnime(data.id);
           updateEpisodePages();
-          showMessage('Unmarked all watched episodes');
+          showMessage(getText('toast.options.unmarked_all_watched'));
         });
       });
     }
 
     if (isAnime() || isEpisode())
       $(`<div class="anitracker-center-content" style="width:100%;margin-top: 10px;">
-        <button class="btn btn-secondary" id="anitracker-refresh-session" title="Refresh the session for the current page">
+        <button class="btn btn-secondary" id="anitracker-refresh-session" title="${toHtmlCodes(getText('title.button.options.refresh_session'))}">
           <i class="fa fa-refresh" aria-hidden="true"></i>
-          &nbsp;Refresh Session
+          &nbsp;${toHtmlCodes(getText('button.options.refresh_session'))}
         </button></div>`).appendTo('#anitracker-modal-body');
 
     $(`
     <div class="anitracker-center-content" style="width:100%;margin-top: 5px;">
-      <button class="btn btn-secondary anitracker-flat-button" id="anitracker-changelog" title="Show previous changelogs">
+      <button class="btn btn-secondary anitracker-flat-button" id="anitracker-changelog" title="${toHtmlCodes(getText('title.button.options.version_history'))}">
         <i class="fa fa-history" aria-hidden="true"></i>
-        &nbsp;Version History...
+        &nbsp;${toHtmlCodes(getText('button.options.version_history'))}
       </button>
     </div>`).appendTo('#anitracker-modal-body');
 
     $('#anitracker-refresh-session').on('click', function() {
       const elem = $(this);
-      const timeout = temporaryHtmlChange(elem, 10000, '<i class="fa fa-refresh" aria-hidden="true" style="animation: anitracker-spin 1s linear infinite;"></i>&nbsp;&nbsp;Refreshing...');
+      const timeout = temporaryHtmlChange(elem, 10000,
+        `<i class="fa fa-refresh" aria-hidden="true" style="animation: anitracker-spin 1s linear infinite;"></i>
+        &nbsp;&nbsp;${toHtmlCodes(getText('button.options.refresh_session.refreshing'))}`);
 
       refreshSession().then(result => {
         if (result === 0) return;
-        else if ([2,3].includes(result)) temporaryHtmlChange(elem, 2200, 'Failed: Couldn\'t find session', timeout);
-        else temporaryHtmlChange(elem, 2200, 'Failed.', timeout);
+        else if ([2,3].includes(result)) temporaryHtmlChange(elem, 2200, toHtmlCodes(getText('button.options.refresh_session.failed_no_data')), timeout);
+        else temporaryHtmlChange(elem, 2200, toHtmlCodes(getText('button.options.refresh_session.failed')), timeout);
       });
     });
 
@@ -13495,7 +13587,7 @@ function addOptionSwitch(optionId, name, desc = '', parent = '#anitracker-modal-
   $(`
   <div class="custom-control custom-switch anitracker-switch" id="anitracker-${optionId}" title="${toHtmlCodes(desc)}">
     <input type="checkbox" class="custom-control-input" id="anitracker-${optionId}-switch" title="${toHtmlCodes(desc)}">
-    <label class="custom-control-label" for="anitracker-${optionId}-switch">${name}</label>
+    <label class="custom-control-label" for="anitracker-${optionId}-switch">${toHtmlCodes(name)}</label>
   </div>`).appendTo(parent).tooltip({
     boundary:'viewport',
     placement: (window.innerWidth > 700 && $.contains($('#anitracker-modal-body')[0], $(parent)[0])) ? 'left': 'top'
