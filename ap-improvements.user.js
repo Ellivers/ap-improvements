@@ -801,12 +801,12 @@ function validateTranslations(obj) {
 // Does not validate the logic
 function validateQuantityExpression(qExpr) {
   if (qExpr === 'else') return [];
-  // const separatedNumbers = qExpr.match(/\d+ \d+/g);
-  // if (separatedNumbers) errors.add(separatedNumbers.map(g => ``))
+  const errors = new Set();
+  const separatedNumbers = qExpr.match(/\d+ \d+/g);
+  if (separatedNumbers) separatedNumbers.forEach(g => errors.add(`Space between numbers ("${g}")`));
   qExpr = qExpr.replaceAll(' ','');
   if (!qExpr) return ["Empty expression"];
   if (qExpr === 'else') return ['"else" cannot contain spaces'];
-  const errors = new Set();
   let openBrackets = 0;
   let closedBrackets = 0;
   for (let i = 0; i < qExpr.length; i++) {
