@@ -801,6 +801,8 @@ function validateTranslations(obj) {
 // Does not validate the logic
 function validateQuantityExpression(qExpr) {
   if (qExpr === 'else') return [];
+  // const separatedNumbers = qExpr.match(/\d+ \d+/g);
+  // if (separatedNumbers) errors.add(separatedNumbers.map(g => ``))
   qExpr = qExpr.replaceAll(' ','');
   if (!qExpr) return ["Empty expression"];
   if (qExpr === 'else') return ['"else" cannot contain spaces'];
@@ -818,17 +820,18 @@ function validateQuantityExpression(qExpr) {
       closedBrackets++;
       if (!qExpr[i-1] || (qExpr[i+1] && (qExpr[i+1] === '(' || !/[|&)]/.test(qExpr[i+1])))) errors.add(`Invalid closing parenthesis in column ${i+1}`);
     }
+    if (char === '!' && qExpr[i+1] !== '(') errors.add(`Negation character "!" in invalid position (column ${i+1})`)
     if (/[|&]/.test(char)) {
-      if (!qExpr[i-1] || /[|&(!]/.test(qExpr[i-1])) errors.add(`Separator character ${char} in invalid position (column ${i+1})`);
-      if (!qExpr[i+1] || /[|&)]/.test(qExpr[i+1])) errors.add(`Separator character ${char} in invalid position (column ${i+1})`);
+      if (!qExpr[i-1] || /[|&(!]/.test(qExpr[i-1])) errors.add(`Separator character "${char}" in invalid position (column ${i+1})`);
+      if (!qExpr[i+1] || /[|&)]/.test(qExpr[i+1])) errors.add(`Separator character "${char}" in invalid position (column ${i+1})`);
     }
   }
-  for (const part of qExpr.split(/[|&)]|!?\(/)) {
+  for (const part of qExpr.split(/[|&()!]/)) {
     if (part === 'else') {
       errors.add('"else" cannot be mixed with other expression parts');
       continue;
     }
-    if (!/^((%\d+)?[<>]=?\d+|(%\d+)?!?=\d+|)$/.test(part)) errors.add(`Invalid expression part "${part}"`);
+    if (!/^((%\d+)?([<>]=?\d+|!?=\d+)|)$/.test(part)) errors.add(`Invalid expression part "${part}"`);
   }
   if (openBrackets !== closedBrackets) errors.add("Mismatched parentheses");
   return Array.from(errors);
@@ -905,6 +908,12 @@ function matchesQuantityExpression(qExpr, toMatch) {
 
 function parseQuantityExpression(qExpr) {
   qExpr = qExpr.replaceAll(' ','');
+  const shortcutRegex = /^\(*(!\()?\(*([^()]+)\)*$/.exec(qExpr);
+  if (shortcutRegex) {
+    const result = parsePart(shortcutRegex[2]);
+    if (shortcutRegex[1]) result.inverted = !result.inverted;
+    return result;
+  }
 
   const obj = {
     type: 'root',
@@ -953,7 +962,6 @@ function parseQuantityExpression(qExpr) {
 
   // Does not parse "else"
   function parsePart(qExpr) {
-    qExpr = /^\(*([^()]+)\)*$/.exec(qExpr)[1];
     const obj = {};
     let match;
     match = /^%(\d+)[<>]?!?=?\d+$/.exec(qExpr);
