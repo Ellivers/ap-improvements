@@ -11114,7 +11114,7 @@ function addGeneralButtons() {
       <div style="margin-top:20px;">
         <div id="anitracker-changelog-spinner" class="anitracker-spinner anitracker-center-content" style="width:100%;">
           <div class="spinner-border" role="status">
-            <span class="sr-only">Loading...</span>
+            <span class="sr-only">${toHtmlCodes(getText('screenreader.loading'))}</span>
           </div>
         </div>
       </div>`).appendTo('#anitracker-modal-body');
@@ -11124,10 +11124,10 @@ function addGeneralButtons() {
       req.onload = () => {
         $('#anitracker-changelog-spinner').remove();
         if (req.status !== 200) {
-          $('<span class="text-danger">Couldn\'t get version history.</span>').appendTo('#anitracker-modal-body');
+          $('<span class="text-danger"></span>').text(getText('info.version_history.failed')).appendTo('#anitracker-modal-body');
           return;
         }
-        setModalSubtitle(`Current version: ${GM_info.script.version}`);
+        setModalSubtitle(getText('modal_subtitle.version_history',[GM_info.script.version]));
 
         const lines = req.response.split('\n');
         let currentList;
@@ -11165,27 +11165,27 @@ function addGeneralButtons() {
       };
       req.send();
 
-      openModal('Version History', openOptionsModal);
+      openModal(getText('modal_title.version_history'), openOptionsModal);
     });
 
     $('#anitracker-edit-keybinds').on('click', () => {
       $('#anitracker-modal-body').empty();
       const keybindEntries = [
-        {title:'Bookmarks',id:'keybindBookmarks',parent:'#anitracker-site-keybinds'},
-        {title:'Episode Feed',id:'keybindNotifications',parent:'#anitracker-site-keybinds'},
-        {title:'Open Search',id:'keybindSearch',parent:'#anitracker-site-keybinds'},
-        {title:'Previous Menu',id:'keybindModalBack',parent:'#anitracker-site-keybinds'},
-        {title:'Toggle Theatre Mode',id:'keybindTheatreMode',parent:'#anitracker-site-keybinds'},
-        {title:'Next Episode',id:'keybindNextEpisode',parent:'#anitracker-site-keybinds'},
-        {title:'Previous Episode',id:'keybindPrevEpisode',parent:'#anitracker-site-keybinds'},
-        {title:'Backward 10 Seconds',id:'keybind10sBackward',parent:'#anitracker-player-keybinds'},
-        {title:'Forward 10 Seconds',id:'keybind10sForward',parent:'#anitracker-player-keybinds'},
-        {title:'Backward 1 Frame',id:'keybind1fBackward',parent:'#anitracker-player-keybinds'},
-        {title:'Forward 1 Frame',id:'keybind1fForward',parent:'#anitracker-player-keybinds'},
-        {title:'Go to Start',id:'keybindPlayerStart',parent:'#anitracker-player-keybinds'},
-        {title:'Go to End',id:'keybindPlayerEnd',parent:'#anitracker-player-keybinds'},
-        {title:'Toggle Looping',id:'keybindToggleLoop',parent:'#anitracker-player-keybinds'},
-        {title:'Reset Player',id:'keybindResetPlayer',parent:'#anitracker-player-keybinds'},
+        {title:'label.keybinds.bookmarks',id:'keybindBookmarks',parent:'#anitracker-site-keybinds'},
+        {title:'label.keybinds.episode_feed',id:'keybindNotifications',parent:'#anitracker-site-keybinds'},
+        {title:'label.keybinds.search',id:'keybindSearch',parent:'#anitracker-site-keybinds'},
+        {title:'label.keybinds.modal_back',id:'keybindModalBack',parent:'#anitracker-site-keybinds'},
+        {title:'label.keybinds.theater_mode',id:'keybindTheatreMode',parent:'#anitracker-site-keybinds'},
+        {title:'label.keybinds.next_episode',id:'keybindNextEpisode',parent:'#anitracker-site-keybinds'},
+        {title:'label.keybinds.previous_episode',id:'keybindPrevEpisode',parent:'#anitracker-site-keybinds'},
+        {title:'label.keybinds.10_seconds_backward',id:'keybind10sBackward',parent:'#anitracker-player-keybinds'},
+        {title:'label.keybinds.10_seconds_forward',id:'keybind10sForward',parent:'#anitracker-player-keybinds'},
+        {title:'label.keybinds.1_frame_backward',id:'keybind1fBackward',parent:'#anitracker-player-keybinds'},
+        {title:'label.keybinds.1_frame_forward',id:'keybind1fForward',parent:'#anitracker-player-keybinds'},
+        {title:'label.keybinds.player_start',id:'keybindPlayerStart',parent:'#anitracker-player-keybinds'},
+        {title:'label.keybinds.player_end',id:'keybindPlayerEnd',parent:'#anitracker-player-keybinds'},
+        {title:'label.keybinds.toggle_loop',id:'keybindToggleLoop',parent:'#anitracker-player-keybinds'},
+        {title:'label.keybinds.reset_player',id:'keybindResetPlayer',parent:'#anitracker-player-keybinds'},
       ];
 
       function getKeybindString(keybind) {
@@ -11233,11 +11233,11 @@ function addGeneralButtons() {
 
       $(`
       <div class="anitracker-dark-area">
-        <strong>Site:</strong>
+        <strong>${toHtmlCodes(getText('section.keybinds.site'))}</strong>
         <div class="anitracker-keybinds-section" id="anitracker-site-keybinds"></div>
       </div>
       <div class="anitracker-dark-area" style="margin-top:10px;">
-        <strong>Video Player:</strong>
+        <strong>${toHtmlCodes(getText('section.keybinds.player'))}</strong>
         <div class="anitracker-keybinds-section" id="anitracker-player-keybinds" style="margin-bottom:10px;"></div>
       </div>
       `).appendTo('#anitracker-modal-body');
@@ -11247,15 +11247,15 @@ function addGeneralButtons() {
         const keyHtml = getKeybindHtml(g.value);
         const defValue = getKeybindString(defaultData.settings[g.id]);
         $(`
-        <label for="anitracker-${g.id}-button">${g.title}</label>
+        <label for="anitracker-${g.id}-button">${toHtmlCodes(getText(g.title))}</label>
         <button class="btn btn-secondary anitracker-flat-button anitracker-keybind-button" id="anitracker-${g.id}-button" title="${getKeybindString(g.value)}">
           ${keyHtml}
         </button>
-        <button class="btn btn-secondary anitracker-flat-button anitracker-reset-keybind-button" title="Reset to ${defValue}">
+        <button class="btn btn-secondary anitracker-flat-button anitracker-reset-keybind-button" title="${toHtmlCodes(getText('title.button.keybinds.reset',[defValue]))}">
           <i class="fa fa-undo" aria-hidden="true"></i>
         </button>`).appendTo(g.parent).data('id', g.id);
       });
-      addOptionSwitch('numpadSeeking', 'Numpad Seeking', 'Allow seeking through videos with numpad keys.', '#anitracker-modal-body>.anitracker-dark-area:nth-child(3)');
+      addOptionSwitch('numpadSeeking', getText('switch.keybinds.numpad_seeking'), getText('title.switch.keybinds.numpad_seeking'), '#anitracker-modal-body>.anitracker-dark-area:nth-child(3)');
       updateConflicts();
 
       $('.anitracker-keybind-button').on('keydown', (e) => {
