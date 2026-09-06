@@ -324,7 +324,12 @@ const translations = {
     "modal_title.bookmarks.share_result": "Share Result",
     "modal_title.bookmarks.add": "Add Bookmark",
     "modal_title.bookmarks.edit": "Edit Bookmark",
+    "modal_title.options": "Options",
+    "modal_title.version_history": "Version History",
+    "modal_title.keybinds": "Edit Keybinds",
+    "modal_title.download_options": "Download Preferences",
     "modal_subtitle.collection": "May not be entirely accurate",
+    "modal_subtitle.version_history": "Current version: %1",
     "button.remove": "Remove",
     "button.save": "Save",
     "button.manage_data": "Manage Data...",
@@ -371,6 +376,10 @@ const translations = {
     "button.dropdown.episode_options.mark_watched": "Mark watched",
     "button.dropdown.episode_options.download": "Download",
     "button.dropdown.episode_options.remove": "Remove",
+    "button.dropdown.download_options.no_preference": "No preference",
+    "button.dropdown.download_options.language.jp": "Japanese",
+    "button.dropdown.download_options.language.en": "English",
+    "button.dropdown.download_options.language.ch": "Chinese",
     "result_type.collection": "Collection",
     "result_info.collection_entries": "%d Entries",
     "list_info.episodes": {
@@ -453,6 +462,9 @@ const translations = {
     "title.button.options.unmark_all_watched": "Unmark all fully watched episodes of this anime",
     "title.button.options.refresh_session": "Refresh the session for the current page",
     "title.button.options.version_history": "Show previous changelogs",
+    "title.button.keybinds.reset": "Reset to %1",
+    "title.button.download_options.resolution": "Change preferred resolution",
+    "title.button.download_options.language": "Change preferred language",
     "title.button.dropdown.bookmarks.share.image": "Share the bookmark list as an image",
     "title.button.dropdown.bookmarks.share.text": "Share the bookmark list as a text file",
     "title.button.dropdown.bookmarks.status": "Change watching status to %1",
@@ -479,6 +491,7 @@ const translations = {
     "title.switch.options.continue_watching_section": "Show the \"Continue Watching\" section on the homepage.",
     "title.switch.options.reduce_motion": "Don't show animations for opening/closing modal menus.",
     "title.switch.options.sticky_header": "Always keep the header at the top of the screen.",
+    "title.switch.keybinds.numpad_seeking": "Allow seeking through videos with numpad keys.",
     "title.label.index.season_filter.from": "Select start season year",
     "title.label.index.season_filter.to": "Select end season year",
     "title.info.episode_feed.last_refreshed.never": "Not yet refreshed",
@@ -492,9 +505,28 @@ const translations = {
     "label.index.rule.exclude": "Exclude:",
     "label.index.season_filter.from": "From:",
     "label.index.season_filter.to": "To:",
+    "label.keybinds.bookmarks": "Bookmarks",
+    "label.keybinds.episode_feed": "Episode Feed",
+    "label.keybinds.search": "Open Search",
+    "label.keybinds.modal_back": "Previous Menu",
+    "label.keybinds.theater_mode": "Toggle Theatre Mode",
+    "label.keybinds.next_episode": "Next Episode",
+    "label.keybinds.previous_episode": "Previous Episode",
+    "label.keybinds.10_seconds_backward": "Backward 10 Seconds",
+    "label.keybinds.10_seconds_forward": "Forward 10 Seconds",
+    "label.keybinds.1_frame_backward": "Backward 1 Frame",
+    "label.keybinds.1_frame_forward": "Forward 1 Frame",
+    "label.keybinds.player_start": "Go to Start",
+    "label.keybinds.player_end": "Go to End",
+    "label.keybinds.toggle_loop": "Toggle Looping",
+    "label.keybinds.reset_player": "Reset Player",
+    "label.dropdown.download_options.resolution": "Resolution",
+    "label.dropdown.download_options.language": "Language",
     "section.options.player": "Video player:",
     "section.options.site": "Site:",
     "section.options.this_anime": "This anime:",
+    "section.keybinds.site": "Site:",
+    "section.keybinds.player": "Video Player:",
     "switch.index.season_filter.enable": "Enable",
     "switch.index.season_filter.invert": "Invert",
     "switch.options.auto_play_video": "Auto-Play Video",
@@ -511,6 +543,7 @@ const translations = {
     "switch.options.continue_watching_section": "Watching Section",
     "switch.options.reduce_motion": "Reduce Motion",
     "switch.options.sticky_header": "Header Follows",
+    "switch.keybinds.numpad_seeking": "Numpad Seeking",
     "info.continue_watching.empty": "Nothing to continue watching!",
     "info.index.filter_results": "Filter results: %1",
     "info.timestamp_edit_done": "You can open an issue %1 to get these added.",
@@ -534,6 +567,8 @@ const translations = {
     "info.refresh.failed.anime": "Anime name: %1",
     "info.refresh.failed.episode": "Episode: %1",
     "info.episode_options.download": "Select which version to download",
+    "info.version_history.failed": "Couldn't get version history.",
+    "info.download_options": "These preferences apply when downloading an episode through its dropdown menu.",
     "link.timestamp_edit_done.open_issue": "here",
     "link.full_poster": "View full poster",
     "toast.removed_anime": "Removed \"%1\"",
@@ -554,6 +589,10 @@ const translations = {
     "toast.episode_options.download.no_download": "Couldn't download",
     "toast.episode_options.download.failed": "Downloading failed",
     "toast.episode_options.mark_watched.failed": "Error marking as watched",
+    "toast.keybinds.keybind_set": "Keybind set to %1",
+    "toast.keybinds.keybind_unset": "Keybind unset",
+    "toast.keybinds.keybind_reset.bound": "Keybind reset to %1",
+    "toast.keybinds.keybind_reset.unbound": "Keybind reset",
     "message.refresh.from_404": "The session was outdated, and has been refreshed. Please try that link again.",
     "message.title.episode_feed.too_many": "You already have too many episode feeds (maximum %d)",
     "message.sync.major_deletion.header": "Potential sync issue! The latest sync deleted the following amounts of data:",
@@ -11265,7 +11304,7 @@ function addGeneralButtons() {
         const id = elem.data('id');
 
         const fullKeybind = `${(e.ctrlKey && inputKey !== 'Control') ? 'Control+' : ''}${e.shiftKey ? 'Shift+' : ''}${inputKey}`;
-        if (setKeybind(id, fullKeybind)) showMessage(inputKey ? `Keybind set to ${getKeybindString(fullKeybind)}` : 'Keybind unset');
+        if (setKeybind(id, fullKeybind)) showMessage(inputKey ? getText('toast.keybinds.keybind_set',[getKeybindString(fullKeybind)]) : getText('toast.keybinds.keybind_unset'));
 
         e.preventDefault();
         e.stopPropagation();
@@ -11277,7 +11316,7 @@ function addGeneralButtons() {
         if (defValue === undefined) return;
 
         setKeybind(id, defValue);
-        showMessage(`Keybind reset${defValue ? ' to ' + getKeybindString(defValue) : ''}`);
+        showMessage(defValue ? getText('toast.keybinds.keybind_reset.bound',[getKeybindString(defValue)]) : getText('toast.keybinds.keybind_reset.unbound'));
         $(this).blur();
       });
       $('.anitracker-keybinds-section').on('anitracker:update', () => {
@@ -11295,7 +11334,7 @@ function addGeneralButtons() {
         if (changed) updateConflicts();
       });
 
-      openModal('Edit Keybinds', openOptionsModal);
+      openModal(getText('modal_title.keybinds'), openOptionsModal);
     });
 
     $('#anitracker-dl-options').on('click', () => {
@@ -11303,33 +11342,37 @@ function addGeneralButtons() {
       const storage = getStorage();
       $(`
         <p class="anitracker-secondary-info anitracker-thin-text">
-          These preferences apply when downloading an episode through its dropdown menu.
+          ${toHtmlCodes(getText('info.download_options'))}
         </p>
         <div class="anitracker-dl-options-section">
-          <label for="anitracker-res-dropdown-button">Resolution</label>
+          <label for="anitracker-res-dropdown-button">
+            ${toHtmlCodes(getText('label.dropdown.download_options.resolution'))}
+          </label>
           <div class="btn-group">
-            <button class="btn btn-secondary dropdown-toggle" data-toggle="dropdown" data-boundary="viewport" id="anitracker-res-dropdown-button" title="Change preferred resolution">
-              ${storage.settings.dlPreferRes ? storage.settings.dlPreferRes + 'p' : 'No preference'}
+            <button class="btn btn-secondary dropdown-toggle" data-toggle="dropdown" data-boundary="viewport" id="anitracker-res-dropdown-button" title="${toHtmlCodes(getText('title.button.download_options.resolution'))}">
+              ${storage.settings.dlPreferRes ? storage.settings.dlPreferRes + 'p' : toHtmlCodes(getText('button.dropdown.download_options.no_preference'))}
             </button>
             <div class="dropdown-menu anitracker-dropdown-content" data-for="res">
               <button class="anitracker-flat-button" data-value="1080">1080p</button>
               <button class="anitracker-flat-button" data-value="720">720p</button>
               <button class="anitracker-flat-button" data-value="360">360p</button>
-              <button class="anitracker-flat-button" data-value="">No preference</button>
+              <button class="anitracker-flat-button" data-value="">${toHtmlCodes(getText('button.dropdown.download_options.no_preference'))}</button>
             </div>
           </div>
         </div>
         <div class="anitracker-dl-options-section" style="margin-top: 5px;">
-          <label for="anitracker-lang-dropdown-button">Language</label>
+          <label for="anitracker-lang-dropdown-button">
+            ${toHtmlCodes(getText('label.dropdown.download_options.language'))}
+          </label>
           <div class="btn-group">
-            <button class="btn btn-secondary dropdown-toggle" data-toggle="dropdown" data-boundary="viewport" id="anitracker-lang-dropdown-button" title="Change preferred language">
-              ${getLangName(storage.settings.dlPreferLang) || 'No preference'}
+            <button class="btn btn-secondary dropdown-toggle" data-toggle="dropdown" data-boundary="viewport" id="anitracker-lang-dropdown-button" title="${toHtmlCodes(getText('title.button.download_options.language'))}">
+              ${getLangName(storage.settings.dlPreferLang) || toHtmlCodes(getText('button.dropdown.download_options.no_preference'))}
             </button>
             <div class="dropdown-menu anitracker-dropdown-content" data-for="lang">
-              <button class="anitracker-flat-button" data-value="jp">Japanese</button>
-              <button class="anitracker-flat-button" data-value="en">English</button>
-              <button class="anitracker-flat-button" data-value="ch">Chinese</button>
-              <button class="anitracker-flat-button" data-value="">No preference</button>
+              <button class="anitracker-flat-button" data-value="jp">${toHtmlCodes(getLangName('jp'))}</button>
+              <button class="anitracker-flat-button" data-value="en">${toHtmlCodes(getLangName('en'))}</button>
+              <button class="anitracker-flat-button" data-value="ch">${toHtmlCodes(getLangName('ch'))}</button>
+              <button class="anitracker-flat-button" data-value="">${toHtmlCodes(getText('button.dropdown.download_options.no_preference'))}</button>
             </div>
           </div>
         </div>
@@ -11346,17 +11389,14 @@ function addGeneralButtons() {
       });
 
       function getLangName(lang) {
-        return ({
-          jp: 'Japanese',
-          en: 'English',
-          ch: 'Chinese'
-        })[lang];
+        if (!['jp','en','ch'].includes(lang)) return undefined;
+        return getText('button.dropdown.download_options.language.' + lang);
       }
 
-      openModal('Download Preferences', openOptionsModal);
+      openModal(getText('modal_title.download_options'), openOptionsModal);
     });
 
-    openModal('Options');
+    openModal(getText('modal_title.options'));
   }
   $('#anitracker-options').on('click', openOptionsModal);
 
