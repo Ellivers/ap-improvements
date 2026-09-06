@@ -346,6 +346,12 @@ const translations = {
     "button.dropdown.bookmarks.share.text": "Text",
     "button.dropdown.episode.previous_anime": "Previous Anime",
     "button.dropdown.episode.next_anime": "Next Anime",
+    "button.dropdown.episode_options.copy_link": "Copy link",
+    "button.dropdown.episode_options.toggle_watched.watched": "Mark watched",
+    "button.dropdown.episode_options.toggle_watched.unwatched": "Mark unwatched",
+    "button.dropdown.episode_options.mark_watched": "Mark watched",
+    "button.dropdown.episode_options.download": "Download",
+    "button.dropdown.episode_options.remove": "Remove",
     "result_type.collection": "Collection",
     "result_info.collection_entries": "%d Entries",
     "list_info.episodes": {
@@ -406,9 +412,15 @@ const translations = {
     "title.button.episode.episode_dropdown": "Go to episode",
     "title.button.episode.sub_dropdown": "Change resolution and sub/dub source",
     "title.button.episode.download_dropdown": "Download video",
+    "title.button.episode_options": "View episode options",
     "title.button.dropdown.bookmarks.share.image": "Share the bookmark list as an image",
     "title.button.dropdown.bookmarks.share.text": "Share the bookmark list as a text file",
     "title.button.dropdown.bookmarks.status": "Change watching status to %1",
+    "title.button.dropdown.episode_options.copy_link": "Copy a link to this episode",
+    "title.button.dropdown.episode_options.toggle_watched": "Toggle this episode being fully watched",
+    "title.button.dropdown.episode_options.mark_watched": "Mark this episode as being fully watched",
+    "title.button.dropdown.episode_options.download": "Open download page for this episode",
+    "title.button.dropdown.episode_options.remove": "Remove this progress",
     "title.input.site_search": "Search for anime",
     "title.input.index.search": "Search within applied filters",
     "title.switch.index.season_filter.enable": "Enable season range filter",
@@ -450,17 +462,21 @@ const translations = {
     "info.refresh.failed.find_episode": "Try finding the episode using the following info:",
     "info.refresh.failed.anime": "Anime name: %1",
     "info.refresh.failed.episode": "Episode: %1",
+    "info.episode_options.download": "Select which version to download",
     "link.timestamp_edit_done.open_issue": "here",
     "link.full_poster": "View full poster",
     "toast.removed_anime": "Removed \"%1\"",
-    "toast.video_progress.marked_watched": "Marked \"%1\" episode %2 as watched",
-    "toast.video_progress.removed": "Removed \"%1\" episode %2",
+    "toast.removed_episode": "Removed \"%1\" episode %2",
+    "toast.marked_watched": "Marked \"%1\" episode %2 as watched",
     "toast.sync.major_deletion": "Potential sync issue. Check the log!",
     "toast.sync.major_deletion.restored": "Restored data",
     "toast.manage_data.get_all": "Added all episodes to feed",
     "toast.episode_feed.removed_old": "Removed from feed",
     "toast.bookmarks.added": "Bookmark added!",
     "toast.bookmarks.removed": "Bookmark removed",
+    "toast.episode_options.download.no_download": "Couldn't download",
+    "toast.episode_options.download.failed": "Downloading failed",
+    "toast.episode_options.mark_watched.failed": "Error marking as watched",
     "message.refresh.from_404": "The session was outdated, and has been refreshed. Please try that link again.",
     "message.sync.major_deletion.header": "Potential sync issue! The latest sync deleted the following amounts of data:",
     "message.sync.major_deletion.data.session": "Session entries: %d",
@@ -8717,7 +8733,7 @@ function setupContinueWatchingSection() {
         if (!id) return;
 
         addWatched(+id, episode);
-        showMessage(getText('toast.video_progress.marked_watched',[`${name?.slice(0,16)}${name?.length > 16 ? '...' : ''}`,episode]), 4000);
+        showMessage(getText('toast.marked_watched',[`${name?.slice(0,16)}${name?.length > 16 ? '...' : ''}`,episode]), 4000);
       });
       $('.anitracker-video-progress-item .anitracker-delete-button').on('click', function() {
         const elem = $(this).parents(':eq(1)');
@@ -8729,7 +8745,7 @@ function setupContinueWatchingSection() {
         deleteEpisodeFromTracker(name, episode, id);
 
         removeVideoProgressElem(elem);
-        showMessage(getText('toast.video_progress.removed',[`${name?.slice(0,16)}${name?.length > 16 ? '...' : ''}`,episode]), 4000);
+        showMessage(getText('toast.removed_episode',[`${name?.slice(0,16)}${name?.length > 16 ? '...' : ''}`,episode]), 4000);
       });
       scrollModalToTop();
       setModalShift(shouldShiftModal());
@@ -9917,14 +9933,17 @@ function setProgressBar(baseElem, epWatched, currentTime, duration) {
 
 function addEpisodeOptions(parentElem, features, data) {
   const featuresHtml = [];
-  if (features.copyLink) featuresHtml.push(`<button title="Copy a link to this episode" data-action="copy"><i class="fa fa-copy" aria-hidden="true"></i>Copy link</button>`);
-  if (features.toggleWatched) featuresHtml.push(`<button title="Toggle this episode being fully watched" data-action="toggle-watched"><i class="fa fa-${data.watched ? 'eye-slash' : 'eye'}" aria-hidden="true"></i>Mark ${data.watched ? 'unwatched' : 'watched'}</button>`);
-  if (features.addWatched) featuresHtml.push(`<button title="Mark this episode as being fully watched" data-action="add-watched"><i class="fa fa-eye" aria-hidden="true"></i>Mark watched</button>`);
-  if (features.download) featuresHtml.push(`<button title="Open download page for this episode" data-action="download"><i class="fa fa-download" aria-hidden="true"></i>Download</button>`);
-  if (features.remove) featuresHtml.push(`<button title="Remove this progress" data-action="remove"><i class="fa fa-trash" aria-hidden="true"></i>Remove</button>`);
+  if (features.copyLink) featuresHtml.push(buildButtonHtml('copy', 'button.dropdown.episode_options.copy_link', 'title.button.dropdown.episode_options.copy_link', 'copy'));
+  if (features.toggleWatched) {
+    if (data.watched) featuresHtml.push(buildButtonHtml('toggle-watched', 'button.dropdown.episode_options.toggle_watched.unwatched', 'title.button.dropdown.episode_options.toggle_watched', 'eye-slash'));
+    else featuresHtml.push(buildButtonHtml('toggle-watched', 'button.dropdown.episode_options.toggle_watched.watched', 'title.button.dropdown.episode_options.toggle_watched', 'eye'));
+  }
+  if (features.addWatched) featuresHtml.push(buildButtonHtml('add-watched', 'button.dropdown.episode_options.mark_watched', 'title.button.dropdown.episode_options.mark_watched', 'eye'));
+  if (features.download) featuresHtml.push(buildButtonHtml('download', 'button.dropdown.episode_options.download', 'title.button.dropdown.episode_options.download', 'download'));
+  if (features.remove) featuresHtml.push(buildButtonHtml('remove', 'button.dropdown.episode_options.remove', 'title.button.dropdown.episode_options.remove', 'trash'));
 
   const elem = $(`
-    <button class="anitracker-episode-menu-button" title="View episode options">
+    <button class="anitracker-episode-menu-button" title="${toHtmlCodes(getText('title.button.episode_options'))}">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 512">
         <!--!Font Awesome Free 6.7.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2025 Fonticons, Inc.-->
         <path fill="currentColor" d="M64 360a56 56 0 1 0 0 112 56 56 0 1 0 0-112zm0-160a56 56 0 1 0 0 112 56 56 0 1 0 0-112zM120 96A56 56 0 1 0 8 96a56 56 0 1 0 112 0z"></path>
@@ -9937,6 +9956,10 @@ function addEpisodeOptions(parentElem, features, data) {
 
   for (const [key, value] of Object.entries(data)) {
     $(elem[2]).data(key, value);
+  }
+
+  function buildButtonHtml(action, name, title, icon) {
+    return `<button title="${toHtmlCodes(getText(title))}" data-action="${action}"><i class="fa fa-${icon}" aria-hidden="true"></i>${toHtmlCodes(getText(name))}</button>`;
   }
 }
 
@@ -10004,7 +10027,7 @@ function applyEpisodeOptionsEvents(elems) {
 
       elem.contents().filter(function(){
         return this.nodeType === 3;
-      })[0].textContent = 'Mark ' + (epWatched ? 'watched' : 'unwatched');
+      })[0].textContent = getText(epWatched ? 'button.dropdown.episode_options.toggle_watched.watched' : 'button.dropdown.episode_options.toggle_watched.unwatched');
       elem.find('i').toggleClass('fa-eye').toggleClass('fa-eye-slash');
       return;
     }
@@ -10020,7 +10043,7 @@ function applyEpisodeOptionsEvents(elems) {
 
       const spinner = $(`<div class="anitracker-spinner anitracker-episode-spinner">
         <div class="spinner-border" role="status">
-          <span class="sr-only">Loading...</span>
+          <span class="sr-only">${toHtmlCodes(getText('screenreader.loading'))}</span>
         </div>
       </div>`).prependTo(dropdown.parent());
       const pageLink = dropdown.parent().find('a').attr('href');
@@ -10059,11 +10082,13 @@ function applyEpisodeOptionsEvents(elems) {
           bestCandidates.push(ver);
         }
         const candidates = bestCandidates.length ? bestCandidates : versions;
-        if (!candidates.length) showMessage("Couldn't download");
+        if (!candidates.length) showMessage(getText('toast.episode_options.download.no_download'));
         else if (candidates.length === 1) downloadEpisode(candidates[0].url, elem, resPref, langPref);
         else {
           $('#anitracker-modal-body').empty();
-          $(`<span class="anitracker-thin-text anitracker-center-item">Select which version to download</span>`).appendTo('#anitracker-modal-body');
+          $(`<span class="anitracker-thin-text anitracker-center-item">
+              ${toHtmlCodes(getText('info.episode_options.download'))}
+            </span>`).appendTo('#anitracker-modal-body');
           candidates.forEach(a => {
             $(`<button href="${a.url}" class="anitracker-download-select-button">${a.html}</button>`).appendTo('#anitracker-modal-body');
           });
@@ -10077,7 +10102,7 @@ function applyEpisodeOptionsEvents(elems) {
         }
       };
       req.onerror = () => {
-        showMessage('Downloading failed');
+        showMessage(getText('toast.episode_options.download.failed'));
         spinner.remove();
       };
       req.ontimeout = req.onerror;
@@ -10085,7 +10110,7 @@ function applyEpisodeOptionsEvents(elems) {
     }
     else if (action === 'add-watched') {
       if (!animeId) {
-        showMessage('Error marking as watched');
+        showMessage(getText('toast.episode_options.mark_watched.failed'));
         return;
       }
       const storage = getStorage();
@@ -10095,12 +10120,12 @@ function applyEpisodeOptionsEvents(elems) {
 
       addWatched(+animeId, episode, storage);
 
-      showMessage(`Marked "${animeName?.slice(0,16)}${animeName?.length > 16 ? '...' : ''}" episode ${episode} as watched`, 4000);
+      showMessage(getText('toast.marked_watched',[`${animeName?.slice(0,16)}${animeName?.length > 16 ? '...' : ''}`,episode]), 4000);
       updateEpisodePages();
     }
     else if (action === 'remove') {
       deleteEpisodeFromTracker(animeName, episode, +animeId);
-      showMessage(`Removed "${animeName?.slice(0,16)}${animeName?.length > 16 ? '...' : ''}" episode ${episode}`, 4000);
+      showMessage(getText('toast.removed_episode',[`${animeName?.slice(0,16)}${animeName?.length > 16 ? '...' : ''}`,episode]), 4000);
       updateEpisodePages();
     }
   })
