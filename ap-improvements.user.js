@@ -3259,6 +3259,7 @@ function getCachedFirstEpisodeEntry(iinfo) {
   return parseCachedFirstEpisodeEntry(found);
 }
 
+// Format: [first episode, anime id, anime session, timestamp]
 function cacheFirstEpisode(ep, iinfo, storage) {
   if (ep === undefined) return;
   const exists = (iinfo.id && getCachedFirstEpisodeEntry({id: iinfo.id})) || (iinfo.session && getCachedFirstEpisodeEntry({session: iinfo.session}));
@@ -3304,6 +3305,7 @@ function getCachedPoster(iinfo) {
   }
 }
 
+// Format: [poster, anime id, timestamp]
 function cachePoster(poster, iinfo, storage) {
   if (!poster) return;
   const exists = getCachedPoster(iinfo);
