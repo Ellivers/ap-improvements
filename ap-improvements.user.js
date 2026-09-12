@@ -5464,7 +5464,16 @@ function openNotificationsModal() {
       console.error(`[AnimePahe Improvements] Received response ${data} with anime`);
       $('#anitracker-notifications-list-spinner').remove();
       $(`<span class="text-danger">An error occurred with the following anime:</span><br>
-        <span class="text-danger">${toHtmlCodes(anime.name)}</span>`).appendTo('#anitracker-modal-body .anitracker-modal-list');
+        <span class="text-danger">${toHtmlCodes(anime.name)}</span>
+        <button class="btn btn-secondary" id="anitracker-notif-error-ok" style="display: block;margin: auto;">OK</button>`)
+        .appendTo('#anitracker-modal-body .anitracker-modal-list');
+      $('#anitracker-notif-error-ok').on('click', () => {
+        done(false);
+        $('.anitracker-last-refreshed').parent().css('height','');
+      });
+      queue.length = 0;
+      animeData.length = 0;
+      animeData.push(...getStorage().notifications.anime);
       return;
     }
     animeData.push(data);
@@ -5496,7 +5505,7 @@ function openNotificationsModal() {
       openNotificationsModal();
       return;
     }
-    $('#anitracker-notifications-list-spinner').remove();
+    $('#anitracker-modal-body .anitracker-modal-list').empty();
     if (fromRefresh) {
       storage.notifications.episodes.sort((a,b) => a.time < b.time ? 1 : -1);
       storage.notifications.lastUpdated = Date.now();
@@ -6481,6 +6490,7 @@ async function getNewestEpisodes(session, untilTime, noCache = true) {
 
   async function addUntilEp(page) {
     const episodeResponse = await getEpisodePageResponse(session, page, 'episode_desc', {noCache: noCache});
+    if (!episodeResponse) return [false, undefined];
 
     for (const ep of episodeResponse.data) {
       if (toUTCDate(ep.created_at).getTime() <= untilTime) return [true, episodeResponse];
