@@ -3231,7 +3231,7 @@ async function getFirstEpisodeEntry(iinfo) {
 
   let response = await getEpisodePageResponse(iinfo.session);
   if (!response && iinfo.name) {
-    const newData = await getAnimeData(iinfo, ["session"], {requireNew:true});
+    const newData = await getAnimeData(iinfo, ["session"], {requireNew:true,ignored:['current_page','anime_page']});
     if (newData.session) response = await getEpisodePageResponse(newData.session);
   }
   if (!response) {
@@ -9471,21 +9471,32 @@ async function updateEpisodePages(allowCache = true) {
 
 // MARKER:EPISODE PAGE CHANGES
 async function updateEpisodePage(entry, allowCache = true) {
-  const animeSession = entry.animeSession;
   const pageNum = getPageNum();
   const episodeSort = $('.episode-bar .btn-group-toggle .active').text().trim();
 
   // Only situation where cache isn't allowed is when the page has changed
   const cachedList = allowCache ? entry.cachedList : undefined;
   const initialSpinner = addTitleSpinner(entry.mode === 'multi' ? entry.element.parent().find('>h2') : $('.episode-count'), 'Loading episodes...', 'anitracker-spinner');
-  const episodes = cachedList ?? await entry.apiFunction({
+  let episodes = cachedList ?? await entry.apiFunction({
     pageNum: pageNum,
-    session: animeSession,
+    session: entry.animeSession,
     sort: episodeSort,
     allowCache: allowCache, 
   });
+  if (!episodes && entry.updateEntry) { // If the data doesn't work for the API call, try updating it
+    const updated = await entry.updateEntry();
+    if (updated) {
+      entry = updated;
+      episodes = await entry.apiFunction({
+        pageNum: pageNum,
+        session: entry.animeSession,
+        sort: episodeSort,
+        allowCache: allowCache, 
+      });
+    }
+  }
   initialSpinner.remove();
-  if (episodes === undefined) return undefined;
+  if (!episodes) return undefined;
   entry.cachedList = episodes;
   if (!episodes.length) return undefined;
 
@@ -9592,7 +9603,7 @@ async function updateEpisodePage(entry, allowCache = true) {
     ? undefined
     : await getFirstEpisodeEntry({
       id: episodes[0].anime_id,
-      session: animeSession,
+      session: entry.animeSession,
       name: animeName
     });
 
@@ -9813,6 +9824,12 @@ if (isAnime()) {
         noCache: !options.allowCache
       });
       return response?.data;
+    },
+    updateEntry: async (entry) => {
+      const newData = await getAnimeData(getAnimeDataFromPage($(document), false), ['session'], {requireNew:true,ignored:['current_page','anime_page']});
+      if (!newData?.session) return undefined;
+      entry.animeSession = newData.session;
+      return entry;
     },
     mode: 'single',
     features: {
