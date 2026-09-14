@@ -1,3 +1,8 @@
+### 4.12.2 (2026-09-14)
+- Added an OK button to dismiss errors displayed in the episode feed menu
+- Fixed the episode feed menu not showing an error when encountering a missing episode list
+- Fixed occasional session mismatch when getting the episode list
+
 ### 4.12.1 (2026-09-03)
 - Fixed session refreshing for episode pages sometimes not working correctly
 
