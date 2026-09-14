@@ -9488,7 +9488,7 @@ async function updateEpisodePage(entry, allowCache = true) {
     allowCache: allowCache,
   });
   if (!episodes && entry.updateEntry) { // If the data doesn't work for the API call, try updating it
-    const updated = await entry.updateEntry();
+    const updated = await entry.updateEntry(entry);
     if (updated) {
       entry = updated;
       episodes = await entry.apiFunction({
