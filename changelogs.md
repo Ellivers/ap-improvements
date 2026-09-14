@@ -1,3 +1,7 @@
+### 4.12.3 (2026-09-14)
+- Fixed random anime result pages often not loading due to site changes
+- Fixed the episode list on anime pages occasionally not being changed
+
 ### 4.12.2 (2026-09-14)
 - Added an OK button to dismiss errors displayed in the episode feed menu
 - Errors when refreshing the episode feed no longer cause subsequent feed entries to be skipped
