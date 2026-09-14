@@ -5424,6 +5424,7 @@ function openNotificationsModal() {
 
   const animeData = [...oldStorage.notifications.anime];
   const queue = [];
+  const errorAnime = [];
 
   openModal('Episode Feed').then(() => {
     if (animeData.find(a => (a.updateFrom !== undefined || !a.session))) startLoading();
@@ -5461,22 +5462,11 @@ function openNotificationsModal() {
     const data = await updateNotifications(anime.name);
 
     if (typeof data !== 'object') {
-      console.error(`[AnimePahe Improvements] Received response ${data} with anime`);
-      $('#anitracker-notifications-list-spinner').remove();
-      $(`<span class="text-danger">An error occurred with the following anime:</span><br>
-        <span class="text-danger">${toHtmlCodes(anime.name)}</span>
-        <button class="btn btn-secondary" id="anitracker-notif-error-ok" style="display: block;margin: auto;">OK</button>`)
-        .appendTo('#anitracker-modal-body .anitracker-modal-list');
-      $('#anitracker-notif-error-ok').on('click', () => {
-        done(false);
-        $('.anitracker-last-refreshed').parent().css('height','');
-      });
-      queue.length = 0;
-      animeData.length = 0;
-      animeData.push(...getStorage().notifications.anime);
-      return;
+      console.error(`[AnimePahe Improvements] Received response ${data} with anime ${anime.name}`);
+      errorAnime.push(anime.name);
+      animeData.push(anime);
     }
-    animeData.push(data);
+    else animeData.push(data);
 
     if (queue.length) next();
     else done();
@@ -5506,6 +5496,20 @@ function openNotificationsModal() {
       return;
     }
     $('#anitracker-modal-body .anitracker-modal-list').empty();
+
+    if (errorAnime.length) {
+      $(`<span class="text-danger">An error occurred with the following anime:</span><br>
+        ${errorAnime.map(g => `<span class="text-danger" style="display: block;">${toHtmlCodes(g)}</span>`).join('')}
+        <button class="btn btn-secondary" id="anitracker-notif-error-ok" style="display: block;margin: auto;">OK</button>`)
+        .appendTo('#anitracker-modal-body .anitracker-modal-list');
+      $('#anitracker-notif-error-ok').on('click', () => {
+        done(false);
+        $('.anitracker-last-refreshed').parent().css('height','');
+      });
+      errorAnime.length = 0;
+      return;
+    }
+
     if (fromRefresh) {
       storage.notifications.episodes.sort((a,b) => a.time < b.time ? 1 : -1);
       storage.notifications.lastUpdated = Date.now();
