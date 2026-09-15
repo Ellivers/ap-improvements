@@ -7726,13 +7726,13 @@ async function getEpisodePageResponse(session, pageNum = 1, sort = 'episode_asc'
       if (!data) return resolve(data);
 
       if (pageNum === 1) {
-        cacheFirstEpisode(data.data[0].episode, {
+        cacheFirstEpisode(data.data[0]?.episode, {
           session: session,
           id: data.data[0].anime_id,
         }, getStorage());
       }
       else if (data.current_page === data.last_page) {
-        cacheFirstEpisode(data.data[data.data.length - 1].episode, {
+        cacheFirstEpisode(data.data[data.data.length - 1]?.episode, {
           session: session,
           id: data.data[data.data.length - 1].anime_id,
         }, getStorage());
