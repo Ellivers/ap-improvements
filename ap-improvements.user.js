@@ -9480,6 +9480,7 @@ async function updateEpisodePage(entry, allowCache = true) {
 
   // Only situation where cache isn't allowed is when the page has changed
   const cachedList = allowCache ? entry.cachedList : undefined;
+  if (hasTitleSpinner(entry.element.parent().find('>h2'))) return;
   const initialSpinner = addTitleSpinner(entry.mode === 'multi' ? entry.element.parent().find('>h2') : $('.episode-count'), 'Loading episodes...', 'anitracker-spinner');
   let episodes = cachedList ?? await entry.apiFunction({
     pageNum: pageNum,
@@ -9600,7 +9601,6 @@ async function updateEpisodePage(entry, allowCache = true) {
   applyEpisodeOptionsEvents(episodeElements);
 
   // Second loop for episode number correction, because otherwise the await could slow down the other visuals
-  if (hasTitleSpinner(entry.element.parent().find('>h2'))) return;
   const relEpSpinner = entry.mode === 'multi' && addTitleSpinner(entry.element.parent().find('>h2'), "Getting relative episode numbers...");
 
   let firstEpisodeEntry = (entry.mode === 'multi' || !storage.settings.relativeEpNums)
