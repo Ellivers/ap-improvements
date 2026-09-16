@@ -7729,13 +7729,13 @@ async function getEpisodePageResponse(session, pageNum = 1, sort = 'episode_asc'
       if (!data) return resolve(data);
 
       if (pageNum === 1) {
-        cacheFirstEpisode(data.data[0].episode, {
+        cacheFirstEpisode(data.data[0]?.episode, {
           session: session,
           id: data.data[0].anime_id,
         }, getStorage());
       }
       else if (data.current_page === data.last_page) {
-        cacheFirstEpisode(data.data[data.data.length - 1].episode, {
+        cacheFirstEpisode(data.data[data.data.length - 1]?.episode, {
           session: session,
           id: data.data[data.data.length - 1].anime_id,
         }, getStorage());
@@ -7828,7 +7828,7 @@ function makeSearchable(string) {
 }
 
 function getAnimeDataFromPage(page = $(document), isEpisode) {
-  const poster = isEpisode ? trimPosterUrl(page.find('.anime-poster img')[0]?.src) : trimPosterUrl($(page.find('.anime-poster img')[0])?.data('src'));
+  const poster = isEpisode ? trimPosterUrl(page.find('.anime-poster img')[0]?.src) : trimPosterUrl(page.find('.anime-poster img')[0]?.src);
   const name = getAnimeName(page, isEpisode);
   const ids = {};
   for (const meta of page.find('meta')) {
@@ -9483,6 +9483,7 @@ async function updateEpisodePage(entry, allowCache = true) {
 
   // Only situation where cache isn't allowed is when the page has changed
   const cachedList = allowCache ? entry.cachedList : undefined;
+  if (hasTitleSpinner(entry.element.parent().find('>h2'))) return;
   const initialSpinner = addTitleSpinner(entry.mode === 'multi' ? entry.element.parent().find('>h2') : $('.episode-count'), 'Loading episodes...', 'anitracker-spinner');
   let episodes = cachedList ?? await entry.apiFunction({
     pageNum: pageNum,
@@ -9603,7 +9604,6 @@ async function updateEpisodePage(entry, allowCache = true) {
   applyEpisodeOptionsEvents(episodeElements);
 
   // Second loop for episode number correction, because otherwise the await could slow down the other visuals
-  if (hasTitleSpinner(entry.element.parent().find('>h2'))) return;
   const relEpSpinner = entry.mode === 'multi' && addTitleSpinner(entry.element.parent().find('>h2'), "Getting relative episode numbers...");
 
   let firstEpisodeEntry = (entry.mode === 'multi' || !storage.settings.relativeEpNums)
@@ -9786,7 +9786,7 @@ if (isAnime()) {
 
     $('#anitracker-reroll-button').on('click', function() {
       $(this).text('Rerolling...');
-      
+
       const storage = getStorage();
       storage.temp = {randomPool: preparedList};
       saveData(storage);
