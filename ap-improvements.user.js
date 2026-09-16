@@ -7825,7 +7825,7 @@ function makeSearchable(string) {
 }
 
 function getAnimeDataFromPage(page = $(document), isEpisode) {
-  const poster = isEpisode ? trimPosterUrl(page.find('.anime-poster img')[0]?.src) : trimPosterUrl($(page.find('.anime-poster img')[0])?.data('src'));
+  const poster = isEpisode ? trimPosterUrl(page.find('.anime-poster img')[0]?.src) : trimPosterUrl(page.find('.anime-poster img')[0]?.src);
   const name = getAnimeName(page, isEpisode);
   const ids = {};
   for (const meta of page.find('meta')) {
@@ -9783,7 +9783,7 @@ if (isAnime()) {
 
     $('#anitracker-reroll-button').on('click', function() {
       $(this).text('Rerolling...');
-      
+
       const storage = getStorage();
       storage.temp = {randomPool: preparedList};
       saveData(storage);
