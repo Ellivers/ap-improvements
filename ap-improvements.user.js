@@ -3388,7 +3388,7 @@ function playAnimation(elem, anim, duration, type = '') {
   });
 }
 
-const posterRegex = /^(?:https:\/\/)?(?:i\.\w+\.\w+\/)?([^.]*)(?:\.md|\.th)?(\..*)?$/;
+const posterRegex = /^(?:https:\/\/)?(?:i\.\w+\.\w+)?\/?([^.]*)(?:\.md|\.th)?(\..*)?$/;
 function trimPosterUrl(posterUrl) {
   const parts = posterRegex.exec(posterUrl);
   if (!parts) return undefined;
@@ -3396,11 +3396,10 @@ function trimPosterUrl(posterUrl) {
 }
 
 function makePosterUrl(poster, format = '') {
-  if (format) {
-    const parts = posterRegex.exec(poster);
-    if (parts) poster = `${parts[1]}.${format}${parts[2]}`;
-  }
-  return `https://i.${window.location.host}/${poster}`;
+  const parts = posterRegex.exec(poster);
+  let path = `${parts[1]}${parts[2]}`;
+  if (format) path = `${parts[1]}.${format}${parts[2]}`;
+  return `https://i.${window.location.host}/${path}`;
 }
 
 // See if all data matches between data1 and data2
