@@ -9479,8 +9479,9 @@ async function updateEpisodePage(entry, allowCache = true) {
 
   // Only situation where cache isn't allowed is when the page has changed
   const cachedList = allowCache ? entry.cachedList : undefined;
-  if (hasTitleSpinner(entry.element.parent().find('>h2'))) return;
-  const initialSpinner = addTitleSpinner(entry.mode === 'multi' ? entry.element.parent().find('>h2') : $('.episode-count'), 'Loading episodes...', 'anitracker-spinner');
+  const spinnerElem = entry.mode === 'multi' ? entry.element.parent().find('>h2') : $('.episode-count');
+  if (hasTitleSpinner(spinnerElem)) return;
+  const initialSpinner = addTitleSpinner(spinnerElem, 'Loading episodes...', 'anitracker-spinner');
   let episodes = cachedList ?? await entry.apiFunction({
     pageNum: pageNum,
     session: entry.animeSession,
