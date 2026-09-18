@@ -2583,9 +2583,6 @@ a.youtube-preview::before {
   flex-direction: column;
   justify-content: space-between;
 }
-.anitracker-bookmark-grid-entry img {
-  transition: opacity .5s;
-}
 .anitracker-bookmark-grid-entry a {
   text-align: center;
   flex-grow: 1;
@@ -7727,17 +7724,19 @@ async function getEpisodePageResponse(session, pageNum = 1, sort = 'episode_asc'
       siteVars.ongoingRequests = siteVars.ongoingRequests.filter(r => !(r.type === 'firstEpPage' && r.session === session && r.page === pageNum && r.sort === sort));
       if (!data) return resolve(data);
 
-      if (pageNum === 1) {
-        cacheFirstEpisode(data.data[0]?.episode, {
-          session: session,
-          id: data.data[0].anime_id,
-        }, getStorage());
-      }
-      else if (data.current_page === data.last_page) {
-        cacheFirstEpisode(data.data[data.data.length - 1]?.episode, {
-          session: session,
-          id: data.data[data.data.length - 1].anime_id,
-        }, getStorage());
+      if (data.data[0]) {
+        if (pageNum === 1) {
+          cacheFirstEpisode(data.data[0].episode, {
+            session: session,
+            id: data.data[0].anime_id,
+          }, getStorage());
+        }
+        else if (data.current_page === data.last_page) {
+          cacheFirstEpisode(data.data[data.data.length - 1].episode, {
+            session: session,
+            id: data.data[data.data.length - 1].anime_id,
+          }, getStorage());
+        }
       }
 
       if (!cached) siteVars.cached.episodePage.push({
@@ -9482,8 +9481,9 @@ async function updateEpisodePage(entry, allowCache = true) {
 
   // Only situation where cache isn't allowed is when the page has changed
   const cachedList = allowCache ? entry.cachedList : undefined;
-  if (hasTitleSpinner(entry.element.parent().find('>h2'))) return;
-  const initialSpinner = addTitleSpinner(entry.mode === 'multi' ? entry.element.parent().find('>h2') : $('.episode-count'), 'Loading episodes...', 'anitracker-spinner');
+  const spinnerElem = entry.mode === 'multi' ? entry.element.parent().find('>h2') : $('.episode-count');
+  if (hasTitleSpinner(spinnerElem)) return;
+  const initialSpinner = addTitleSpinner(spinnerElem, 'Loading episodes...', 'anitracker-spinner');
   let episodes = cachedList ?? await entry.apiFunction({
     pageNum: pageNum,
     session: entry.animeSession,
