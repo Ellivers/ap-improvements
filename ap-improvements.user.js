@@ -2582,9 +2582,6 @@ a.youtube-preview::before {
   flex-direction: column;
   justify-content: space-between;
 }
-.anitracker-bookmark-grid-entry img {
-  transition: opacity .5s;
-}
 .anitracker-bookmark-grid-entry a {
   text-align: center;
   flex-grow: 1;
