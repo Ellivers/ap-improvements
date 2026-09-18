@@ -1,3 +1,9 @@
+### 4.12.4 (2026-09-18)
+- Fixed errors due to empty episode lists
+- Fixed failing to get anime icons
+- Fixed multiple loading indicators showing up on episode lists
+- Fixed the bookmark icon animation being slower due to site changes
+
 ### 4.12.3 (2026-09-14)
 - Fixed random anime result pages often not loading due to site changes
 - Fixed the episode list on anime pages occasionally not being changed
