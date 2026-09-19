@@ -12523,12 +12523,16 @@ async function syncData() {
         syncDiffs.imported = importData(storage, dbData, true, {settings:true}, true); // Imports synced data and saves storage data
         storage = getStorage();
 
-        const toPut = copyObj(storage);
-        if (!settings.linkList) delete toPut.linkList;
-        if (!settings.videoTimes) delete toPut.videoTimes;
-        if (!settings.bookmarks) delete toPut.bookmarks;
-        if (!settings.notifications) delete toPut.notifications;
-        if (!settings.watched) delete toPut.watched;
+        const toPut = {
+          version: storage.version
+        };
+        if (settings.linkList) toPut.linkList = copyObj(storage.linkList);
+        if (settings.videoTimes) toPut.videoTimes = copyObj(storage.videoTimes);
+        if (settings.bookmarks) toPut.bookmarks = copyObj(storage.bookmarks);
+        if (settings.notifications) toPut.notifications = {
+          anime: copyObj(storage.notifications.anime)
+        };
+        if (settings.watched) toPut.watched = copyObj(storage.watched);
 
         const putReasons = [];
         for (const entry of storage.sync.temp.removedData) {
