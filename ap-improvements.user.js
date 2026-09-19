@@ -2027,7 +2027,7 @@ const _css = `
       const currentTime = player.currentTime;
       checkActiveTimestamps(currentTime);
       if (Math.trunc(currentTime) % 10 === 0 && player.currentTime - lastTimeUpdate > 9) {
-        updateStoredTime(); 
+        updateStoredTime();
         lastTimeUpdate = player.currentTime;
       }
     });
@@ -3280,9 +3280,6 @@ a.youtube-preview::before {
   flex-direction: column;
   justify-content: space-between;
 }
-.anitracker-bookmark-grid-entry img {
-  transition: opacity .5s;
-}
 .anitracker-bookmark-grid-entry a {
   text-align: center;
   flex-grow: 1;
@@ -3929,7 +3926,7 @@ async function getFirstEpisodeEntry(iinfo) {
 
   let response = await getEpisodePageResponse(iinfo.session);
   if (!response && iinfo.name) {
-    const newData = await getAnimeData(iinfo, ["session"], {requireNew:true});
+    const newData = await getAnimeData(iinfo, ["session"], {requireNew:true,ignored:['current_page','anime_page']});
     if (newData.session) response = await getEpisodePageResponse(newData.session);
   }
   if (!response) {
@@ -3956,6 +3953,7 @@ function getCachedFirstEpisodeEntry(iinfo) {
   return parseCachedFirstEpisodeEntry(found);
 }
 
+// Format: [first episode, anime id, anime session, timestamp]
 function cacheFirstEpisode(ep, iinfo, storage) {
   if (ep === undefined) return;
   const exists = (iinfo.id && getCachedFirstEpisodeEntry({id: iinfo.id})) || (iinfo.session && getCachedFirstEpisodeEntry({session: iinfo.session}));
@@ -3979,7 +3977,7 @@ function updateCache(key, timeIndex, storage) {
   const limit = getStorageLimits().cached[key];
   if (length > limit) storage.cached[key].splice(0, length - limit);
   saveData(storage);
-  
+
   siteVars.cached[key] = storage.cached[key];
 }
 
@@ -4001,6 +3999,7 @@ function getCachedPoster(iinfo) {
   }
 }
 
+// Format: [poster, anime id, timestamp]
 function cachePoster(poster, iinfo, storage) {
   if (!poster) return;
   const exists = getCachedPoster(iinfo);
@@ -4017,7 +4016,7 @@ function invalidatePosterCache(poster, storage) {
   const existing = getCachedPoster({poster: poster});
   if (!existing) return;
   storage.cached.poster = storage.cached.poster.filter(g => g[0] !== poster);
-  
+
   updateCache('poster',2,storage);
 }
 
@@ -4083,7 +4082,7 @@ function playAnimation(elem, anim, duration, type = '') {
   });
 }
 
-const posterRegex = /^(?:https:\/\/)?(?:i\.\w+\.\w+\/)?([^.]*)(?:\.md|\.th)?(\..*)?$/;
+const posterRegex = /^(?:https:\/\/)?(?:i\.\w+\.\w+)?\/?([^.]*)(?:\.md|\.th)?(\..*)?$/;
 function trimPosterUrl(posterUrl) {
   const parts = posterRegex.exec(posterUrl);
   if (!parts) return undefined;
@@ -4091,11 +4090,10 @@ function trimPosterUrl(posterUrl) {
 }
 
 function makePosterUrl(poster, format = '') {
-  if (format) {
-    const parts = posterRegex.exec(poster);
-    if (parts) poster = `${parts[1]}.${format}${parts[2]}`;
-  }
-  return `https://i.${window.location.host}/${poster}`;
+  const parts = posterRegex.exec(poster);
+  let path = `${parts[1]}${parts[2]}`;
+  if (format) path = `${parts[1]}.${format}${parts[2]}`;
+  return `https://i.${window.location.host}/${path}`;
 }
 
 // See if all data matches between data1 and data2
@@ -4498,7 +4496,7 @@ async function getAnimeData(_iinfo = {}, _reqinfo = [], config = {}) {
         if (value) reqinfo = reqinfo.filter(a => a !== key);
       }
       if (result.new.episode_session) oinfo.new.session = result.new.session;
-      
+
       for (const [key, value] of Object.entries(result.old)) {
         if (!value) continue;
         if (!iinfo[key]) iinfo[key] = value;
@@ -4564,7 +4562,7 @@ function openModal(title = '', backFunction, options = {}) {
   else close.replaceClass('fa-arrow-left', 'fa-close').attr('title', getText('title.button.modal.close'));
   $('#anitracker-modal-title').text(title);
   setModalSubtitle(options.subtitle ?? '');
-  
+
   const isOpen = modalIsOpen();
   $('#anitracker-modal').css('visibility','visible');
   $('#anitracker-modal').focus();
@@ -4821,7 +4819,7 @@ function getVideoSourceUrl(videoPageUrl) {
         console.error('[AnimePahe Improvements] Could not get kwik page for video source');
         return resolve(undefined);
       }
-  
+
       const pageElements = Array.from($(request.response)); // Elements that are not buried cannot be found with jQuery.find()
       const hostInfo = (() => {
         for (const link of pageElements.filter(a => a.tagName === 'LINK')) {
@@ -4834,7 +4832,7 @@ function getVideoSourceUrl(videoPageUrl) {
           };
         }
       })();
-  
+
       const searchInfo = (() => {
         for (const script of pageElements.filter(a => a.tagName === 'SCRIPT')) {
           if ($(script).attr('url') || !$(script).text().startsWith('eval')) continue;
@@ -4855,12 +4853,12 @@ function getVideoSourceUrl(videoPageUrl) {
           };
         }
       })();
-  
+
       if (searchInfo.part1 === undefined) {
         console.error('[AnimePahe Improvements] Could not find "extraNumber" from ' + videoPageUrl);
         return resolve(undefined);
       }
-  
+
       resolve(`https://vault-${hostInfo.vaultId}.${hostInfo.hostName}/stream/${hostInfo.vaultId}/${searchInfo.part1}/${searchInfo.part2}/uwu.m3u8`);
     };
     request.send();
@@ -5409,7 +5407,7 @@ function getSeasonTimeframe(from, to) {
   return filters;
 }
 
-if (!isRandomAnime() && initialStorage.temp !== undefined) {
+if (initialStorage.temp !== undefined && !isRandomAnime()) {
   const storage = getStorage();
   delete storage.temp;
   saveData(storage);
@@ -5840,7 +5838,7 @@ if (/^\/(customlink|anitracker-redirect)/.test(window.location.pathname)) {
         const iinfo = {};
         if (+animeParam) iinfo.id = +animeParam; // animeParam can be both an ID (legacy) and a name
         else iinfo.name = decodeURIComponent(animeParam);
-  
+
         let animeData;
         animeData = await getAnimeData(iinfo,["session","name"]);
         if (!animeData.session) {
@@ -5851,7 +5849,7 @@ if (/^\/(customlink|anitracker-redirect)/.test(window.location.pathname)) {
         parts.animeSession = animeData.session;
       }
       if (!parts.animeSession) return;
-      
+
       if (episodeParam) {
         const epData = await getEpisodeData(parts.animeSession, +episodeParam);
         parts.episodeSession = epData?.session;
@@ -6155,6 +6153,7 @@ function openNotificationsModal() {
 
   const animeData = [...oldStorage.notifications.anime];
   const queue = [];
+  const errorAnime = [];
 
   openModal(getText('modal_title.episode_feed')).then(() => {
     if (animeData.find(a => (a.updateFrom !== undefined || !a.session))) startLoading();
@@ -6192,13 +6191,11 @@ function openNotificationsModal() {
     const data = await updateNotifications(anime.name);
 
     if (typeof data !== 'object') {
-      console.error(`[AnimePahe Improvements] Received response ${data} with anime`);
-      $('#anitracker-notifications-list-spinner').remove();
-      $(`<span class="text-danger">${toHtmlCodes(getText('info.episode_feed.error'))}</span><br>
-        <span class="text-danger">${toHtmlCodes(anime.name)}</span>`).appendTo('#anitracker-modal-body .anitracker-modal-list');
-      return;
+      console.error(`[AnimePahe Improvements] Received response ${data} with anime ${anime.name}`);
+      errorAnime.push(anime.name);
+      animeData.push(anime);
     }
-    animeData.push(data);
+    else animeData.push(data);
 
     if (queue.length) next();
     else done();
@@ -6227,7 +6224,21 @@ function openNotificationsModal() {
       openNotificationsModal();
       return;
     }
-    $('#anitracker-notifications-list-spinner').remove();
+    $('#anitracker-modal-body .anitracker-modal-list').empty();
+
+    if (errorAnime.length) {
+      $(`<span class="text-danger">An error occurred with the following anime:</span><br>
+        ${errorAnime.map(g => `<span class="text-danger" style="display: block;">${toHtmlCodes(g)}</span>`).join('')}
+        <button class="btn btn-secondary" id="anitracker-notif-error-ok" style="display: block;margin: auto;">OK</button>`)
+        .appendTo('#anitracker-modal-body .anitracker-modal-list');
+      $('#anitracker-notif-error-ok').on('click', () => {
+        done(false);
+        $('.anitracker-last-refreshed').parent().css('height','');
+      });
+      errorAnime.length = 0;
+      return;
+    }
+
     if (fromRefresh) {
       storage.notifications.episodes.sort((a,b) => a.time < b.time ? 1 : -1);
       storage.notifications.lastUpdated = Date.now();
@@ -6340,7 +6351,7 @@ function openNotificationsModal() {
     });
 
     $('.anitracker-notification-item.anitracker-temp').removeClass('anitracker-temp'); // Temporary class for adding event listeners
-    
+
     for (const data of animeData) {
       const elems = $(`.anitracker-notification-item[anime-id="${data.id}"]`);
       if (!elems.length || $(elems[0]).hasClass('anitracker-has-img-error-event')) continue;
@@ -6353,7 +6364,7 @@ function openNotificationsModal() {
         getAnimeData(oldData, ["poster"], {requireNew: true}).then(newData => {
           removeImageSpinner(elems.find('.anitracker-image-wrapper'));
           if (!newData?.poster) return;
-          
+
           $(`.anitracker-notification-item[anime-id="${data.id}"]`).find('img').attr('src', makePosterUrl(newData.poster,'th'));
           const storage = getStorage();
           const found = storage.notifications.anime.find(a => a.id === oldData.id);
@@ -7128,7 +7139,7 @@ async function updateNotifications(animeName) {
     }
     nobj.name = data.name;
   }
-  
+
   // Add newly found episodes
   for (const ep of newestEpisodes.reverse()) {
     allEpisodes.splice(0,0,{
@@ -7219,6 +7230,7 @@ async function getNewestEpisodes(session, untilTime, noCache = true) {
 
   async function addUntilEp(page) {
     const episodeResponse = await getEpisodePageResponse(session, page, 'episode_desc', {noCache: noCache});
+    if (!episodeResponse) return [false, undefined];
 
     for (const ep of episodeResponse.data) {
       if (toUTCDate(ep.created_at).getTime() <= untilTime) return [true, episodeResponse];
@@ -8262,12 +8274,12 @@ function loadIndexPage() {
       elem.find('i').removeClass('fa-refresh').addClass('fa-random').removeClass('anitracker-spin');
 
       const storage = getStorage();
-      storage.temp = results;
+      storage.temp = {
+        randomPool: results
+      };
       saveData(storage);
 
-      const params = new URLSearchParams('anitracker-random=1');
-
-      getRandomAnime(results, getSearchParamsString(params));
+      getRandomAnime(results);
     });
   });
 
@@ -8508,17 +8520,19 @@ async function getEpisodePageResponse(session, pageNum = 1, sort = 'episode_asc'
       siteVars.ongoingRequests = siteVars.ongoingRequests.filter(r => !(r.type === 'firstEpPage' && r.session === session && r.page === pageNum && r.sort === sort));
       if (!data) return resolve(data);
 
-      if (pageNum === 1) {
-        cacheFirstEpisode(data.data[0].episode, {
-          session: session,
-          id: data.data[0].anime_id,
-        }, getStorage());
-      }
-      else if (data.current_page === data.last_page) {
-        cacheFirstEpisode(data.data[data.data.length - 1].episode, {
-          session: session,
-          id: data.data[data.data.length - 1].anime_id,
-        }, getStorage());
+      if (data.data[0]) {
+        if (pageNum === 1) {
+          cacheFirstEpisode(data.data[0].episode, {
+            session: session,
+            id: data.data[0].anime_id,
+          }, getStorage());
+        }
+        else if (data.current_page === data.last_page) {
+          cacheFirstEpisode(data.data[data.data.length - 1].episode, {
+            session: session,
+            id: data.data[data.data.length - 1].anime_id,
+          }, getStorage());
+        }
       }
 
       if (!cached) siteVars.cached.episodePage.push({
@@ -8608,7 +8622,7 @@ function makeSearchable(string) {
 }
 
 function getAnimeDataFromPage(page = $(document), isEpisode) {
-  const poster = isEpisode ? trimPosterUrl(page.find('.anime-poster img')[0]?.src) : trimPosterUrl($(page.find('.anime-poster img')[0])?.data('src'));
+  const poster = isEpisode ? trimPosterUrl(page.find('.anime-poster img')[0]?.src) : trimPosterUrl(page.find('.anime-poster img')[0]?.src);
   const name = getAnimeName(page, isEpisode);
   const ids = {};
   for (const meta of page.find('meta')) {
@@ -9254,7 +9268,7 @@ async function refreshSession(from404 = false) {
   const storedSession = getStoredLinkData(storage) || storage.linkList.find(g => g.animeSession === animeSession);
 
   if (!storedSession && from404) return 1;
-  
+
   let name;
   let episodeNum;
   if (storedSession) {
@@ -9686,7 +9700,7 @@ function setRelativeEpNums(on) {
     if (!firstEpEntry) return undefined;
 
     addDataToSession({firstEpisode: firstEpEntry.first_episode});
-    
+
     return firstEpEntry.first_episode;
   }
 
@@ -10278,21 +10292,34 @@ async function updateEpisodePages(allowCache = true) {
 
 // MARKER:EPISODE PAGE CHANGES
 async function updateEpisodePage(entry, allowCache = true) {
-  const animeSession = entry.animeSession;
   const pageNum = getPageNum();
   const episodeSort = $('.episode-bar .btn-group-toggle .active').text().trim();
 
   // Only situation where cache isn't allowed is when the page has changed
   const cachedList = allowCache ? entry.cachedList : undefined;
-  const initialSpinner = addTitleSpinner(entry.mode === 'multi' ? entry.element.parent().find('>h2') : $('.episode-count'), 'Loading episodes...', 'anitracker-spinner');
-  const episodes = cachedList ?? await entry.apiFunction({
+  const spinnerElem = entry.mode === 'multi' ? entry.element.parent().find('>h2') : $('.episode-count');
+  if (hasTitleSpinner(spinnerElem)) return;
+  const initialSpinner = addTitleSpinner(spinnerElem, 'Loading episodes...', 'anitracker-spinner');
+  let episodes = cachedList ?? await entry.apiFunction({
     pageNum: pageNum,
-    session: animeSession,
+    session: entry.animeSession,
     sort: episodeSort,
-    allowCache: allowCache, 
+    allowCache: allowCache,
   });
+  if (!episodes && entry.updateEntry) { // If the data doesn't work for the API call, try updating it
+    const updated = await entry.updateEntry(entry);
+    if (updated) {
+      entry = updated;
+      episodes = await entry.apiFunction({
+        pageNum: pageNum,
+        session: entry.animeSession,
+        sort: episodeSort,
+        allowCache: allowCache,
+      });
+    }
+  }
   initialSpinner.remove();
-  if (episodes === undefined) return undefined;
+  if (!episodes) return undefined;
   entry.cachedList = episodes;
   if (!episodes.length) return undefined;
 
@@ -10392,14 +10419,13 @@ async function updateEpisodePage(entry, allowCache = true) {
   applyEpisodeOptionsEvents(episodeElements);
 
   // Second loop for episode number correction, because otherwise the await could slow down the other visuals
-  if (hasTitleSpinner(entry.element.parent().find('>h2'))) return;
   const relEpSpinner = entry.mode === 'multi' && addTitleSpinner(entry.element.parent().find('>h2'), "Getting relative episode numbers...");
 
   let firstEpisodeEntry = (entry.mode === 'multi' || !storage.settings.relativeEpNums)
     ? undefined
     : await getFirstEpisodeEntry({
       id: episodes[0].anime_id,
-      session: animeSession,
+      session: entry.animeSession,
       name: animeName
     });
 
@@ -10558,12 +10584,10 @@ if (isAnime()) {
     document.title = getText('tab_title.random_result',[document.title]);
 
     const storage = getStorage();
-    let preparedList = [];
-    if (storage.temp) {
-      preparedList = storage.temp;
-      delete storage.temp;
-      saveData(storage);
-    }
+
+    const preparedList = storage.temp.randomPool;
+    delete storage.temp;
+    saveData(storage);
 
     $(`
     <div class="anitracker-random-result-buttons">
@@ -10583,24 +10607,12 @@ if (isAnime()) {
 
     $('#anitracker-reroll-button').on('click', function() {
       $(this).text(getText('button.random_result.reroll.rerolling'));
-      const params = new URLSearchParams('anitracker-random=1');
 
-      if (preparedList.length > 0) {
-        const storage = getStorage();
-        storage.temp = preparedList;
-        saveData(storage);
+      const storage = getStorage();
+      storage.temp = {randomPool: preparedList};
+      saveData(storage);
 
-        getRandomAnime(preparedList, getSearchParamsString(params), '_self');
-      }
-      else {
-        getFilteredList([]).then((animeList) => {
-          const storage = getStorage();
-          storage.temp = animeList;
-          saveData(storage);
-
-          getRandomAnime(animeList, getSearchParamsString(params), '_self');
-        });
-      }
+      getRandomAnime(preparedList, '_self');
     });
 
     $('#anitracker-save-session-button').on('click', function() {
@@ -10626,6 +10638,12 @@ if (isAnime()) {
         noCache: !options.allowCache
       });
       return response?.data;
+    },
+    updateEntry: async (entry) => {
+      const newData = await getAnimeData(getAnimeDataFromPage($(document), false), ['session'], {requireNew:true,ignored:['current_page','anime_page']});
+      if (!newData?.session) return undefined;
+      entry.animeSession = newData.session;
+      return entry;
     },
     mode: 'single',
     features: {
@@ -10664,17 +10682,17 @@ if (isAnime()) {
   if (initialStorage.settings.relativeEpNums) setRelativeEpNums(true);
 }
 
-function getRandomAnime(list, args, openType = '_blank') {
+function getRandomAnime(list, openType = '_blank') {
   if (!list.length) {
     showMessage(getText('toast.random_anime.fail'));
     return;
   }
   const random = randint(0, list.length-1);
-  windowOpen(list[random].link + args, openType);
+  windowOpen(list[random].link, openType);
 }
 
 function isRandomAnime() {
-  return new URLSearchParams(window.location.search).has('anitracker-random');
+  return initialStorage.temp?.randomPool !== undefined;
 }
 
 function trimHttp(string) {
@@ -10918,7 +10936,7 @@ async function getAnimeCoverUrl() {
 
 async function setAnimeCover(src, defaultBg = false) {
   addDataToSession({coverImg: src});
-  
+
   const cover = $('.anime-cover');
 
   if (!defaultBg) {
@@ -12035,7 +12053,7 @@ function addGeneralButtons() {
           </button>
         </div>`).appendTo(elem.parent().find('.anitracker-modal-list'));
       });
-      
+
       applyDeleteEvents();
 
       elem.addClass('anitracker-expanded');
