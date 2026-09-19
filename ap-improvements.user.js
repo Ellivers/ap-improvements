@@ -7820,7 +7820,7 @@ function makeSearchable(string) {
 }
 
 function getAnimeDataFromPage(page = $(document), isEpisode) {
-  const poster = isEpisode ? trimPosterUrl(page.find('.anime-poster img')[0]?.src) : trimPosterUrl(page.find('.anime-poster img')[0]?.src);
+  const posterSrc = page.find('.anime-poster img')[0]?.src;
   const name = getAnimeName(page, isEpisode);
   const ids = {};
   for (const meta of page.find('meta')) {
@@ -7831,7 +7831,7 @@ function getAnimeDataFromPage(page = $(document), isEpisode) {
     name: name,
     id: ids.id,
     anidb_id: ids.anidb_id,
-    poster: poster,
+    poster: posterSrc ? trimPosterUrl(posterSrc) : undefined,
   }
 }
 
