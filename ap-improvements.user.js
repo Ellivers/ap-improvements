@@ -340,6 +340,7 @@ const translations = {
     "button.video_progress.mark_watched": "Watched",
     "button.video_progress.remove": "Remove",
     "button.dismiss": "Dismiss",
+    "button.episode_feed.dismiss_error": "OK",
     "button.episode_feed.manage_feed": "Manage Feed...",
     "button.episode_feed.refresh": "Refresh",
     "button.manage_feed.get_all": "Get All",
@@ -6227,9 +6228,11 @@ function openNotificationsModal() {
     $('#anitracker-modal-body .anitracker-modal-list').empty();
 
     if (errorAnime.length) {
-      $(`<span class="text-danger">An error occurred with the following anime:</span><br>
+      $(`<span class="text-danger">${toHtmlCodes(getText('info.episode_feed.error'))}</span><br>
         ${errorAnime.map(g => `<span class="text-danger" style="display: block;">${toHtmlCodes(g)}</span>`).join('')}
-        <button class="btn btn-secondary" id="anitracker-notif-error-ok" style="display: block;margin: auto;">OK</button>`)
+        <button class="btn btn-secondary" id="anitracker-notif-error-ok" style="display: block;margin: auto;">
+          ${toHtmlCodes(getText('button.episode_feed.dismiss_error'))}
+        </button>`)
         .appendTo('#anitracker-modal-body .anitracker-modal-list');
       $('#anitracker-notif-error-ok').on('click', () => {
         done(false);

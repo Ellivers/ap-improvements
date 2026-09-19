@@ -27,6 +27,7 @@
   "button.video_progress.mark_watched": "Watched",
   "button.video_progress.remove": "Remove",
   "button.dismiss": "Dismiss",
+  "button.episode_feed.dismiss_error": "OK",
   "button.episode_feed.manage_feed": "Manage Feed...",
   "button.episode_feed.refresh": "Refresh",
   "button.manage_feed.get_all": "Get All",
