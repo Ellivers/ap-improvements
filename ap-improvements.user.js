@@ -12781,6 +12781,7 @@ if (isEpisode()) {
     }, 1000);
   });
 
+  $('.theatre-info h1').css('text-wrap','auto');
   getAnimeData({
     session: animeSession
   }, ["id"]).then(data => {
