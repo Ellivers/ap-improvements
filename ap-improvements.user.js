@@ -5208,12 +5208,6 @@ $(document).on('keydown', (e, other = undefined) => {
   }
 });
 
-if (window.location.pathname.startsWith('/queue')) {
-  $(`
-  <span style="font-size:.6em;margin-left:10px;">(Incoming episodes)</span>
-  `).appendTo('h2');
-}
-
 // Redirect filter pages
 if (/^\/anime\/\w+(\/[\w\-.]+)?$/.test(window.location.pathname)) {
   if (is404) return;
