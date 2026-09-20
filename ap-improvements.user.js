@@ -5932,12 +5932,6 @@ $(document).on('keydown', (e, other = undefined) => {
   }
 });
 
-if (window.location.pathname.startsWith('/queue')) {
-  $(`
-  <span style="font-size:.6em;margin-left:10px;">(Incoming episodes)</span>
-  `).appendTo('h2');
-}
-
 // Redirect filter pages
 if (/^\/anime\/\w+(\/[\w\-.]+)?$/.test(window.location.pathname)) {
   if (is404) return;
@@ -8625,7 +8619,7 @@ function makeSearchable(string) {
 }
 
 function getAnimeDataFromPage(page = $(document), isEpisode) {
-  const poster = isEpisode ? trimPosterUrl(page.find('.anime-poster img')[0]?.src) : trimPosterUrl(page.find('.anime-poster img')[0]?.src);
+  const posterSrc = page.find('.anime-poster img')[0]?.src;
   const name = getAnimeName(page, isEpisode);
   const ids = {};
   for (const meta of page.find('meta')) {
@@ -8636,7 +8630,7 @@ function getAnimeDataFromPage(page = $(document), isEpisode) {
     name: name,
     id: ids.id,
     anidb_id: ids.anidb_id,
-    poster: poster,
+    poster: posterSrc ? trimPosterUrl(posterSrc) : undefined,
   }
 }
 
@@ -13362,12 +13356,16 @@ async function syncData() {
         syncDiffs.imported = importData(storage, dbData, true, {settings:true}, true); // Imports synced data and saves storage data
         storage = getStorage();
 
-        const toPut = copyObj(storage);
-        if (!settings.linkList) delete toPut.linkList;
-        if (!settings.videoTimes) delete toPut.videoTimes;
-        if (!settings.bookmarks) delete toPut.bookmarks;
-        if (!settings.notifications) delete toPut.notifications;
-        if (!settings.watched) delete toPut.watched;
+        const toPut = {
+          version: storage.version
+        };
+        if (settings.linkList) toPut.linkList = copyObj(storage.linkList);
+        if (settings.videoTimes) toPut.videoTimes = copyObj(storage.videoTimes);
+        if (settings.bookmarks) toPut.bookmarks = copyObj(storage.bookmarks);
+        if (settings.notifications) toPut.notifications = {
+          anime: copyObj(storage.notifications.anime)
+        };
+        if (settings.watched) toPut.watched = copyObj(storage.watched);
 
         const putReasons = [];
         for (const entry of storage.sync.temp.removedData) {
@@ -13616,6 +13614,7 @@ if (isEpisode()) {
     }, 1000);
   });
 
+  $('.theatre-info h1').css('text-wrap','auto');
   getAnimeData({
     session: animeSession
   }, ["id"]).then(data => {

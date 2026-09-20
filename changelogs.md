@@ -1,3 +1,9 @@
+### 4.13.0 (in development)
+- Improved the way seek thumbnails feel
+  - It should generally be a bit more responsive now
+- Fixed the bookmark, episode feed, and link buttons being cut off on certain episode pages
+- Various other fixes
+
 ### 4.12.4 (2026-09-18)
 - Fixed errors due to empty episode lists
 - Fixed failing to get anime icons
