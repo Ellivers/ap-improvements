@@ -6222,7 +6222,7 @@ function openNotificationsModal() {
     $('#anitracker-modal-body .anitracker-modal-list').empty();
 
     if (errorAnime.length) {
-      $(`<span class="text-danger">${toHtmlCodes(getText('info.episode_feed.error'))}</span><br>
+      $(`<span class="text-danger">${toHtmlCodes(getText('info.episode_feed.error',[errorAnime.length]))}</span><br>
         ${errorAnime.map(g => `<span class="text-danger" style="display: block;">${toHtmlCodes(g)}</span>`).join('')}
         <button class="btn btn-secondary" id="anitracker-notif-error-ok" style="display: block;margin: auto;">
           ${toHtmlCodes(getText('button.episode_feed.dismiss_error'))}
@@ -11427,61 +11427,61 @@ function addGeneralButtons() {
     $('#anitracker-modal-body').empty();
     $(`
     <div class="anitracker-modal-list-container">
-      <div class="anitracker-storage-data" title="Expand or retract the storage entry for page sessions" tabindex="0" key="linkList">
-        <span>Session Data</span>
+      <div class="anitracker-storage-data" title="${toHtmlCodes(getText('title.section.manage_data.sessions'))}" tabindex="0" key="linkList">
+        <span>${toHtmlCodes(getText('section.manage_data.sessions'))}</span>
       </div>
     </div>
     <div class="anitracker-modal-list-container">
-      <div class="anitracker-storage-data" title="Expand or retract the storage entry for video progress" tabindex="0" key="videoTimes">
-        <span>Video Progress</span>
+      <div class="anitracker-storage-data" title="${toHtmlCodes(getText('title.section.manage_data.video_progress'))}" tabindex="0" key="videoTimes">
+        <span>${toHtmlCodes(getText('section.manage_data.video_progress'))}</span>
       </div>
     </div>
     <div class="anitracker-modal-list-container">
-      <div class="anitracker-storage-data" title="Expand or retract the storage entry for episodes marked as watched" tabindex="0" key="watched">
-        <span>Watched Episodes</span>
+      <div class="anitracker-storage-data" title="${toHtmlCodes(getText('title.section.manage_data.watched'))}" tabindex="0" key="watched">
+        <span>${toHtmlCodes(getText('section.manage_data.watched'))}</span>
       </div>
     </div>
     <div class="anitracker-modal-list-container">
-      <div class="anitracker-storage-data" title="Expand or retract the storage entry for anime-specific video playback speed" tabindex="0" key="videoSpeed">
-        <span>Video Playback Speed</span>
+      <div class="anitracker-storage-data" title="${toHtmlCodes(getText('title.section.manage_data.playback_speed'))}" tabindex="0" key="videoSpeed">
+        <span>${toHtmlCodes(getText('section.manage_data.playback_speed'))}</span>
       </div>
     </div>
     <div class="anitracker-button-row" style="margin-bottom: 10px;">
       <div class="btn-group">
-        <button class="btn btn-secondary" id="anitracker-sync-data" title="Edit data sync settings">
+        <button class="btn btn-secondary" id="anitracker-sync-data" title="${toHtmlCodes(getText('title.button.manage_data.sync_data'))}">
           <i class="fa fa-sync" aria-hidden="true"></i>
-          &nbsp;Sync Data...
+          &nbsp;${toHtmlCodes(getText('button.manage_data.sync_data'))}
         </button>
       </div>
       <div class="btn-group">
-        <button class="btn btn-secondary" id="anitracker-export-data" title="Export and download the JSON data">
+        <button class="btn btn-secondary" id="anitracker-export-data" title="${toHtmlCodes(getText('Export and download the JSON data'))}">
           <i class="fa fa-download" aria-hidden="true"></i>
-          &nbsp;Export
+          &nbsp;${toHtmlCodes(getText('button.manage_data.export'))}
         </button>
       </div>
-      <label class="btn btn-secondary" id="anitracker-import-data-label" tabindex="0" for="anitracker-import-data" style="margin-bottom:0;" title="Import a JSON file with AnimePahe Improvements data. This does not delete any existing data.">
+      <label class="btn btn-secondary" id="anitracker-import-data-label" tabindex="0" for="anitracker-import-data" style="margin-bottom:0;" title="${toHtmlCodes(getText('title.button.manage_data.import'))}">
         <i class="fa fa-upload" aria-hidden="true"></i>
-        &nbsp;Import
+        &nbsp;${toHtmlCodes(getText('button.manage_data.import'))}
       </label>
       <div class="btn-group">
-        <button class="btn btn-secondary" id="anitracker-raw-data" title="View data in JSON format">
+        <button class="btn btn-secondary" id="anitracker-raw-data" title="${toHtmlCodes(getText('title.button.manage_data.raw'))}">
           <i class="fa fa-code" aria-hidden="true"></i>
-          &nbsp;Raw
+          &nbsp;${toHtmlCodes(getText('button.manage_data.raw'))}
         </button>
       </div>
       <input type="file" id="anitracker-import-data" style="opacity: 0; width: 0px;" accept=".json">
     </div>
     <div class="anitracker-center-content" style="gap: 7px;">
       <div class="btn-group">
-        <button class="btn btn-danger anitracker-flat-button" id="anitracker-reset-data" title="Remove stored data and reset all settings">
+        <button class="btn btn-danger anitracker-flat-button" id="anitracker-reset-data" title="${toHtmlCodes(getText('title.button.manage_data.reset'))}">
           <i class="fa fa-undo" aria-hidden="true"></i>
-          &nbsp;Reset Data
+          &nbsp;${toHtmlCodes(getText('button.manage_data.reset'))}
         </button>
       </div>
       <div class="btn-group">
-        <button class="btn btn-dark anitracker-flat-button" id="anitracker-edit-data" title="Edit a data key">
+        <button class="btn btn-dark anitracker-flat-button" id="anitracker-edit-data" title="${toHtmlCodes(getText('title.button.manage_data.edit'))}">
           <i class="fa fa-pencil" aria-hidden="true"></i>
-          &nbsp;Edit...
+          &nbsp;${toHtmlCodes(getText('button.manage_data.edit'))}
         </button>
       </div>
     </div>
@@ -11504,7 +11504,7 @@ function addGeneralButtons() {
     }
 
     $('#anitracker-reset-data').on('click', function() {
-      if (confirm('[AnimePahe Improvements]\n\nThis will remove all saved data (including settings) and reset it to its default state.\nAre you sure?') === true) {
+      if (confirm('[AnimePahe Improvements]\n\n' + getText('message.manage_data.reset_warning')) === true) {
         const storage = getStorage();
         if (isSyncEnabled(storage)) {
           syncDisconnectUser(storage.sync.syncCode);
@@ -11527,7 +11527,7 @@ function addGeneralButtons() {
     function openEditDataModal() {
       $('#anitracker-modal-body').empty();
       $(`
-        <b>Warning: for developer use.<br>Back up your data before messing with this.</b>
+        <b>${toHtmlCodes(getText('info.edit_data')).replaceAll('\n','<br>')}</b>
         <input autocomplete="off" class="form-control anitracker-text-input-bar anitracker-edit-data-key" placeholder="Key (Path)">
         <input autocomplete="off" class="form-control anitracker-text-input-bar anitracker-edit-data-value" placeholder="Value (JSON)">
         <p>Leave value empty to get the existing value</p>
@@ -11785,7 +11785,7 @@ function addGeneralButtons() {
           newData = JSON.parse(fileReader.result);
         }
         catch {
-          alert('[AnimePahe Improvements]\n\nPlease input a valid JSON file.');
+          alert('[AnimePahe Improvements]\n\n' + getText('toast.manage_data.import.invalid_format'));
           return;
         }
 
@@ -11797,7 +11797,7 @@ function addGeneralButtons() {
           totalChanged += value;
         }
         if (totalChanged === 0) {
-          alert('[AnimePahe Improvements]\n\nThis file contains no changes to import.');
+          alert('[AnimePahe Improvements]\n\n' + getText('toast.manage_data.import.no_changes'));
           return;
         }
 
@@ -11807,50 +11807,50 @@ function addGeneralButtons() {
         <div class="form-check">
           <input class="form-check-input anitracker-import-data-input" type="checkbox" value="" id="anitracker-link-list-check" ${diffBefore.linkListAdded > 0 ? "checked" : "disabled"}>
           <label class="form-check-label" for="anitracker-link-list-check">
-            Session entries (${diffBefore.linkListAdded})
+            ${toHtmlCodes(getText('label.check.import_data.sessions',[diffBefore.linkListAdded]))}
           </label>
         </div>
         <div class="form-check">
           <input class="form-check-input anitracker-import-data-input" type="checkbox" value="" id="anitracker-video-times-check" ${(diffBefore.videoTimesAdded + diffBefore.videoTimesUpdated + diffBefore.videoTimeEntryUpdated) > 0 ? "checked" : "disabled"}>
           <label class="form-check-label" for="anitracker-video-times-check">
-            Video progress data (${diffBefore.videoTimesAdded + diffBefore.videoTimesUpdated + diffBefore.videoTimeEntryUpdated})
+            ${toHtmlCodes(getText('label.check.import_data.video_progress',[diffBefore.videoTimesAdded + diffBefore.videoTimesUpdated + diffBefore.videoTimeEntryUpdated]))}
           </label>
         </div>
         <div class="form-check">
           <input class="form-check-input anitracker-import-data-input" type="checkbox" value="" id="anitracker-bookmarks-check" ${(diffBefore.bookmarksAdded + diffBefore.bookmarksUpdated) > 0 ? "checked" : "disabled"}>
           <label class="form-check-label" for="anitracker-bookmarks-check">
-            Bookmarks (${diffBefore.bookmarksAdded + diffBefore.bookmarksUpdated})
+            ${toHtmlCodes(getText('label.check.import_data.bookmarks',[diffBefore.bookmarksAdded + diffBefore.bookmarksUpdated]))}
           </label>
         </div>
         <div class="form-check">
           <input class="form-check-input anitracker-import-data-input" type="checkbox" value="" id="anitracker-notifications-check" ${(diffBefore.notificationsAdded + diffBefore.episodeFeedUpdated) > 0 ? "checked" : "disabled"}>
           <label class="form-check-label" for="anitracker-notifications-check">
-            Episode feed entries (${diffBefore.notificationsAdded})
-            <ul style="margin-bottom:0;margin-left:-24px;"><li>Episode feed entries updated: ${diffBefore.episodeFeedUpdated}</li></ul>
+            ${toHtmlCodes(getText('label.check.import_data.episode_feeds',[diffBefore.notificationsAdded]))}
+            <ul style="margin-bottom:0;margin-left:-24px;"><li>${toHtmlCodes(getText('label.check.import_data.episode_feeds.updated',[diffBefore.episodeFeedUpdated]))}</li></ul>
           </label>
         </div>
         <div class="form-check">
           <input class="form-check-input anitracker-import-data-input" type="checkbox" value="" id="anitracker-watched-check" ${diffBefore.watchedEpisodesAdded > 0 ? "checked" : "disabled"}>
           <label class="form-check-label" for="anitracker-watched-check">
-            Watched episodes (${diffBefore.watchedEpisodesAdded})
+            ${toHtmlCodes(getText('label.check.import_data.watched',[diffBefore.watchedEpisodesAdded]))}
           </label>
         </div>
         <div class="form-check">
           <input class="form-check-input anitracker-import-data-input" type="checkbox" value="" id="anitracker-video-speed-check" ${(diffBefore.videoSpeedUpdated) > 0 ? "checked" : "disabled"}>
           <label class="form-check-label" for="anitracker-video-speed-check">
-            Video speed entries (${diffBefore.videoSpeedUpdated})
+            ${toHtmlCodes(getText('label.check.import_data.playback_speed',[diffBefore.videoSpeedUpdated]))}
           </label>
         </div>
         <div class="form-check">
           <input class="form-check-input anitracker-import-data-input" type="checkbox" value="" id="anitracker-settings-check" ${diffBefore.settingsUpdated > 0 ? "checked" : "disabled"}>
           <label class="form-check-label" for="anitracker-settings-check">
-            Settings (${diffBefore.settingsUpdated})
+            ${toHtmlCodes(getText('label.check.import_data.settings',[diffBefore.settingsUpdated]))}
           </label>
         </div>
         <div class="btn-group" style="float: right;">
-          <button class="btn btn-primary" id="anitracker-confirm-import" title="Confirm import">
+          <button class="btn btn-primary" id="anitracker-confirm-import" title="${toHtmlCodes(getText('title.button.import_data.import'))}">
             <i class="fa fa-upload" aria-hidden="true"></i>
-            &nbsp;Import
+            &nbsp;${toHtmlCodes(getText('button.import_data.import'))}
           </button>
         </div>
         `).appendTo('#anitracker-modal-body');
@@ -11875,11 +11875,11 @@ function addGeneralButtons() {
           });
 
           updateFromImport(diffAfter);
-          showMessage('Imported!');
+          showMessage(getText('toast.import_data.imported'));
           openShowDataModal();
         });
 
-        openModal('Choose what to import', openShowDataModal);
+        openModal(getText('modal_title.import_data'), openShowDataModal);
       });
       fileReader.readAsText(file);
     });
@@ -11893,13 +11893,13 @@ function addGeneralButtons() {
       const dataEntries = $(`<div class="anitracker-modal-list" ${!reduceMotion ? 'style="display:none;max-height:100vh;"' : ''}></div>`).appendTo(elem.parent());
 
       const cleanButton = ['linkList','videoTimes'].includes(dataType) ?
-            `<button class="btn btn-secondary anitracker-clean-data-button anitracker-list-btn" style="text-wrap:nowrap;" title="Clean up unneeded entries">
-              Clean Up
+            `<button class="btn btn-secondary anitracker-clean-data-button anitracker-list-btn" style="text-wrap:nowrap;" title="${toHtmlCodes(getText('title.button.manage_data.clean_up'))}">
+              ${toHtmlCodes(getText('button.manage_data.clean_up'))}
             </button>` : '';
       $(`
       <div class="btn-group anitracker-storage-filter">
-        <input title="Search within this storage entry" autocomplete="off" class="form-control anitracker-text-input-bar anitracker-modal-search" placeholder="Search">
-        <button dir="down" class="btn btn-secondary dropdown-toggle anitracker-reverse-order-button anitracker-list-btn" title="Sort direction (down is default, and means newest first)"></button>
+        <input title="${toHtmlCodes(getText('title.input.manage_data.search'))}" autocomplete="off" class="form-control anitracker-text-input-bar anitracker-modal-search" placeholder="${toHtmlCodes(getText('placeholder.search'))}">
+        <button dir="down" class="btn btn-secondary dropdown-toggle anitracker-reverse-order-button anitracker-list-btn" title="${toHtmlCodes(getText('title.button.list.reverse_sort'))}"></button>
         ${cleanButton}
       </div>
       `).appendTo(dataEntries);
@@ -11919,7 +11919,7 @@ function addGeneralButtons() {
       elem.parent().find('.anitracker-clean-data-button').on('click', () => {
         const toRemove = getCleanUpList(dataType);
         if (!toRemove.length) {
-          alert("[AnimePahe Improvements] Found no entries to clean up.");
+          alert("[AnimePahe Improvements]\n\n" + getText('message.manage_data.clean_up.nothing_to_clean_up'));
           return;
         }
         if (!confirm("[AnimePahe Improvements]\n\n" + getCleanUpText(dataType, toRemove.length))) return;
@@ -11952,9 +11952,9 @@ function addGeneralButtons() {
           <a target="_blank" href="/${(g.type === 'episode' ? 'play/' : 'anime/') + g.animeSession + (g.type === 'episode' ? ('/' + g.episodeSession) : '')}" title="${toHtmlCodes(name)}">
             ${toHtmlCodes(name)}
           </a><br>
-          <button class="btn btn-danger anitracker-delete-session-button anitracker-flat-button" title="Delete this stored session">
+          <button class="btn btn-danger anitracker-delete-session-button anitracker-flat-button" title="${toHtmlCodes(getText('title.button.manage_data.delete.session'))}">
             <i class="fa fa-trash" aria-hidden="true"></i>
-            &nbsp;Delete
+            &nbsp;${toHtmlCodes(getText('button.delete'))}
           </button>
         </div>`).appendTo(elem.parent().find('.anitracker-modal-list'));
       });
@@ -11964,14 +11964,14 @@ function addGeneralButtons() {
         $(`
         <div class="anitracker-modal-list-entry">
           <span title="${toHtmlCodes(g.animeName)}">
-            <a href="${href}" target="_blank">${toHtmlCodes(g.animeName)}</a> - Episode ${g.episodeNum}
+            <a href="${href}" target="_blank">${toHtmlCodes(g.animeName)}</a> - ${toHtmlCodes(getText('generic.episode',[g.episodeNum]))}
           </span><br>
           <span>
-            Current time: ${secondsToHMS(g.time)}
+            ${toHtmlCodes(getText('info.manage_data.video_progress.time',[secondsToHMS(g.time)]))}
           </span><br>
-          <button class="btn btn-danger anitracker-delete-progress-button anitracker-flat-button" lookForPath="${g.videoPaths[0]}" title="Delete this video progress">
+          <button class="btn btn-danger anitracker-delete-progress-button anitracker-flat-button" lookForPath="${g.videoPaths[0]}" title="${toHtmlCodes(getText('title.button.manage_data.delete.video_progress'))}">
             <i class="fa fa-trash" aria-hidden="true"></i>
-            &nbsp;Delete
+            &nbsp;${toHtmlCodes(getText('button.delete'))}
           </button>
         </div>`).appendTo(elem.parent().find('.anitracker-modal-list'));
       });
@@ -11983,18 +11983,18 @@ function addGeneralButtons() {
           $(`
           <div class="anitracker-modal-list-entry" animeid="${g.animeId}">
             <span>
-              <a class="anitracker-watched-anime-id" href="${href}" target="_blank"${linkListObj ? ` title="${toHtmlCodes(linkListObj.animeName)}"` : ''}>${linkListObj ? toHtmlCodes(linkListObj.animeName) : `ID ${g.animeId}`}</a> - ${episodes.length} episode${episodes.length === 1 ? '' : 's'}
+              <a class="anitracker-watched-anime-id" href="${href}" target="_blank"${linkListObj ? ` title="${toHtmlCodes(linkListObj.animeName)}"` : ''}>${linkListObj ? toHtmlCodes(linkListObj.animeName) : toHtmlCodes(getText('link.manage_data.watched.id',[g.animeId]))}</a> - ${toHtmlCodes(getText('info.manage_data.watched.episode_count',[episodes.length]))}
             </span><br>
             <span class="anitracker-watched-episodes-list">
               ${episodes.join()}
             </span><br>
-            ${!linkListObj ? `<button class="btn btn-secondary anitracker-get-name-button anitracker-flat-button" title="Get the name for this anime">
+            ${!linkListObj ? `<button class="btn btn-secondary anitracker-get-name-button anitracker-flat-button" title="${toHtmlCodes(getText('title.button.manage_data.watched.get_name'))}">
               <i class="fa fa-search" aria-hidden="true"></i>
-              &nbsp;Get Name
+              &nbsp;${toHtmlCodes(getText('button.manage_data.watched.get_name'))}
             </button>` : ''}
-            <button class="btn btn-danger anitracker-delete-watched-button anitracker-flat-button" title="Delete this video progress">
+            <button class="btn btn-danger anitracker-delete-watched-button anitracker-flat-button" title="${toHtmlCodes(getText('title.button.manage_data.delete.watched'))}">
               <i class="fa fa-trash" aria-hidden="true"></i>
-              &nbsp;Delete
+              &nbsp;${toHtmlCodes(getText('button.delete'))}
             </button>
           </div>`).appendTo(elem.parent().find('.anitracker-modal-list'));
         });
@@ -12005,7 +12005,7 @@ function addGeneralButtons() {
           getAnimeData({id: id}, ["name","session"]).then(data => {
             hideButtonSpinner(this);
             if (!data.name) {
-              alert("[AnimePahe Improvements]\n\nCouldn't get anime name");
+              alert("[AnimePahe Improvements]\n\n" + getText('message.manage_data.watched.get_name.failed'));
               return $(this).remove();
             }
 
@@ -12042,11 +12042,11 @@ function addGeneralButtons() {
             <a href="${href}" target="_blank">${toHtmlCodes(g.animeName)}</a>
           </span><br>
           <span>
-            Playback speed: ${g.speed}x
+            ${toHtmlCodes(getText('info.manage_data.playback_speed.value'))}
           </span><br>
-          <button class="btn btn-danger anitracker-delete-speed-entry-button anitracker-flat-button" ${identifier} title="Delete this video speed entry">
+          <button class="btn btn-danger anitracker-delete-speed-entry-button anitracker-flat-button" ${identifier} title="${toHtmlCodes(getText('title.button.manage_data.delete.playback_speed'))}">
             <i class="fa fa-trash" aria-hidden="true"></i>
-            &nbsp;Delete
+            &nbsp;${toHtmlCodes(getText('button.delete'))}
           </button>
         </div>`).appendTo(elem.parent().find('.anitracker-modal-list'));
       });
@@ -12093,7 +12093,7 @@ function addGeneralButtons() {
         if (isSyncEnabled(storage)) storage.sync.temp.removedData.push(list.map(a => {return {type: 'videoTimes', animeName: a.animeName, episodeNum: a.episodeNum};}));
         storage.videoTimes = storage.videoTimes.filter(a => !list.find(b => matchDataFull(a, b, ["animeName","episodeNum","time"])));
       }
-      showMessage(`Cleaned up ${list.length} ${list.length === 1 ? "entry" : "entries"}.`, 3000);
+      showMessage(getText('toast.manage_data.clean_up.success',[list.length]), 3000);
       saveData(storage);
     }
 
@@ -12112,8 +12112,8 @@ function addGeneralButtons() {
     }
 
     function getCleanUpText(type, count) {
-      if (type === 'linkList') return `Clean up ${count} older duplicate ${count > 1 ? 'entries' : 'entry'}?`;
-      else if (type === 'videoTimes') return `Remove ${count} ${count > 1 ? 'entries' : 'entry'} with no progress?`;
+      if (type === 'linkList') return getText('message.manage_data.clean_up.session',[count]);
+      else if (type === 'videoTimes') return getText('message.manage_data.clean_up.video_progress',[count]);
     }
 
     function applyDeleteEvents() {
@@ -12190,7 +12190,7 @@ function addGeneralButtons() {
         return $(`
         <div class="anitracker-spinner anitracker-${className}-spinner" style="display: inline-block;vertical-align: middle; margin-left: 5px;">
             <div class="spinner-border" role="status">
-              <span class="sr-only">Loading...</span>
+              <span class="sr-only">${toHtmlCodes(getText('screenreader.loading'))}</span>
             </div>
         </div>`).insertAfter(elem);
       }
@@ -12198,38 +12198,38 @@ function addGeneralButtons() {
         return storage.sync.currentMessage ?
             `<span class="anitracker-sync-message anitracker-dark-area anitracker-thin-text ${storage.sync.currentMessage.type}">${storage.sync.currentMessage.text}</span>` : '<span class="anitracker-sync-message anitracker-dark-area anitracker-thin-text" style="display:none;"></span>';
       }
-      const syncedTime = storage.sync.lastSynced ? new Date(storage.sync.lastSynced).toLocaleString() : 'Not synced yet';
+      const syncedTime = storage.sync.lastSynced ? new Date(storage.sync.lastSynced).toLocaleString() : getText('title.info.sync_data.last_synced.never');
 
       if (syncEnabled && !storage.debug?.noSyncSim) {
         $(`
         <div style="display:flex;flex-direction:column;align-items:center;gap:5px;">
-          <p class="anitracker-secondary-info anitracker-thin-text" title="${syncedTime}">Last synced: <span class="anitracker-time-since-sync">${storage.sync.lastSynced ? timeAgoText(storage.sync.lastSynced) : 'Never'}</span></p>
+          <p class="anitracker-secondary-info anitracker-thin-text" title="${toHtmlCodes(syncedTime)}">${toHtmlCodes(getText('info.sync_data.last_synced',['HTML'])).replace('HTML',`<span class="anitracker-time-since-sync">${toHtmlCodes(storage.sync.lastSynced ? timeAgoText(storage.sync.lastSynced) : getText('info.sync_data.last_synced.never'))}</span>`)}</p>
           <div>
-            <button class="btn btn-primary anitracker-sync-button" title="Sync data now">
+            <button class="btn btn-primary anitracker-sync-button" title="${toHtmlCodes(getText('title.button.sync_data.sync_now'))}">
               <i class="fa fa-sync" aria-hidden="true"></i>
-              &nbsp;Sync Now
+              &nbsp;${toHtmlCodes(getText('button.sync_data.sync_now'))}
             </button>
           </div>
-          <button class="btn btn-secondary anitracker-change-sync-settings-button" title="Change sync settings">
+          <button class="btn btn-secondary anitracker-change-sync-settings-button" title="${toHtmlCodes(getText('title.button.sync_data.settings'))}">
             <i class="fa fa-cog" aria-hidden="true"></i>
-            &nbsp;Settings...
+            &nbsp;${toHtmlCodes(getText('button.sync_data.settings'))}
           </button>
-          <button class="btn btn-secondary anitracker-flat-button anitracker-copy-code-button" data-placement="top" data-content="Copied!">
+          <button class="btn btn-secondary anitracker-flat-button anitracker-copy-code-button" data-placement="top" data-content="${toHtmlCodes(getText('title.button.sync_data.copy_code.copied'))}">
             <i class="fa fa-copy" aria-hidden="true"></i>
-            &nbsp;Copy Code
+            &nbsp;${toHtmlCodes(getText('button.sync_data.copy_code'))}
           </button>
           ${getSyncMessageElem(storage)}
           <div style="height:10px;"></div>
           <div>
-            <button class="btn btn-danger anitracker-flat-button anitracker-disconnect-sync-button" title="Disconnect from sync">
+            <button class="btn btn-danger anitracker-flat-button anitracker-disconnect-sync-button" title="${toHtmlCodes(getText('title.button.sync_data.disconnect'))}">
               <i class="fa fa-sign-out" aria-hidden="true"></i>
-              &nbsp;Disconnect
+              &nbsp;${toHtmlCodes(getText('button.sync_data.disconnect'))}
             </button>
           </div>
           <div>
-            <button class="btn btn-danger anitracker-flat-button anitracker-delete-sync-button" title="Delete this sync code">
+            <button class="btn btn-danger anitracker-flat-button anitracker-delete-sync-button" title="${toHtmlCodes(getText('title.button.sync_data.delete'))}">
               <i class="fa fa-trash" aria-hidden="true"></i>
-              &nbsp;Delete
+              &nbsp;${toHtmlCodes(getText('button.sync_data.delete'))}
             </button>
           </div>
         </div>`).appendTo('#anitracker-modal-body');
