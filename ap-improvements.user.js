@@ -784,9 +784,6 @@ function validateTranslations(obj) {
     }
     for (const [qExpr, text] of entries) {
       if (text.includes('HTML')) err(key, `${qExpr}: Cannot contain "HTML"`);
-      if (!/%d/.test(text)) {
-        err(key, `${qExpr}: Text needs to contain number placeholder "%d"`);
-      }
       const qErrors = validateQuantityExpression(qExpr);
       qErrors.forEach(e => {err(key, `${qExpr}: ${e}`)});
     }
@@ -849,7 +846,7 @@ function getText(translationKey, vars = [], options = {}) {
 function makeTranslatedText(translationKey, vars = []) {
   const val = translations.active[translationKey] || translations.default[translationKey];
   if (!val) {
-    console.error(`[AnimePahe Improvements] Nonexistent translation key "${translationKey}" used. Falling back to key.`);
+    console.error(`[AnimePahe Improvements] Nonexistent translation key "${translationKey}". Falling back to key.`);
     return translationKey;
   }
   if (typeof val === 'string') {
