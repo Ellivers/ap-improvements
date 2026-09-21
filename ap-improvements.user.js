@@ -650,6 +650,7 @@ const translations = {
     "info.episode_feed.last_refreshed.never": "Never",
     "info.episode_feed.error": "An error occurred with the following anime:",
     "info.episode_feed.empty": "Nothing here yet!",
+    "info.episode_feed.stalled": "Stalled... (%1)",
     "info.bookmarks.empty": "No bookmarks yet!",
     "info.bookmarks.share.save": "Right-click to save",
     "info.bookmarks.share.layout_tip": "Grid view is recommended over list view",
@@ -7372,7 +7373,7 @@ async function updateNotifications(animeName) {
         if (!elem.length) {
           elem = $(`
             <span id="anitracker-notifications-stall-info">
-              <span>Stalled... (<span class="anitracker-seconds">0</span>)</span>
+              <span>${toHtmlCodes(getText('info.episode_feed.stalled',['HTML'])).replace('HTML','<span class="anitracker-seconds">0</span>')}</span>
             </span>`).appendTo('#anitracker-notifications-list-spinner');
         }
         elem.find('.anitracker-seconds').text(secondsStalled);
