@@ -166,7 +166,7 @@ function getDefaultData() {
     },
     translation: {
       errors: [],
-      text: {},
+      applied: {},
     },
     cached: {
       firstEpisode: [],
@@ -328,10 +328,21 @@ const translations = {
     "modal_title.version_history": "Version History",
     "modal_title.keybinds": "Edit Keybinds",
     "modal_title.download_options": "Download Preferences",
+    "modal_title.manage_data": "Manage Data",
+    "modal_title.sync_data": "Data Syncing",
+    "modal_title.sync_data.disconnect": "Disconnect Sync",
+    "modal_title.sync_data.delete": "Delete Code",
+    "modal_title.sync_data.create_code": "Create Code",
+    "modal_title.sync_data.enter_code": "Enter Code",
+    "modal_title.sync_data.settings": "Choose sync settings",
+    "modal_title.import_data": "Choose what to import",
     "modal_subtitle.collection": "May not be entirely accurate",
     "modal_subtitle.version_history": "Current version: %1",
     "button.remove": "Remove",
+    "button.delete": "Delete",
     "button.save": "Save",
+    "button.yes": "Yes",
+    "button.no": "No",
     "button.manage_data": "Manage Data...",
     "button.options": "Options...",
     "button.clear_session": "Clear Session",
@@ -367,6 +378,28 @@ const translations = {
     "button.options.refresh_session.failed_no_data": "Failed: Couldn't find session",
     "button.options.refresh_session.failed": "Failed.",
     "button.options.version_history": "Version History...",
+    "button.manage_data.sync_data": "Sync Data...",
+    "button.manage_data.export": "Export",
+    "button.manage_data.import": "Import",
+    "button.manage_data.raw": "Raw",
+    "button.manage_data.reset": "Reset Data",
+    "button.manage_data.edit": "Edit...",
+    "button.manage_data.clean_up": "Clean Up",
+    "button.manage_data.watched.get_name": "Get Name",
+    "button.sync_data.sync_now": "Sync Now",
+    "button.sync_data.settings": "Settings...",
+    "button.sync_data.copy_code": "Copy Code",
+    "button.sync_data.disconnect": "Disconnect",
+    "button.sync_data.delete": "Delete",
+    "button.sync_data.create_code": "Create Sync Code",
+    "button.sync_data.enter_code": "Enter Sync Code...",
+    "button.sync_data.create_code.confirm": "Create",
+    "button.sync_data.create_code.done.done": "Done",
+    "button.sync_data.enter_code.confirm": "Connect",
+    "button.sync_data.settings.continue": "Continue",
+    "button.import_data.import": "Import",
+    "button.episode.copy_link": "Link",
+    "button.episode.copy_link.with_time": "Link & Time",
     "button.dropdown.bookmarks.share.image": "Image",
     "button.dropdown.bookmarks.share.text": "Text",
     "button.dropdown.episode.previous_anime": "Previous Anime",
@@ -401,6 +434,7 @@ const translations = {
     "screenreader.loading": "Loading...",
     "title.button.manage_data": "View and handle stored data",
     "title.button.options": "Options",
+    "title.button.copied": "Copied!",
     "title.button.clear_session": "Remove this page from the session tracker",
     "title.button.clear_session.cleared": "Cleared!",
     "title.button.clear_episode_sessions": "Clear all episodes from this anime from the session tracker",
@@ -408,7 +442,6 @@ const translations = {
     "title.button.title.bookmark": "Bookmark this anime",
     "title.button.title.episode_feed": "Add to episode feed",
     "title.button.title.copy_link": "Copy link to anime",
-    "title.button.title.copy_link.copied": "Copied!",
     "title.button.modal.close": "Close modal",
     "title.button.modal.back": "Go back to previous menu",
     "title.button.list.reverse_sort": "Sort direction (down is default, and means newest first)",
@@ -474,8 +507,38 @@ const translations = {
     "title.button.dropdown.episode_options.mark_watched": "Mark this episode as being fully watched",
     "title.button.dropdown.episode_options.download": "Open download page for this episode",
     "title.button.dropdown.episode_options.remove": "Remove this progress",
+    "title.button.manage_data.sync_data": "Edit data sync settings",
+    "title.button.manage_data.export": "Export and download the JSON data",
+    "title.button.manage_data.import": "Import a JSON file with AnimePahe Improvements data. This does not delete any existing data.",
+    "title.button.manage_data.raw": "View data in JSON format",
+    "title.button.manage_data.reset": "Remove stored data and reset all settings",
+    "title.button.manage_data.edit": "Edit a data key",
+    "title.button.manage_data.clean_up": "Clean up unneeded entries",
+    "title.button.manage_data.delete.session": "Delete this stored session",
+    "title.button.manage_data.delete.video_progress": "Delete this video progress",
+    "title.button.manage_data.delete.watched": "Delete this watched entry",
+    "title.button.manage_data.delete.playback_speed": "Delete this video speed entry",
+    "title.button.manage_data.watched.get_name": "Get the name for this anime",
+    "title.button.sync_data.sync_now": "Sync data now",
+    "title.button.sync_data.settings": "Change sync settings",
+    "title.button.sync_data.disconnect": "Disconnect from sync",
+    "title.button.sync_data.delete": "Delete this sync code",
+    "title.button.sync_data.disconnect.confirm": "Confirm disconnect",
+    "title.button.sync_data.disconnect.cancel": "Cancel",
+    "title.button.sync_data.delete.confirm": "Confirm deletion",
+    "title.button.sync_data.delete.cancel": "Cancel",
+    "title.button.sync_data.create_code": "Create a new sync code to send to other devices",
+    "title.button.sync_data.enter_code": "Enter an already existing sync code",
+    "title.button.sync_data.create_code.confirm": "Confirm creation of sync code",
+    "title.button.sync_data.create_code.done.copy": "Copy sync code to clipboard",
+    "title.button.sync_data.create_code.done.done": "Go to the main sync menu",
+    "title.button.sync_data.enter_code.confirm": "Connect to this code",
+    "title.button.sync_data.settings.continue": "Continue to the next page",
+    "title.button.sync_data.settings.save": "Save settings and go back",
+    "title.button.import_data.import": "Confirm import",
     "title.input.site_search": "Search for anime",
     "title.input.index.search": "Search within applied filters",
+    "title.input.manage_data.search": "Search within this storage entry",
     "title.switch.index.season_filter.enable": "Enable season range filter",
     "title.switch.index.season_filter.invert": "Invert season range",
     "title.switch.options.auto_play_video": "Automatically play the video when it is loaded. (You might need to tell your browser to allow auto-playing on this website)",
@@ -493,19 +556,31 @@ const translations = {
     "title.switch.options.reduce_motion": "Don't show animations for opening/closing modal menus.",
     "title.switch.options.sticky_header": "Always keep the header at the top of the screen.",
     "title.switch.keybinds.numpad_seeking": "Allow seeking through videos with numpad keys.",
+    "title.switch.episode.auto_play_next": "Automatically go to the next episode when the current one has ended.",
+    "title.section.manage_data.sessions": "Expand or retract the storage entry for page sessions",
+    "title.section.manage_data.video_progress": "Expand or retract the storage entry for video progress",
+    "title.section.manage_data.watched": "Expand or retract the storage entry for episodes marked as watched",
+    "title.section.manage_data.playback_speed": "Expand or retract the storage entry for anime-specific video playback speed",
     "title.label.index.season_filter.from": "Select start season year",
     "title.label.index.season_filter.to": "Select end season year",
+    "title.label.check.sync_data.settings.video_progress": "Sync video progress entries with other devices",
+    "title.label.check.sync_data.settings.bookmarks": "Sync bookmarks with other devices",
+    "title.label.check.sync_data.settings.watched": "Sync watched episodes with other devices",
+    "title.label.check.sync_data.settings.episode_feed": "Sync episode feed entries (anime that are part of the episode feed) with other devices",
+    "title.label.check.sync_data.settings.sessions": "Sync stored session entries with other devices. Not recommended due to browser tabs being different between devices.",
+    "title.label.input.sync_data.settings.auto_sync": "Set number of minutes between each auto-sync.",
     "title.info.episode_feed.last_refreshed.never": "Not yet refreshed",
+    "title.info.sync_data.last_synced.never": "Not synced yet",
     "title.search_result.collection": "%1 - Collection",
     "title.spinner.episode_list.relative_episodes": "Getting relative episode numbers...",
     "title.link.episode.previous_anime": "Play Last Episode of %1",
     "title.link.episode.next_anime": "Play First Episode of %1",
     "label.manage_feed.schedule.starting_day": "Start from:",
-    "label.dropdown.bookmarks.share": "Share through",
     "label.index.rule.include": "Include:",
     "label.index.rule.exclude": "Exclude:",
     "label.index.season_filter.from": "From:",
     "label.index.season_filter.to": "To:",
+    "label.episode.copy_link": "Copy:",
     "label.keybinds.bookmarks": "Bookmarks",
     "label.keybinds.episode_feed": "Episode Feed",
     "label.keybinds.search": "Open Search",
@@ -521,6 +596,21 @@ const translations = {
     "label.keybinds.player_end": "Go to End",
     "label.keybinds.toggle_loop": "Toggle Looping",
     "label.keybinds.reset_player": "Reset Player",
+    "label.check.sync_data.settings.video_progress": "Video Progress",
+    "label.check.sync_data.settings.bookmarks": "Bookmarks",
+    "label.check.sync_data.settings.watched": "Watched Episodes",
+    "label.check.sync_data.settings.episode_feed": "Episode Feed Entries",
+    "label.check.sync_data.settings.sessions": "Session Data (not recommended)",
+    "label.check.import_data.sessions": "Session entries (%d)",
+    "label.check.import_data.video_progress": "Video progress data (%d)",
+    "label.check.import_data.bookmarks": "Bookmarks (%d)",
+    "label.check.import_data.episode_feeds": "Episode feed entries (%d)",
+    "label.check.import_data.episode_feeds.updated": "Episode feed entries updated (%d)",
+    "label.check.import_data.watched": "Watched episodes (%d)",
+    "label.check.import_data.playback_speed": "Video speed entries (%d)",
+    "label.check.import_data.settings": "Settings (%d)",
+    "label.input.sync_data.settings.auto_sync": "Time between syncing, in minutes. Set to 0 to disable auto-sync.",
+    "label.dropdown.bookmarks.share": "Share through",
     "label.dropdown.download_options.resolution": "Resolution",
     "label.dropdown.download_options.language": "Language",
     "section.options.player": "Video player:",
@@ -528,6 +618,10 @@ const translations = {
     "section.options.this_anime": "This anime:",
     "section.keybinds.site": "Site:",
     "section.keybinds.player": "Video Player:",
+    "section.manage_data.sessions": "Session Data",
+    "section.manage_data.video_progress": "Video Progress",
+    "section.manage_data.watched": "Watched Episodes",
+    "section.manage_data.playback_speed": "Video Playback Speed",
     "switch.index.season_filter.enable": "Enable",
     "switch.index.season_filter.invert": "Invert",
     "switch.options.auto_play_video": "Auto-Play Video",
@@ -545,6 +639,7 @@ const translations = {
     "switch.options.reduce_motion": "Reduce Motion",
     "switch.options.sticky_header": "Header Follows",
     "switch.keybinds.numpad_seeking": "Numpad Seeking",
+    "switch.episode.auto_play_next": "Auto-Play Next",
     "info.continue_watching.empty": "Nothing to continue watching!",
     "info.index.filter_results": "Filter results: %1",
     "info.timestamp_edit_done": "You can open an issue %1 to get these added.",
@@ -570,8 +665,40 @@ const translations = {
     "info.episode_options.download": "Select which version to download",
     "info.version_history.failed": "Couldn't get version history.",
     "info.download_options": "These preferences apply when downloading an episode through its dropdown menu.",
+    "info.manage_data.video_progress.time": "Current time: %1",
+    "info.manage_data.watched.episode_count": {
+      "=1": "%d episode",
+      "else": "%d episodes"
+    },
+    "info.manage_data.playback_speed.value": "Playback speed: %dx",
+    "info.sync_data.last_synced": "Last synced: %1",
+    "info.sync_data.last_synced.never": "Never",
+    "info.sync_data.disconnect": "Disconnect this device from sync?",
+    "info.sync_data.delete.1": "Delete sync code?",
+    "info.sync_data.delete.2": "Existing data on all connected devices/browsers will remain as-is.",
+    "info.sync_data.delete.loading": "Fetching data...",
+    "info.sync_data": "Automatically sync data between multiple devices",
+    "info.sync_data.create_code.1": "Create a new sync code?",
+    "info.sync_data.create_code.2": "After creation, you can enter this code on devices/browsers you want to sync your data with.",
+    "info.sync_data.create_code.done": "Copy the following code and send it to the devices you want to sync with.",
+    "info.sync_data.enter_code.1": "Enter 10 character sync code.",
+    "info.sync_data.enter_code.2": "Codes expire after not being used for 30 days.",
+    "info.sync_data.enter_code.error.empty": "Please enter a code.",
+    "info.sync_data.enter_code.error.network": "Couldn't connect. Check your internet connection.",
+    "info.sync_data.enter_code.error.invalid": "Code is invalid.",
+    "info.sync_data.enter_code.error.outdated": "Please update AnimePahe Improvements.",
+    "info.sync_data.enter_code.error.unknown": "Unknown error occurred. Check the log for more info.",
+    "info.sync_data.enter_code.error.rate_limited": "You have sent too many requests. Try again in a few minutes.",
+    "info.sync_data.settings.first_time": "You can change this later.",
+    "info.sync_data.settings.auto_sync.preview": "= %1",
+    "info.sync_data.settings.auto_sync.preview.default": "= %1 (default)",
+    "info.sync_data.settings.auto_sync.preview.disabled": "= disabled",
+    "info.sync_data.settings.auto_sync.preview.time": "%1h%2m",
+    "info.sync_data.settings.auto_sync.preview.time.no_hours": "%1m",
+    "info.edit_data": "Warning: for developer use.\nBack up your data before messing with this.",
     "link.timestamp_edit_done.open_issue": "here",
     "link.full_poster": "View full poster",
+    "link.manage_data.watched.id": "ID %1",
     "toast.removed_anime": "Removed \"%1\"",
     "toast.removed_episode": "Removed \"%1\" episode %2",
     "toast.marked_watched": "Marked \"%1\" episode %2 as watched",
@@ -594,6 +721,16 @@ const translations = {
     "toast.keybinds.keybind_unset": "Keybind unset",
     "toast.keybinds.keybind_reset.bound": "Keybind reset to %1",
     "toast.keybinds.keybind_reset.unbound": "Keybind reset",
+    "toast.manage_data.import.invalid_format": "Please input a valid JSON file.",
+    "toast.manage_data.import.no_changes": "This file contains no changes to import.",
+    "toast.manage_data.clean_up.success": {
+      "=1": "Cleaned up %d entry",
+      "else": "Cleaned up %d entries"
+    },
+    "toast.sync_data.disconnected": "Sync disconnected",
+    "toast.sync_data.deleted": "Sync deleted",
+    "toast.sync_data.connected": "Sync connected!",
+    "toast.import_data.imported": "Imported!",
     "message.refresh.from_404": "The session was outdated, and has been refreshed. Please try that link again.",
     "message.title.episode_feed.too_many": "You already have too many episode feeds (maximum %d)",
     "message.sync.major_deletion.header": "Potential sync issue! The latest sync deleted the following amounts of data:",
@@ -611,10 +748,47 @@ const translations = {
     "message.index.season_filter.invalid_season_order": "Season times must be from oldest to newest.",
     "message.index.season_filter.invalid_season_order.tip": "(Winter is the first quarter of the year)",
     "message.index.season_filter.too_broad": "Year interval cannot be more than 100 years.",
+    "message.manage_data.reset_warning": "This will remove all saved data (including settings) and reset it to its default state.\nAre you sure?",
+    "message.manage_data.clean_up.nothing_to_clean_up": "Found no entries to clean up.",
     "message.manage_data.clean_up.session": {
       "=1": "Clean up %d older duplicate entry?",
       "else": "Clean up %d older duplicate entries?"
     },
+    "message.manage_data.clean_up.video_progress": {
+      "=1": "Remove %d entry with no progress?",
+      "else": "Remove %d entries with no progress?"
+    },
+    "message.manage_data.watched.get_name.failed": "Couldn't get anime name",
+    "sync_message.disconnect.network": "Couldn't disconnect. Please check you internet connection.",
+    "sync_message.disconnect.unknown": "Couldn't disconnect due to unknown error.",
+    "sync_message.delete.network": "Couldn't remove data. Please check you internet connection.",
+    "sync_message.delete.unknown": "Couldn't remove data due to unknown error.",
+    "sync_message.delete.rate_limited": "Couldn't remove data. Try again in a few minutes.",
+    "sync_message.create_code.network": "Could not create code. Check your internet connection.",
+    "sync_message.create_code.unknown": "An unknown error occurred when trying to create a code.",
+    "sync_message.outdated": "Could not sync data due to outdated AnimePahe Improvements script. Please update to at least version %1.<br>(Current version: %2)",
+    "sync_message.rate_limited": "You have sent too many requests. Try again in a few minutes.",
+    "sync_message.service_unavailable": "Server is unavailable at the moment.",
+    "sync_message.network_error": "Could not sync due to network error. Check your internet connection.",
+    "sync_message.invalid_code": "The sync code is no longer valid (possibly due to being unused for a long time).\nPlease create or enter a new code.",
+    "sync_message.unknown_error": "Could not sync due to unknown error.",
+    "sync_message.data_send_failure": "Last sync was not able to send data to the server.",
+    "sync_message.nothing_enabled": "Nothing is currently being synced.\nCheck settings.",
+    "sync_message.data_too_large": "The data was too large to send to the server.\nPlease remove any unnecessary data.",
+    "sync_message.extra.disconnect": "To disconnect anyway, press the confirm button again.",
+    "sync_message.extra.server_message": "Message from server:",
+    "sync_message.extra.try_again.hours": {
+      "=1": "Try again in about %d hour.",
+      "else": "Try again in about %d hours."
+    },
+    "sync_message.extra.try_again.minutes": {
+      "=1": "Try again in about %d minute.",
+      "else": "Try again in about %d minutes."
+    },
+    "sync_message.extra.try_again.other": "Try again after:\n%1",
+    "sync_message.extra.no_info": "No information was given.",
+    "sync_message.extra.check_log": "See the log for more info.",
+    "sync_message.extra.rate_limited": "Try again in a few minutes.",
     "placeholder.search": "Search",
     "placeholder.loading": "Loading...",
     "placeholder.index.filter.genre": "Genre",
@@ -622,6 +796,7 @@ const translations = {
     "placeholder.index.filter.type": "Type",
     "placeholder.index.filter.demographic": "Demographic",
     "placeholder.index.season_filter.year": "Year",
+    "version.unspecified": "[unspecified]",
     "issue_placeholder.insert_info": "(Add more info here...)",
     "bookmark_status.watching": "Watching",
     "bookmark_status.planning_to_watch": "Planning to Watch",
@@ -10482,7 +10657,7 @@ function addTitleIcons(animeid) {
     <i style="display: none;" class="fa fa-check anitracker-title-icon-check" aria-hidden="true"></i>
   </i>`).appendTo(div);
   $(`<div style="margin-left:1rem;display:inline-block;">
-    <div title="${toHtmlCodes(getText('title.button.title.copy_link.copied'))}" data-placement="top"></div>
+    <div title="${toHtmlCodes(getText('title.button.copied'))}" data-placement="top"></div>
     <i title="${toHtmlCodes(getText('title.button.title.copy_link'))}" class="fa fa-link anitracker-title-icon anitracker-title-copy-link" tabindex="0" style="margin-left:0!important;"></i>
   </div>`).appendTo(div);
 
@@ -11451,7 +11626,7 @@ function addGeneralButtons() {
         </button>
       </div>
       <div class="btn-group">
-        <button class="btn btn-secondary" id="anitracker-export-data" title="${toHtmlCodes(getText('Export and download the JSON data'))}">
+        <button class="btn btn-secondary" id="anitracker-export-data" title="${toHtmlCodes(getText('title.button.manage_data.export'))}">
           <i class="fa fa-download" aria-hidden="true"></i>
           &nbsp;${toHtmlCodes(getText('button.manage_data.export'))}
         </button>
@@ -12211,7 +12386,7 @@ function addGeneralButtons() {
             <i class="fa fa-cog" aria-hidden="true"></i>
             &nbsp;${toHtmlCodes(getText('button.sync_data.settings'))}
           </button>
-          <button class="btn btn-secondary anitracker-flat-button anitracker-copy-code-button" data-placement="top" data-content="${toHtmlCodes(getText('title.button.sync_data.copy_code.copied'))}">
+          <button class="btn btn-secondary anitracker-flat-button anitracker-copy-code-button" data-placement="top" data-content="${toHtmlCodes(getText('title.button.copied'))}">
             <i class="fa fa-copy" aria-hidden="true"></i>
             &nbsp;${toHtmlCodes(getText('button.sync_data.copy_code'))}
           </button>
@@ -12257,11 +12432,15 @@ function addGeneralButtons() {
           const storage = getStorage();
 
           $(`
-          <p class="anitracker-thin-text">Disconnect this device from sync?</p>
+          <p class="anitracker-thin-text">${toHtmlCodes(getText('info.sync_data.disconnect'))}</p>
           <div class="anitracker-center-content">
             <div style="display:flex;gap:16px;" id="anitracker-disconnect-prompt">
-              <button class="btn btn-primary anitracker-disconnect-sync-confirm-button" title="Confirm disconnect">Yes</button>
-              <button class="btn btn-secondary anitracker-disconnect-sync-cancel-button" title="Cancel">No</button>
+              <button class="btn btn-primary anitracker-disconnect-sync-confirm-button" title="${toHtmlCodes(getText('title.button.sync_data.disconnect.confirm'))}">
+                ${toHtmlCodes(getText('button.yes'))}
+              </button>
+              <button class="btn btn-secondary anitracker-disconnect-sync-cancel-button" title="${toHtmlCodes(getText('title.button.sync_data.disconnect.cancel'))}">
+                ${toHtmlCodes(getText('button.no'))}
+              </button>
             </div>
           </div>
           ${getSyncMessageElem(storage)}`).appendTo('#anitracker-modal-body');
@@ -12284,7 +12463,7 @@ function addGeneralButtons() {
               else if (result === 1 && !disconnectFailed) {
                 storage.sync.currentMessage = {
                   type: "error",
-                  text: "Couldn't disconnect. Please check you internet connection.<br>To disconnect anyway, press the confirm button again."
+                  textList: [{key:"disconnect.network"},{key:"extra.disconnect"}]
                 };
                 saveData(storage);
                 updateSyncMessageElem(storage);
@@ -12294,7 +12473,7 @@ function addGeneralButtons() {
               else if (result === 2 && !disconnectFailed) {
                 storage.sync.currentMessage = {
                   type: "error",
-                  text: "Couldn't disconnect due to unknown error.<br>To disconnect anyway, press the confirm button again."
+                  textList: [{key:"disconnect.unknown"},{key:"extra.disconnect"}]
                 };
                 saveData(storage);
                 updateSyncMessageElem(storage);
@@ -12302,7 +12481,7 @@ function addGeneralButtons() {
                 return;
               }
               else if (result === 3 && !disconnectFailed) {
-                storage.sync.currentMessage.text += "<br>To disconnect anyway, press the confirm button again.";
+                storage.sync.currentMessage.textList.push('extra.disconnect');
                 saveData(storage);
                 updateSyncMessageElem(storage);
                 disconnectFailed = true;
@@ -12313,13 +12492,13 @@ function addGeneralButtons() {
               if (storage.debug?.dontLeave === true) return;
               removeSync();
 
-              showMessage('Sync disconnected');
+              showMessage(getText('toast.sync_data.disconnected'));
               openSyncDataModal();
             });
           });
 
           $('.anitracker-disconnect-sync-cancel-button').on('click', openSyncDataModal);
-          openModal('Disconnect Sync', openSyncDataModal);
+          openModal(getText('modal_title.sync_data.disconnect'), openSyncDataModal);
         });
 
         $('.anitracker-delete-sync-button').on('click', () => {
@@ -12329,12 +12508,16 @@ function addGeneralButtons() {
 
           $(`
           <div id="anitracker-delete-sync-prompt">
-            <p class="anitracker-thin-text">Delete sync code?</p>
-            <p class="anitracker-thin-text anitracker-secondary-info">Existing data on all connected devices/browsers will remain as-is.</p>
+            <p class="anitracker-thin-text">${toHtmlCodes(getText('info.sync_data.delete.1'))}</p>
+            <p class="anitracker-thin-text anitracker-secondary-info">${toHtmlCodes(getText('info.sync_data.delete.2'))}</p>
             <div class="anitracker-center-content">
               <div style="display:flex;gap:16px;">
-                <button class="btn btn-danger anitracker-delete-sync-confirm-button" title="Confirm deletion">Yes</button>
-                <button class="btn btn-secondary anitracker-delete-sync-cancel-button" title="Cancel">No</button>
+                <button class="btn btn-danger anitracker-delete-sync-confirm-button" title="${toHtmlCodes(getText('title.button.sync_data.delete.confirm'))}">
+                  ${toHtmlCodes(getText('button.yes'))}
+                </button>
+                <button class="btn btn-secondary anitracker-delete-sync-cancel-button" title="${toHtmlCodes(getText('title.button.sync_data.delete.cancel'))}">
+                  ${toHtmlCodes(getText('button.no'))}
+                </button>
               </div>
             </div>
             ${getSyncMessageElem(storage)}
@@ -12347,10 +12530,10 @@ function addGeneralButtons() {
 
             const loadingElem = $(`
             <div style="padding:10px;">
-              <p class="anitracker-thin-text" id="anitracker-delete-sync-status">Fetching data...</p>
+              <p class="anitracker-thin-text" id="anitracker-delete-sync-status">${toHtmlCodes(getText('info.sync_data.delete.loading'))}</p>
               <div class="anitracker-spinner anitracker-center-content">
                 <div class="spinner-border" role="status">
-                  <span class="sr-only">Loading...</span>
+                  <span class="sr-only">${toHtmlCodes(getText('screenreader.loading'))}</span>
                 </div>
               </div>
             </div>`).insertAfter('#anitracker-delete-sync-prompt');
@@ -12368,7 +12551,7 @@ function addGeneralButtons() {
                 if (dataResponse.status === 1) {
                   storage.sync.currentMessage = {
                     type: "error",
-                    text: "Couldn't remove data. Please check you internet connection."
+                    textList: [{key:"delete.network"}]
                   };
                   saveData(storage);
                   updateSyncMessageElem(storage);
@@ -12377,7 +12560,7 @@ function addGeneralButtons() {
                 else if (dataResponse.status === 3) {
                   storage.sync.currentMessage = {
                     type: "error",
-                    text: "Couldn't remove data due to unknown error."
+                    textList: [{key:"delete.unknown"}]
                   };
                   saveData(storage);
                   updateSyncMessageElem(storage);
@@ -12386,7 +12569,7 @@ function addGeneralButtons() {
                 else if (dataResponse.status === 5) {
                   storage.sync.currentMessage = {
                     type: "error",
-                    text: "Couldn't remove data. Try again in a few minutes."
+                    textList: [{key:"delete.rate_limited"}]
                   };
                   saveData(storage);
                   updateSyncMessageElem(storage);
@@ -12410,7 +12593,7 @@ function addGeneralButtons() {
                 if (delStatus === 1) {
                   storage.sync.currentMessage = {
                     type: "error",
-                    text: "Couldn't remove data. Please check you internet connection."
+                    textList: [{key:"delete.network"}]
                   };
                   saveData(storage);
                   updateSyncMessageElem(storage);
@@ -12419,7 +12602,7 @@ function addGeneralButtons() {
                 else if (delStatus === 2) {
                   storage.sync.currentMessage = {
                     type: "error",
-                    text: "Couldn't remove data due to unknown error."
+                    textList: [{key:"delete.unknown"}]
                   };
                   saveData(storage);
                   updateSyncMessageElem(storage);
@@ -12428,7 +12611,7 @@ function addGeneralButtons() {
                 else if (delStatus === 6) {
                   storage.sync.currentMessage = {
                     type: "error",
-                    text: "Couldn't remove data. Try again in a few minutes."
+                    textList: [{key:"delete.rate_limited"}]
                   };
                   saveData(storage);
                   updateSyncMessageElem(storage);
@@ -12444,32 +12627,32 @@ function addGeneralButtons() {
               if (storage.debug?.dontLeave === true) return loading = false;
               removeSync();
 
-              showMessage('Sync deleted');
+              showMessage(getText('toast.sync_data.deleted'));
               openSyncDataModal();
             }
           });
 
           $('.anitracker-delete-sync-cancel-button').on('click', openSyncDataModal);
-          openModal('Delete Code', openSyncDataModal);
+          openModal(getText('modal_title.sync_data.delete'), openSyncDataModal);
         });
       }
       else {
         $(`
         <div style="display:flex;flex-direction:column;align-items:center;gap:5px;">
-          <p class="anitracker-secondary-info anitracker-thin-text">Automatically sync data between multiple devices</p>
+          <p class="anitracker-secondary-info anitracker-thin-text">${toHtmlCodes(getText('info.sync_data'))}</p>
           <div>
-            <button class="btn btn-secondary anitracker-create-sync-code-button" title="Create a new sync code to send to other devices">
+            <button class="btn btn-secondary anitracker-create-sync-code-button" title="${toHtmlCodes(getText('title.button.sync_data.create_code'))}">
               <i class="fa fa-plus" aria-hidden="true"></i>
-              &nbsp;Create Sync Code
+              &nbsp;${toHtmlCodes(getText('button.sync_data.create_code'))}
             </button>
           </div>
-          <button class="btn btn-secondary anitracker-enter-sync-code-button" title="Enter an already existing sync code">
+          <button class="btn btn-secondary anitracker-enter-sync-code-button" title="${toHtmlCodes(getText('title.button.sync_data.enter_code'))}">
             <i class="fa fa-search" aria-hidden="true"></i>
-            &nbsp;Enter Sync Code...
+            &nbsp;${toHtmlCodes(getText('button.sync_data.enter_code'))}
           </button>
-          <button class="btn btn-secondary anitracker-flat-button anitracker-change-sync-settings-button" title="Change sync settings" style="margin-top:12px;">
+          <button class="btn btn-secondary anitracker-flat-button anitracker-change-sync-settings-button" title="${toHtmlCodes(getText('title.button.sync_data.settings'))}" style="margin-top:12px;">
             <i class="fa fa-cog" aria-hidden="true"></i>
-            &nbsp;Settings...
+            &nbsp;${toHtmlCodes(getText('button.sync_data.settings'))}
           </button>
           ${getSyncMessageElem(storage)}
         </div>`).appendTo('#anitracker-modal-body');
@@ -12478,11 +12661,11 @@ function addGeneralButtons() {
           $('#anitracker-modal-body').empty();
           $(`
           <div style="display:flex;flex-direction:column;align-items:center;">
-          <p class="anitracker-thin-text">Create a new sync code?</p>
-          <p class="anitracker-thin-text">After creation, you can enter this code on devices/browsers you want to sync your data with.</p>
+          <p class="anitracker-thin-text">${toHtmlCodes(getText('info.sync_data.create_code.1'))}</p>
+          <p class="anitracker-thin-text">${toHtmlCodes(getText('info.sync_data.create_code.2'))}</p>
           <div>
-            <button class="btn btn-primary anitracker-create-sync-code-confirm-button" title="Confirm creation of sync code">
-              Create
+            <button class="btn btn-primary anitracker-create-sync-code-confirm-button" title="${toHtmlCodes(getText('title.button.sync_data.create_code.confirm'))}">
+              ${toHtmlCodes(getText('button.sync_data.create_code.confirm'))}
             </button>
           </div></div>`).appendTo('#anitracker-modal-body');
 
@@ -12499,7 +12682,7 @@ function addGeneralButtons() {
 
               if (/^[A-Z0-9]{10}$/.test(result)) {
                 setupSync(result);
-                showMessage('Sync connected!');
+                showMessage(getText('toast.sync_data.connected'));
                 openCodeCreationModal();
                 return;
               }
@@ -12507,11 +12690,11 @@ function addGeneralButtons() {
               const storage = getStorage();
               if (result === 1) storage.sync.currentMessage = {
                   type: 'error',
-                  text: 'Could not create code. Check your internet connection.'
+                  textList: [{key:"create_code.network"}]
                 };
               else if (result === 2) storage.sync.currentMessage = {
                   type: 'error',
-                  text: 'An unknown error occurred when trying to create a code.'
+                  textList: [{key:"create_code.unknown"}]
                 };
               else return; // Codes 3, 4, and 5 are already handled by syncGetCode
 
@@ -12520,7 +12703,7 @@ function addGeneralButtons() {
             });
           });
 
-          openModal('Create Code', openSyncDataModal);
+          openModal(getText('modal_title.sync_data.create_code'), openSyncDataModal);
         });
 
         $('.anitracker-enter-sync-code-button').on('click', openCodeEnterModal);
@@ -12529,22 +12712,22 @@ function addGeneralButtons() {
         openSyncSettingsModal(openSyncDataModal);
       });
 
-      openModal('Data Syncing', openShowDataModal);
+      openModal(getText('modal_title.sync_data'), openShowDataModal);
 
       function openCodeCreationModal() {
         $('#anitracker-modal-body').empty();
 
         const storage = getStorage();
         $(`
-        <p class="anitracker-secondary-info anitracker-thin-text">Copy the following code and send it to the devices you want to sync with.</p>
+        <p class="anitracker-secondary-info anitracker-thin-text">${toHtmlCodes(getText('info.sync_data.create_code.done'))}</p>
         <div class="anitracker-sync-code-display">
           <span>${storage.sync.syncCode}</span>
-          <i class="fa fa-copy" tabindex="0" title="Copy sync code to clipboard"></i>
+          <i class="fa fa-copy" tabindex="0" title="${toHtmlCodes(getText('title.button.sync_data.create_code.done.copy'))}"></i>
         </div>
         <div style="height:2rem;"></div>
         <div class="anitracker-center-content">
-          <button class="btn btn-secondary anitracker-done-button" title="Go to the main sync menu">
-            Done
+          <button class="btn btn-secondary anitracker-done-button" title="${toHtmlCodes(getText('title.button.sync_data.create_code.done.done'))}">
+            ${toHtmlCodes(getText('button.sync_data.create_code.done.done'))}
           </button>
         </div>`).appendTo('#anitracker-modal-body');
 
@@ -12564,7 +12747,7 @@ function addGeneralButtons() {
           }, 1000);
         });
         $('.anitracker-done-button').on('click', openSyncDataModal);
-        openModal('Create Code', openSyncDataModal);
+        openModal(getText('modal_title.sync_data.create_code'), openSyncDataModal);
       }
 
       function openCodeEnterModal() {
@@ -12572,13 +12755,13 @@ function addGeneralButtons() {
 
         $(`
         <div style="display:flex;flex-direction:column;align-items:center;gap:10px;">
-          <p class="anitracker-secondary-info">Enter 10 character sync code.</p>
+          <p class="anitracker-secondary-info">${toHtmlCodes(getText('info.sync_data.enter_code.1'))}</p>
           <input title="Enter sync code" autocomplete="off" maxlength="10" class="form-control anitracker-text-input-bar anitracker-sync-code-input">
-          <p class="anitracker-thin-text anitracker-sync-code-enter-error" style="color:var(--danger);display:none;">Enter 10 character sync code.</p>
-          <p class="anitracker-secondary-info anitracker-thin-text">Codes expire after not being used for 30 days.</p>
+          <p class="anitracker-thin-text anitracker-sync-code-enter-error" style="color:var(--danger);display:none;"></p>
+          <p class="anitracker-secondary-info anitracker-thin-text">${toHtmlCodes(getText('info.sync_data.enter_code.2'))}</p>
           <div>
-            <button class="btn btn-secondary anitracker-sync-code-enter-button" title="Connect to this code">
-              Connect
+            <button class="btn btn-secondary anitracker-sync-code-enter-button" title="${toHtmlCodes(getText('title.button.sync_data.enter_code.confirm'))}">
+              ${toHtmlCodes(getText('button.sync_data.enter_code.confirm'))}
             </button>
           </div>
         </div>`).appendTo('#anitracker-modal-body');
@@ -12588,7 +12771,7 @@ function addGeneralButtons() {
 
           const code = $('.anitracker-sync-code-input').val().toUpperCase();
           if (code === '') {
-            showError('Please enter a code.');
+            showError('empty');
             return;
           }
           const spinner = addSpinner(e.currentTarget, 'sync-code-enter');
@@ -12598,23 +12781,23 @@ function addGeneralButtons() {
 
             if (result === 0) {
               setupSync(code);
-              showMessage('Sync connected!');
+              showMessage(getText('toast.sync_data.connected'));
               openSyncDataModal();
               return;
             }
-            if (result === 1) showError("Couldn't connect. Check your internet connection.");
-            else if (result === 2) showError("Code is invalid.");
-            else if (result === 3) showError("Please update AnimePahe Improvements.");
-            else if (result === 4) showError("Unknown error occurred. Check the log for more info.");
-            else if (result === 5) showError("You have sent too many requests. Try again in a few minutes.");
+            if (result === 1) showError("network");
+            else if (result === 2) showError("invalid");
+            else if (result === 3) showError("outdated");
+            else if (result === 4) showError("unknown");
+            else if (result === 5) showError("rate_limited");
             else if (result === 6) openSyncDataModal();
           });
         });
 
-        openModal('Enter Code', openSyncDataModal);
+        openModal(getText('modal_title.sync_data.enter_code'), openSyncDataModal);
 
         function showError(msg) {
-          $('.anitracker-sync-code-enter-error').text(msg).show();
+          $('.anitracker-sync-code-enter-error').text(getText(`info.sync_data.enter_code.error.${msg}`)).show();
         }
       }
     }
@@ -12625,39 +12808,39 @@ function addGeneralButtons() {
       const storage = getStorage();
       const settings = storage.sync.settings;
       $(`
-      ${firstTime ? '<p class="anitracker-secondary-info anitracker-thin-text">Automatically sync data between multiple devices</p>' : ''}
+      ${firstTime ? `<p class="anitracker-secondary-info anitracker-thin-text">${toHtmlCodes(getText('info.sync_data'))}</p>` : ''}
       <div class="form-check">
         <input class="form-check-input anitracker-sync-settings-input" type="checkbox" value="" id="anitracker-video-times-check" ${settings.videoTimes ? "checked" : ""}>
-        <label class="form-check-label" for="anitracker-video-times-check" title="Sync video progress entries with other devices">
-          Video Progress
+        <label class="form-check-label" for="anitracker-video-times-check" title="${toHtmlCodes(getText('title.label.check.sync_data.settings.video_progress'))}">
+          ${toHtmlCodes(getText('label.check.sync_data.settings.video_progress'))}
         </label>
       </div>
       <div class="form-check">
         <input class="form-check-input anitracker-sync-settings-input" type="checkbox" value="" id="anitracker-bookmarks-check" ${settings.bookmarks ? "checked" : ""}>
-        <label class="form-check-label" for="anitracker-bookmarks-check" title="Sync bookmarks with other devices">
-          Bookmarks
+        <label class="form-check-label" for="anitracker-bookmarks-check" title="${toHtmlCodes(getText('title.label.check.sync_data.settings.bookmarks'))}">
+          ${toHtmlCodes(getText('label.check.sync_data.settings.bookmarks'))}
         </label>
       </div>
       <div class="form-check">
         <input class="form-check-input anitracker-sync-settings-input" type="checkbox" value="" id="anitracker-watched-check" ${settings.watched ? "checked" : ""}>
-        <label class="form-check-label" for="anitracker-watched-check" title="Sync watched episodes with other devices">
-          Watched Episodes
+        <label class="form-check-label" for="anitracker-watched-check" title="${toHtmlCodes(getText('title.label.check.sync_data.settings.watched'))}">
+          ${toHtmlCodes(getText('label.check.sync_data.settings.watched'))}
         </label>
       </div>
       <div class="form-check">
         <input class="form-check-input anitracker-sync-settings-input" type="checkbox" value="" id="anitracker-notifications-check" ${settings.notifications ? "checked" : ""}>
-        <label class="form-check-label" for="anitracker-notifications-check" title="Sync episode feed entries (anime that are part of the episode feed) with other devices">
-          Episode Feed Entries
+        <label class="form-check-label" for="anitracker-notifications-check" title="${toHtmlCodes(getText('title.label.check.sync_data.settings.episode_feed'))}">
+          ${toHtmlCodes(getText('label.check.sync_data.settings.episode_feed'))}
         </label>
       </div>
       <div class="form-check">
         <input class="form-check-input anitracker-sync-settings-input" type="checkbox" value="" id="anitracker-link-list-check" ${settings.linkList ? "checked" : ""}>
-        <label class="form-check-label" for="anitracker-link-list-check" title="Sync stored session entries with other devices. Not recommended due to browser tabs being different between devices.">
-          Session Data (not recommended)
+        <label class="form-check-label" for="anitracker-link-list-check" title="${toHtmlCodes(getText('title.label.check.sync_data.settings.sessions'))}">
+          ${toHtmlCodes(getText('label.check.sync_data.settings.sessions'))}
         </label>
       </div>
-      <label style="margin-top: 10px; max-width: 16rem;" title="Set number of minutes between each auto-sync.">
-        Time between syncing, in minutes. Set to 0 to disable auto-sync.
+      <label style="margin-top: 10px; max-width: 16rem;" title="${toHtmlCodes(getText('title.label.input.sync_data.settings.auto_sync'))}">
+        ${toHtmlCodes(getText('label.input.sync_data.settings.auto_sync'))}
         <div style="display:block;">
           <input autocomplete="off" class="form-control anitracker-text-input-bar anitracker-interval-input" placeholder="${getDefaultData().sync.settings.interval}" type="number" inputmode="numeric" value="${settings.interval}" style="width:6rem;display:inline;">
           <span class="anitracker-secondary-info anitracker-interval-display"></span>
@@ -12666,14 +12849,16 @@ function addGeneralButtons() {
       <div class="anitracker-sync-settings-bottom"></div>`).appendTo('#anitracker-modal-body');
 
       if (firstTime) $(`
-        <p class="anitracker-secondary-info anitracker-thin-text">You can change this later.</p>
-        <button class="btn btn-primary anitracker-save-button" title="Continue to the next page">
-          Continue
+        <p class="anitracker-secondary-info anitracker-thin-text">
+          ${toHtmlCodes(getText('info.sync_data.settings.first_time'))}
+        </p>
+        <button class="btn btn-primary anitracker-save-button" title="${toHtmlCodes(getText('title.button.sync_data.settings.continue'))}">
+          ${toHtmlCodes(getText('button.sync_data.settings.continue'))}
         </button>
         `).appendTo('.anitracker-sync-settings-bottom');
       else $(`
-        <button class="btn btn-primary anitracker-save-button" title="Save settings and go back">
-          Save
+        <button class="btn btn-primary anitracker-save-button" title="${toHtmlCodes(getText('title.button.sync_data.settings.save'))}">
+          ${toHtmlCodes(getText('button.save'))}
         </button>`).appendTo('.anitracker-sync-settings-bottom');
 
       $('.anitracker-interval-input').on('input', function() {
@@ -12682,12 +12867,13 @@ function addGeneralButtons() {
         let val = /^\d+$/.test(inputInterval) ? +inputInterval : defaultInterval;
         if (val !== 0 && val < 60) val = 60;
         if (val === 0) {
-          $('.anitracker-interval-display').text('= disabled');
+          $('.anitracker-interval-display').text(getText('info.sync_data.settings.auto_sync.preview.disabled'));
         }
         else {
           const hrs = Math.floor(val/60);
           const mins = Math.floor(val % 60);
-          $('.anitracker-interval-display').text(`= ${hrs > 0 ? hrs + 'h' : ''}${mins}m${val === defaultInterval ? ' (default)' : ''}`);
+          const time = hrs ? getText('info.sync_data.settings.auto_sync.preview.time',[hrs,mins]) : getText('info.sync_data.settings.auto_sync.preview.time.no_hours',[mins]);
+          $('.anitracker-interval-display').text(val === defaultInterval ? getText('info.sync_data.settings.auto_sync.preview.default',[time]) : getText('info.sync_data.settings.auto_sync.preview',[time]));
         }
       }).trigger('input');
 
@@ -12731,7 +12917,7 @@ function addGeneralButtons() {
         else closeModal();
       });
 
-      openModal('Choose sync settings', backFunction);
+      openModal(getText('modal_title.sync_data.settings'), backFunction);
     }
 
     $('#anitracker-sync-data').on('click', () => {
@@ -12740,7 +12926,7 @@ function addGeneralButtons() {
       else openSyncSettingsModal(openShowDataModal, true);
     });
 
-    openModal('Manage Data');
+    openModal(getText('modal_title.manage_data'));
   }
 
   $('#anitracker-show-data').on('click', openShowDataModal);
@@ -12751,10 +12937,10 @@ function isOutdatedClient(request) {
 }
 
 function showOutdatedClientMessage(request, storage = getStorage()) {
-  const properVersion = request.getResponseHeader('Anitracker-Version-Required') || '[unspecified]';
+  const properVersion = request.getResponseHeader('Anitracker-Version-Required') || getText('version.unspecified');
   storage.sync.currentMessage = {
     type: 'error',
-    text: `Could not sync data due to outdated AnimePahe Improvements script. Please update to at least version ${properVersion}.<br>(Current version: ${GM_info.script.version})`
+    textList: [{key:"outdated",vars:[properVersion,GM_info.script.version]}],
   };
   saveData(storage);
   updateSyncMessageElem(storage);
@@ -12763,30 +12949,33 @@ function showOutdatedClientMessage(request, storage = getStorage()) {
 function showRateLimitMessage(storage = getStorage()) {
   storage.sync.currentMessage = {
     type: 'error',
-    text: "You have sent too many requests. Try again in a few minutes."
+    textList: [{key:"rate_limited"}]
   };
   saveData(storage);
   updateSyncMessageElem(storage);
 }
 
 function showServiceUnavailableMessage(request, storage = getStorage()) {
-  let extraMsg = '';
-  if (request.response) extraMsg += ' Message from server:<br>' + request.response;
+  const extraMsgs = [];
+  if (request.response) extraMsgs.push({key:'extra.server_message'},request.response);
   else {
     const retryAfter = request.getResponseHeader('Retry-After');
     if (!isNaN(+retryAfter)) {
       let time = Math.floor(+retryAfter / 60);
       if (time >= 60) {
         time = Math.floor(time / 60);
-        extraMsg += `<br>Try again in about ${time} hour${time !== 1 ? 's' : ''}.`;
+        extraMsgs.push({key:'extra.try_again.hours',vars:[time]})
       }
-      else extraMsg += `<br>Try again in about ${time} minute${time !== 1 ? 's' : ''}.`;
+      else extraMsgs.push({key:'extra.try_again.minutes',vars:[time]})
     }
-    else if (retryAfter) extraMsg += ' Try again after:<br>' + retryAfter;
+    else if (retryAfter) extraMsgs.push({key:"extra.try_again.other",vars:[retryAfter]});
   }
+  const textList = [{key:'service_unavailable'}];
+  if (extraMsgs.length) textList.push(...extraMsgs);
+  else textList.push({key:'extra.no_info'});
   storage.sync.currentMessage = {
     type: 'error',
-    text: "Server is unavailable at the moment." + extraMsg ? extraMsg : '<br>No information was given.'
+    textList: textList
   };
   saveData(storage);
   updateSyncMessageElem(storage);
@@ -12801,7 +12990,7 @@ function updateSyncMessageElem(storage = getStorage()) {
   else {
     elem.removeClass('info').removeClass('warning').removeClass('error');
     elem.addClass(messageObj.type);
-    elem.html(messageObj.text);
+    elem.html(messageObj.textList.map(t => toHtmlCodes(t.key ? getText('sync_message.'+t.key,t.vars) : t).replaceAll('\n','<br>')).join('<br>'));
     elem.show();
   }
 }
@@ -13204,13 +13393,13 @@ async function syncData() {
         case 1:
           storage.sync.currentMessage = {
             type: 'error',
-            text: 'Could not sync due to network error. Check your internet connection.'
+            textList: [{key:'network_error'}]
           };
           break;
         case 2:
           storage.sync.currentMessage = {
             type: 'warning',
-            text: 'The sync code is no longer valid (possibly due to being unused for a long time).<br>Please create or enter a new code.'
+            textList: [{key:'invalid_code'}]
           };
           saveData(storage);
           removeSync();
@@ -13220,40 +13409,40 @@ async function syncData() {
         case 3:
           storage.sync.currentMessage = {
             type: 'error',
-            text: 'Could not sync due to unknown error.<br>See the log for more info.'
+            textList: [{key:'unknown_error'},{key:'extra.check_log'}]
           };
           break;
         case 4:
           storage.sync.currentMessage = {
             type: 'error',
-            text: 'Last sync was not able to send data to the server.<br>See the log for more info.'
+            textList: [{key:'data_send_failure'},{key:'extra.check_log'}]
           };
           break;
         // 5 is skipped due to not needing a message
         case 6:
           storage.sync.currentMessage = {
             type: 'error',
-            text: 'Last sync was not able to send data to the server.<br>See the log for more info.'
+            textList: [{key:'data_send_failure'},{key:'extra.check_log'}]
           };
           break;
         // 7 and 8 are skipped due to already being handled in runSync
         case 9:
           storage.sync.currentMessage = {
             type: 'error',
-            text: 'Last sync was not able to send data to the server.<br>Try again in a few minutes.'
+            textList: [{key:'data_send_failure'},{key:'extra.rate_limited'}]
           };
           break;
         // 10 is skipped due to already being handled in runSync
         case 11:
           storage.sync.currentMessage = {
             type: 'info',
-            text: 'Nothing is currently being synced.<br>Check settings.'
+            textList: [{key:'nothing_enabled'}]
           };
           break;
         case 12:
           storage.sync.currentMessage = {
             type: 'error',
-            text: 'The data was too large to send to the server.<br>Please remove any unnecessary data.'
+            textList: [{key:'data_too_large'}]
           };
           break;
       }
@@ -13589,14 +13778,18 @@ async function syncData() {
 addGeneralButtons();
 if (isEpisode()) {
   $(`
-  <span style="margin-left: 30px;"><i class="fa fa-files-o" aria-hidden="true"></i>&nbsp;Copy:</span>
+  <span style="margin-left: 30px;"><i class="fa fa-files-o" aria-hidden="true"></i>&nbsp;${toHtmlCodes(getText('label.episode.copy_link'))}</span>
   <div class="btn-group">
-    <button class="btn btn-dark anitracker-copy-button" copy="link" data-placement="top" data-content="Copied!">Link</button>
+    <button class="btn btn-dark anitracker-copy-button" copy="link" data-placement="top" data-content="${toHtmlCodes(getText('title.button.copied'))}">
+      ${toHtmlCodes(getText('button.episode.copy_link'))}
+    </button>
   </div>
   <div class="btn-group" style="margin-right:30px;">
-    <button class="btn btn-dark anitracker-copy-button" copy="link-time" data-placement="top" data-content="Copied!">Link &amp; Time</button>
+    <button class="btn btn-dark anitracker-copy-button" copy="link-time" data-placement="top" data-content="${toHtmlCodes(getText('title.button.copied'))}">
+      ${toHtmlCodes(getText('button.episode.copy_link.with_time'))}
+    </button>
   </div>`).appendTo('#anitracker');
-  addOptionSwitch('autoPlayNext','Auto-Play Next','Automatically go to the next episode when the current one has ended.','#anitracker');
+  addOptionSwitch('autoPlayNext',getText('switch.episode.auto_play_next'),getText('title.switch.episode.auto_play_next'),'#anitracker');
 
   $('.anitracker-copy-button').on('click', (e) => {
     const targ = $(e.currentTarget);
@@ -13682,7 +13875,7 @@ function addOptionSwitch(optionId, name, desc = '', parent = '#anitracker-modal-
 $(`
 <div class="anitracker-player-dropup-spinner anitracker-spinner" style="display: none;">
     <div class="spinner-border" role="status">
-      <span class="sr-only">Loading...</span>
+      <span class="sr-only">${toHtmlCodes(getText('screenreader.loading'))}</span>
     </div>
 </div>`).prependTo('#downloadMenu,#episodeMenu');
 $('.prequel img,.sequel img').attr('loading','');
