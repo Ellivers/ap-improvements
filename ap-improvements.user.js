@@ -10485,7 +10485,7 @@ function addGeneralButtons() {
           <i class="fa fa-undo" aria-hidden="true"></i>
         </button>`).appendTo(g.parent).data('id', g.id);
       });
-      addOptionSwitch('numpadSeeking', 'Numpad Seeking', 'Allow seeking through videos with numpad keys.', '#anitracker-modal-body>.anitracker-dark-area:nth-child(3)');
+      addOptionSwitch('numpadSeeking', 'Numpad Seeking', 'Allow seeking through videos with numpad keys.', '#anitracker-modal-body>.anitracker-dark-area:nth-child(2)');
       updateConflicts();
 
       $('.anitracker-keybind-button').on('keydown', (e) => {
