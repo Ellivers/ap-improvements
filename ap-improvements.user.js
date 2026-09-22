@@ -1888,11 +1888,12 @@ const _css = `
   width: fit-content;
   display: block;
 }
-#anitracker-modal-content header {
+#anitracker-modal-header {
   padding: 5px;
   flex-shrink: 0;
+  cursor: pointer;
 }
-#anitracker-modal-content:not(.shift) header {min-height: 2.3rem;\n}
+#anitracker-modal-content:not(.shift) #anitracker-modal-header {min-height: 2.3rem;\n}
 #anitracker-modal-body {
   padding: 10px;
   overflow-y: auto;
@@ -3835,7 +3836,7 @@ function addPermanentElements() {
     <div id="anitracker-modal-content">
       <i tabindex="0" id="anitracker-modal-close" class="fa fa-close"></i>
       <div>
-        <header>
+        <header id="anitracker-modal-header">
           <h4 id="anitracker-modal-title"></h4>
           <span id="anitracker-modal-subtitle" class="anitracker-secondary-info"></span>
         </header>
@@ -3848,10 +3849,12 @@ function addPermanentElements() {
     if (e.target !== e.currentTarget) return;
     closeModal();
   });
-
   $('#anitracker-modal-close').on('click keydown', (e) => {
     if (e.type === 'keydown' && e.key !== "Enter") return;
     modalBackFunction();
+  });
+  $('#anitracker-modal-header').on('click', () => {
+    $('#anitracker-modal-body')[0].scrollTo({top:0, behavior: getStorage().settings.reduceMotion ? 'auto' : 'smooth'})
   });
 }
 addPermanentElements();
