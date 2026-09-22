@@ -3705,7 +3705,7 @@ const animeInfoFunctions = [
         searchedSessions.push(session);
         const relations = await getBranches(session);
         for (const rel of relations) {
-          if (!matchDataPartial(rel,iinfo,{"session":"session","title":"name"}) && (!rel.poster || trimPosterUrl(rel.poster) !== iinfo.poster)) continue;
+          if (!matchDataPartial(rel,iinfo,{"session":"session","title":"name","poster":"poster"})) continue;
           const pageData2 = await getPageDataFromSession(rel.session);
           if (pageData2) {
             pageData2.session = rel.session;
@@ -3714,7 +3714,7 @@ const animeInfoFunctions = [
           return {
             name: rel.title,
             session: rel.session,
-            poster: trimPosterUrl(rel.poster),
+            poster: rel.poster,
           };
         }
         for (const rel of relations) {
@@ -8936,7 +8936,7 @@ async function getRelationData(session, relationType) {
   for (const rel of relations) {
     if (rel.relation_type !== relationType) continue;
 
-    rel.episodeList = await getAllEpisodes(rel.session);;
+    rel.episodeList = await getAllEpisodes(rel.session);
     return rel;
   }
   return undefined;
@@ -8958,7 +8958,7 @@ async function getRelationList(session) {
       status: infoParts[2],
       season: seasonParts[1],
       year: +seasonParts[2],
-      poster: elem.find('img').attr('data-src').replace('.th',''),
+      poster: trimPosterUrl(elem.find('img').attr('src')),
       session: /^.*animepahe\.[a-z]+\/anime\/([^/]+)/.exec(elem.find('a')[0].href)[1],
       relation_type: elem.parents(':eq(1)').find('h4 span').text().toLowerCase(),
     });
@@ -9036,7 +9036,7 @@ function setRelationLink(relationData, type) {
   $(`
   <div class="${type} hidden-sm-down anitracker-thumbnail">
     <a href="${href}" title="Play ${type === 'prequel' ? 'Last Episode' : 'First Episode'} of ${toHtmlCodes(relationData.title)}">
-      <img class="anitracker-relation-poster" src="${relationData.poster}" data-src="${relationData.poster}" alt="">
+      <img class="anitracker-relation-poster" src="${makePosterUrl(relationData.poster)}" alt="">
     </a>
     <i class="fa fa-chevron-${type === 'prequel' ? 'left' : 'right'}" aria-hidden="true"></i>
   </div>`).appendTo('.player');
