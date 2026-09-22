@@ -1,8 +1,10 @@
 ### 4.13.0 (in development)
+- You can now click the modal header (title) to scroll to the top of a modal menu
 - Improved the way seek thumbnails feel
   - It should generally be a bit more responsive now
 - Fixed collections in search results being broken due to site changes
 - Fixed the Numpad Seeking option not showing up
+- Fixed toast messages for removing/marking a video progress entry as watched showing the incorrect name
 - Fixed the bookmark, episode feed, and link buttons being cut off on certain episode pages
 - Various other fixes
 
