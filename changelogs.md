@@ -1,4 +1,7 @@
 ### 4.13.0 (in development)
+- Added options for video playback speed changing controls in the Edit Keybinds menu
+  - Added Change Speed By Scrolling option to enable/disable changing speed by scrolling
+  - Added Change Speed By Arrow Keys option to enable/disable changing speed using the arrow keys
 - You can now click the modal header (title) to scroll to the top of a modal menu
 - Improved the way seek thumbnails feel
   - It should generally be a bit more responsive now
