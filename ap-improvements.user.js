@@ -125,6 +125,8 @@ function getDefaultData() {
       dlPreferRes: 1080,
       dlPreferLang: '',
       showContinueWatching: true,
+      changeSpeedScroll: true,
+      changeSpeedArrows: true,
 
       keybindBookmarks: "b",
       keybindNotifications: "n",
@@ -1634,13 +1636,15 @@ const _css = `
       return;
     }
     if (['l','L'].includes(e.key)) setTimeout(() => {player.loop = loop}, 5);
-    if (key === 'ArrowUp') {
-      changeSpeed(e, -1); // The changeSpeed function only works if ctrl is being held
-      return;
-    }
-    if (key === 'ArrowDown') {
-      changeSpeed(e, 1);
-      return;
+    if (anitrackerSettings.changeSpeedArrows) {
+      if (key === 'ArrowUp') {
+        changeSpeed(e, -1); // The changeSpeed function only works if ctrl is being held
+        return;
+      }
+      if (key === 'ArrowDown') {
+        changeSpeed(e, 1);
+        return;
+      }
     }
     if (pressedKeybind(e, anitrackerSettings.keybind10sBackward)) {
       player.currentTime = Math.max(0, player.currentTime - 10);
@@ -1742,7 +1746,7 @@ const _css = `
   });
 
   $(document).on('wheel', function(e) {
-    changeSpeed(e, e.originalEvent.deltaY);
+    if (anitrackerSettings.changeSpeedScroll) changeSpeed(e, e.originalEvent.deltaY);
   });
 
   }
@@ -3212,6 +3216,18 @@ const optionSwitches = [
     value: initialStorage.settings.numpadSeeking,
     onEvent: () => {sendMessage({action:'setting_changed',id:'numpadSeeking',value:true})},
     offEvent: () => {sendMessage({action:'setting_changed',id:'numpadSeeking',value:false})}
+  },
+  {
+    optionId: 'changeSpeedScroll',
+    value: initialStorage.settings.changeSpeedScroll,
+    onEvent: () => {sendMessage({action:'setting_changed',id:'changeSpeedScroll',value:true})},
+    offEvent: () => {sendMessage({action:'setting_changed',id:'changeSpeedScroll',value:false})}
+  },
+  {
+    optionId: 'changeSpeedArrows',
+    value: initialStorage.settings.changeSpeedArrows,
+    onEvent: () => {sendMessage({action:'setting_changed',id:'changeSpeedArrows',value:true})},
+    offEvent: () => {sendMessage({action:'setting_changed',id:'changeSpeedArrows',value:false})}
   }];
 
 const originalEpisodeValue = (() => {
@@ -10491,6 +10507,8 @@ function addGeneralButtons() {
         </button>`).appendTo(g.parent).data('id', g.id);
       });
       addOptionSwitch('numpadSeeking', 'Numpad Seeking', 'Allow seeking through videos with numpad keys.', '#anitracker-modal-body>.anitracker-dark-area:nth-child(2)');
+      addOptionSwitch('changeSpeedScroll', 'Change Speed By Scrolling', 'Allow changing video playback speed by holding Ctrl and scrolling up/down.', '#anitracker-modal-body>.anitracker-dark-area:nth-child(2)');
+      addOptionSwitch('changeSpeedArrows', 'Change Speed By Arrow Keys', 'Allow changing video playback speed by holding Ctrl and pressing the up/down arrow keys.', '#anitracker-modal-body>.anitracker-dark-area:nth-child(2)');
       updateConflicts();
 
       $('.anitracker-keybind-button').on('keydown', (e) => {
