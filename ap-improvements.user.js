@@ -8042,7 +8042,7 @@ function setupContinueWatchingSection() {
             ${animeId ? '<button class="btn btn-dark anitracker-mark-watched-button" title="Mark as watched and remove"><i class="fa fa-eye" aria-hidden="true"></i>&nbsp;Watched</button>' : ''}
             <button class="btn btn-dark anitracker-delete-button" title="Remove video progress"><i class="fa fa-trash" aria-hidden="true"></i>&nbsp;Remove</button>
           </div>
-        </div>`).appendTo('#anitracker-modal-body .anitracker-modal-list').data('anime-id', animeId).data('title', entry.animeName).data('episode', entry.episodeNum);
+        </div>`).appendTo('#anitracker-modal-body .anitracker-modal-list').data('anime-id', animeId).data('title', entry.animeName).data('episode', entry.episodeNum).data('visible-name',visibleAnimeName);
         if (!Array.from($(elem).find('a,span')).map(el => $(el).text()).join().toLowerCase().includes($('.anitracker-modal-search').val().toLowerCase())) elem.hide();
 
         if (entry.duration) elem.css('background-size', `${100 * (entry.time / entry.duration)}% ${elem.css('background-size').split(' ')[1]}`);
@@ -8061,7 +8061,8 @@ function setupContinueWatchingSection() {
         if (!id) return;
 
         addWatched(+id, episode);
-        showMessage(`Marked "${name?.slice(0,16)}${name?.length > 16 ? '...' : ''}" episode ${episode} as watched`, 4000);
+        const visibleName = elem.data('visible-name');
+        showMessage(`Marked "${visibleName?.slice(0,16)}${visibleName?.length > 16 ? '...' : ''}" episode ${episode} as watched`, 4000);
       });
       $('.anitracker-video-progress-item .anitracker-delete-button').on('click', function() {
         const elem = $(this).parents(':eq(1)');
@@ -8073,7 +8074,8 @@ function setupContinueWatchingSection() {
         deleteEpisodeFromTracker(name, episode, id);
 
         removeVideoProgressElem(elem);
-        showMessage(`Removed "${name?.slice(0,16)}${name?.length > 16 ? '...' : ''}" episode ${episode}`, 4000);
+        const visibleName = elem.data('visible-name');
+        showMessage(`Removed "${visibleName?.slice(0,16)}${visibleName?.length > 16 ? '...' : ''}" episode ${episode}`, 4000);
       });
       scrollModalToTop();
       setModalShift(shouldShiftModal());
