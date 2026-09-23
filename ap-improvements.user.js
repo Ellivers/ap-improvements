@@ -10513,8 +10513,8 @@ function addGeneralButtons() {
         </button>`).appendTo(g.parent).data('id', g.id);
       });
       addOptionSwitch('numpadSeeking', 'Numpad Seeking', 'Allow seeking through videos with numpad keys.', '#anitracker-modal-body>.anitracker-dark-area:nth-child(2)');
-      addOptionSwitch('changeSpeedScroll', 'Change Speed By Scrolling', 'Allow changing video playback speed by holding Ctrl and scrolling up/down.', '#anitracker-modal-body>.anitracker-dark-area:nth-child(2)');
-      addOptionSwitch('changeSpeedArrows', 'Change Speed By Arrow Keys', 'Allow changing video playback speed by holding Ctrl and pressing the up/down arrow keys.', '#anitracker-modal-body>.anitracker-dark-area:nth-child(2)');
+      addOptionSwitch('changeSpeedScroll', 'Change Speed by Scrolling', 'Allow changing video playback speed by holding Ctrl and scrolling up/down.', '#anitracker-modal-body>.anitracker-dark-area:nth-child(2)');
+      addOptionSwitch('changeSpeedArrows', 'Change Speed by Arrow Keys', 'Allow changing video playback speed by holding Ctrl and pressing the up/down arrow keys.', '#anitracker-modal-body>.anitracker-dark-area:nth-child(2)');
       updateConflicts();
 
       $('.anitracker-keybind-button').on('keydown', (e) => {
