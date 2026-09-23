@@ -141,6 +141,7 @@ function getDefaultData() {
       keybind1fForward: ".",
       keybindPlayerStart: "Home",
       keybindPlayerEnd: "End",
+      keybindScreenshot: "p",
       keybindToggleLoop: "Shift+L",
       keybindResetPlayer: "",
     },
@@ -968,6 +969,7 @@ const _css = `
     else if (action === 'key') {
       if (!data.event.shiftKey && !data.event.ctrlKey) {
         if (data.key === 'f') return showMessage('Press again for full screen');
+        if (anitrackerSettings.copyScreenshots && pressedKeybind(data.event, anitrackerSettings.keybindScreenshot)) return showMessage('Press again to copy screenshot');
         else if ([' ','k'].includes(data.key)) {
           if (player.paused) player.play();
           else player.pause();
@@ -1389,40 +1391,42 @@ const _css = `
 
     // Replace the capture button and assign events
     $('button[data-plyr="capture"]').replaceWith($('button[data-plyr="capture"]').clone()); // Just to remove existing event listeners
-    $('button[data-plyr="capture"]').on('click', () => {
-      const canvas = document.createElement('canvas');
-      canvas.height = player.videoHeight;
-      canvas.width = player.videoWidth;
-      const ctx = canvas.getContext('2d');
-      ctx.drawImage(player, 0, 0, canvas.width, canvas.height);
-      if (anitrackerSettings.copyScreenshots) {
-        canvas.toBlob((blob) => {
-          try {
-            navigator.clipboard.write([
-              new ClipboardItem({[blob.type]: blob})
-            ]);
-          }
-          catch (e) {
-            console.error(e);
-            showMessage("Couldn't copy!");
-            alert("[AnimePahe Improvements]\n\nCouldn't copy screenshot. Try disabling the Copy Screenshots option.");
-            return;
-          }
-          showMessage('Copied image');
-        });
-      }
-      else { // Otherwise, download
-        const element = document.createElement('a');
-        element.setAttribute('href', canvas.toDataURL('image/png'));
-        element.setAttribute('download', $('.ss-label').text());
-        element.click();
-        element.remove();
-      }
-    });
+    $('button[data-plyr="capture"]').on('click', takeScreenshot);
     //
   });
 
   if (player.readyState > 2) $(player).trigger('progress');
+
+  function takeScreenshot() {
+    const canvas = document.createElement('canvas');
+    canvas.height = player.videoHeight;
+    canvas.width = player.videoWidth;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(player, 0, 0, canvas.width, canvas.height);
+    if (anitrackerSettings.copyScreenshots) {
+      canvas.toBlob(async (blob) => {
+        try {
+          await navigator.clipboard.write([
+            new ClipboardItem({[blob.type]: blob})
+          ]);
+          showMessage('Copied screenshot!');
+        }
+        catch (e) {
+          console.error(e);
+          showMessage("Couldn't copy screenshot!");
+          alert("[AnimePahe Improvements]\n\nCouldn't copy screenshot. Try disabling the Copy Screenshots option.");
+          return;
+        }
+      });
+    }
+    else { // Otherwise, download
+      const element = document.createElement('a');
+      element.setAttribute('href', canvas.toDataURL('image/png'));
+      element.setAttribute('download', $('.ss-label').text());
+      element.click();
+      element.remove();
+    }
+  }
 
   function getFrame(video, time, dimensions) {
     return new Promise((resolve) => {
@@ -1665,6 +1669,7 @@ const _css = `
       }
     }
     if (player.readyState > 2) {
+      if (pressedKeybind(e, anitrackerSettings.keybindScreenshot)) return takeScreenshot();
       if (pressedKeybind(e, anitrackerSettings.keybindPlayerStart)) {
         return player.currentTime = 0;
       }
@@ -10435,6 +10440,7 @@ function addGeneralButtons() {
         {title:'Forward 1 Frame',id:'keybind1fForward',parent:'#anitracker-player-keybinds'},
         {title:'Go to Start',id:'keybindPlayerStart',parent:'#anitracker-player-keybinds'},
         {title:'Go to End',id:'keybindPlayerEnd',parent:'#anitracker-player-keybinds'},
+        {title:'Take Screenshot',id:'keybindScreenshot',parent:'#anitracker-player-keybinds'},
         {title:'Toggle Looping',id:'keybindToggleLoop',parent:'#anitracker-player-keybinds'},
         {title:'Reset Player',id:'keybindResetPlayer',parent:'#anitracker-player-keybinds'},
       ];
