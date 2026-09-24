@@ -1166,10 +1166,8 @@ const _css = `
       return;
     }
 
-    elem.text(text);
     setSkipBtnVisibility(true);
-    elem.off('click');
-    elem.on('click', () => {
+    elem.text(text).off('click').on('click', () => {
       player.focus();
       player.currentTime = activeTimestamp.end !== undefined ? activeTimestamp.end - 2 : player.duration;
       setSkipBtnVisibility(false);
@@ -5301,142 +5299,6 @@ function openNotificationsModal() {
     <div class="anitracker-modal-list" style="min-height: 100px;min-width: 200px;"></div>
   </div>`).appendTo('#anitracker-modal-body');
 
-  function openNotifAnimesModal(animation = true) {
-    $('#anitracker-modal-body').empty();
-    const storage = getStorage();
-    $(`
-    <div class="anitracker-feed-schedule"></div>
-    <label for="anitracker-week-start-dropdown-toggle" style="vertical-align: top;" title="Select which day the schedule should start">Start from:</label>
-    <div class="btn-group" style="margin-bottom: 10px;">
-      <button class="btn dropdown-toggle btn-dark anitracker-flat-button" id="anitracker-week-start-dropdown-toggle" data-bs-toggle="dropdown" data-toggle="dropdown" title="Select which day the schedule should start">Sunday</button>
-      <div class="dropdown-menu anitracker-dropdown-content anitracker-week-start-dropdown"></div>
-    </div>
-    <div class="anitracker-modal-list-container" style="width: fit-content;margin: auto;">
-      <div class="anitracker-modal-list" style="min-height: 100px;min-width: 200px;"></div>
-    </div>
-    `).appendTo('#anitracker-modal-body');
-    [0,1,6].forEach(g => $(`<button>${getDayName(g)}</button>`).appendTo('.anitracker-week-start-dropdown').data('value', g));
-    $('#anitracker-week-start-dropdown-toggle').text(getDayName(storage.settings.notifScheduleStart));
-    const schedule = [0,1,2,3,4,5,6].map(g => {return {num: g, list:[]}});
-
-    $('.anitracker-week-start-dropdown>button').on('click', function() {
-      const storage = getStorage();
-      const day = +$(this).data('value');
-      storage.settings.notifScheduleStart = day;
-      saveData(storage);
-
-      $('#anitracker-week-start-dropdown-toggle').text(getDayName(day));
-      makeSchedule(day);
-    });
-
-    openModal('Manage Episode Feed', openNotificationsModal, {hideAnimation: !animation});
-    if (!storage.notifications.anime.length) {
-      $(`<span>Use the <i class="fa fa-bell" title="bell"></i> button on an ongoing anime to add it to the feed.</span>`).appendTo('#anitracker-modal-body .anitracker-modal-list');
-      makeSchedule(storage.settings.notifScheduleStart);
-      return;
-    }
-
-    const promise = siteVars.cached.animeSession.length ? waitTime(200) : getAnimeSession({},{justCache:true});
-    loadUntilPromise($('#anitracker-modal-body .anitracker-modal-list'), promise).then(async () => {
-      for (const g of [...storage.notifications.anime].sort((a,b) => a.latest_episode > b.latest_episode ? 1 : -1)) {
-        const latestEp = new Date(g.latest_episode);
-        const latestEpString = g.latest_episode !== undefined ? `${getDayName(latestEp.getDay())} ${latestEp.toLocaleTimeString([], {timeStyle:'short'})} (${timeSince(latestEp.getTime())} ago)` : "None found";
-        const data = await getAnimeData({
-          id: g.id,
-          name: g.name
-        }, ["session"], {requireInstant:true,ignored:['storage_notification_anime']});
-        const href = data.session ? `/anime/${data.session}` : `/anitracker-redirect?a=${encodeURIComponent(g.name)}`;
-        $(`
-        <div class="anitracker-modal-list-entry" animeid="${g.id}" animename="${toHtmlCodes(g.name)}">
-          <a href="${href}" target="_blank" title="${toHtmlCodes(g.name)}">
-            ${toHtmlCodes(g.name)}
-          </a><br>
-          <span>
-            Latest episode: ${latestEpString}
-          </span><br>
-          <div class="btn-group">
-            <button class="btn btn-secondary anitracker-delete-button anitracker-flat-button" title="Remove this anime from the episode feed">
-              <i class="fa fa-trash" aria-hidden="true"></i>
-              &nbsp;Remove
-            </button>
-          </div>
-          <div class="btn-group">
-            <button class="btn btn-secondary anitracker-get-all-button anitracker-flat-button" title="Add all episodes to the feed" ${g.hasFirstEpisode ? 'disabled=""' : ''}>
-              <i class="fa fa-rotate-right" aria-hidden="true"></i>
-              &nbsp;Get All
-            </button>
-          </div>
-        </div>`).appendTo('#anitracker-modal-body .anitracker-modal-list');
-
-        const scheduleEntry = schedule.find(a => a.num === latestEp.getDay());
-        if (scheduleEntry) scheduleEntry.list.push({
-          time: latestEp,
-          name: g.name,
-          href: href,
-        });
-      }
-      makeSchedule(storage.settings.notifScheduleStart);
-      setModalShift(false);
-
-      $('.anitracker-modal-list-entry .anitracker-get-all-button').on('click', (e) => {
-        const elem = $(e.currentTarget);
-        const id = +elem.parents().eq(1).attr('animeid');
-        const storage = getStorage();
-
-        const found = storage.notifications.anime.find(a => a.id === id);
-        if (!found) {
-          console.error("[AnimePahe Improvements] Couldn't find feed for anime with ID " + id);
-          return;
-        }
-
-        found.hasFirstEpisode = true;
-        found.updateFrom = 0;
-        saveData(storage);
-
-        elem.replaceClass("btn-secondary", "btn-primary");
-        setTimeout(() => {
-          elem.replaceClass("btn-primary", "btn-secondary");
-          elem.prop('disabled', true);
-        }, 200);
-
-        showMessage('Added all episodes to feed');
-      });
-
-      $('.anitracker-modal-list-entry .anitracker-delete-button').on('click', (e) => {
-        const parent = $(e.currentTarget).parents().eq(1);
-        const name = parent.attr('animename');
-        toggleNotifications(name, +parent.attr('animeid'));
-        showMessage(`Removed "${name?.slice(0,20)}${name?.length > 20 ? '...' : ''}"`, 4000);
-
-        const name2 = getAnimeName();
-        if (name2.length > 0 && name2 === name) $('.anitracker-notifications-toggle .anitracker-title-icon-check').hide();
-
-        parent.remove();
-        openNotifAnimesModal(false);
-      });
-    });
-
-    function makeSchedule(startDay) {
-      const today = new Date().getDay();
-      $('.anitracker-feed-schedule>div').remove();
-      for (let i = 0; i < schedule.length; i++) {
-        if (schedule[0].num === startDay) break;
-        schedule.push(schedule.shift());
-      }
-      for (const entry of schedule) {
-        entry.list.sort((a,b) => a.time.toLocaleTimeString() > b.time.toLocaleTimeString() ? 1 : -1);
-        $(`
-        <div>
-          <div class="anitracker-feed-schedule-header">${getDayName(entry.num).slice(0,3)}</div>
-          <div class="anitracker-feed-schedule-body${entry.num === today ? ' anitracker-feed-schedule-today' : ''}">
-            ${entry.list.map(g => {
-              return `<a href="${g.href}" target="_blank" title="${toHtmlCodes(g.name)} (${g.time.toLocaleTimeString([], {timeStyle:'short'})})">${g.name}</a>`;
-            }).join('')}
-          </div>
-        </div>`).appendTo($('.anitracker-feed-schedule'));
-      }
-    }
-  }
   $('.anitracker-view-notif-animes').on('click', openNotifAnimesModal);
 
   const animeData = [...oldStorage.notifications.anime];
@@ -5670,6 +5532,143 @@ function openNotificationsModal() {
     if (!$('.anitracker-view-notif-animes').length) return;
     addToList(20);
   });
+
+  function openNotifAnimesModal(animation = true) {
+    $('#anitracker-modal-body').empty();
+    const storage = getStorage();
+    $(`
+    <div class="anitracker-feed-schedule"></div>
+    <label for="anitracker-week-start-dropdown-toggle" style="vertical-align: top;" title="Select which day the schedule should start">Start from:</label>
+    <div class="btn-group" style="margin-bottom: 10px;">
+      <button class="btn dropdown-toggle btn-dark anitracker-flat-button" id="anitracker-week-start-dropdown-toggle" data-bs-toggle="dropdown" data-toggle="dropdown" title="Select which day the schedule should start">Sunday</button>
+      <div class="dropdown-menu anitracker-dropdown-content anitracker-week-start-dropdown"></div>
+    </div>
+    <div class="anitracker-modal-list-container" style="width: fit-content;margin: auto;">
+      <div class="anitracker-modal-list" style="min-height: 100px;min-width: 200px;"></div>
+    </div>
+    `).appendTo('#anitracker-modal-body');
+    [0,1,6].forEach(g => $(`<button>${getDayName(g)}</button>`).appendTo('.anitracker-week-start-dropdown').data('value', g));
+    $('#anitracker-week-start-dropdown-toggle').text(getDayName(storage.settings.notifScheduleStart));
+    const schedule = [0,1,2,3,4,5,6].map(g => {return {num: g, list:[]}});
+
+    $('.anitracker-week-start-dropdown>button').on('click', function() {
+      const storage = getStorage();
+      const day = +$(this).data('value');
+      storage.settings.notifScheduleStart = day;
+      saveData(storage);
+
+      $('#anitracker-week-start-dropdown-toggle').text(getDayName(day));
+      makeSchedule(day);
+    });
+
+    openModal('Manage Episode Feed', openNotificationsModal, {hideAnimation: !animation});
+    if (!storage.notifications.anime.length) {
+      $(`<span>Use the <i class="fa fa-bell" title="bell"></i> button on an ongoing anime to add it to the feed.</span>`).appendTo('#anitracker-modal-body .anitracker-modal-list');
+      makeSchedule(storage.settings.notifScheduleStart);
+      return;
+    }
+
+    const promise = siteVars.cached.animeSession.length ? waitTime(200) : getAnimeSession({},{justCache:true});
+    loadUntilPromise($('#anitracker-modal-body .anitracker-modal-list'), promise).then(async () => {
+      for (const g of [...storage.notifications.anime].sort((a,b) => a.latest_episode > b.latest_episode ? 1 : -1)) {
+        const latestEp = new Date(g.latest_episode);
+        const latestEpString = g.latest_episode !== undefined ? `${getDayName(latestEp.getDay())} ${latestEp.toLocaleTimeString([], {timeStyle:'short'})} (${timeSince(latestEp.getTime())} ago)` : "None found";
+        const data = await getAnimeData({
+          id: g.id,
+          name: g.name
+        }, ["session"], {requireInstant:true,ignored:['storage_notification_anime']});
+        const href = data.session ? `/anime/${data.session}` : `/anitracker-redirect?a=${encodeURIComponent(g.name)}`;
+        $(`
+        <div class="anitracker-modal-list-entry" animeid="${g.id}" animename="${toHtmlCodes(g.name)}">
+          <a href="${href}" target="_blank" title="${toHtmlCodes(g.name)}">
+            ${toHtmlCodes(g.name)}
+          </a><br>
+          <span>
+            Latest episode: ${latestEpString}
+          </span><br>
+          <div class="btn-group">
+            <button class="btn btn-secondary anitracker-delete-button anitracker-flat-button" title="Remove this anime from the episode feed">
+              <i class="fa fa-trash" aria-hidden="true"></i>
+              &nbsp;Remove
+            </button>
+          </div>
+          <div class="btn-group">
+            <button class="btn btn-secondary anitracker-get-all-button anitracker-flat-button" title="Add all episodes to the feed" ${g.hasFirstEpisode ? 'disabled=""' : ''}>
+              <i class="fa fa-rotate-right" aria-hidden="true"></i>
+              &nbsp;Get All
+            </button>
+          </div>
+        </div>`).appendTo('#anitracker-modal-body .anitracker-modal-list');
+
+        const scheduleEntry = schedule.find(a => a.num === latestEp.getDay());
+        if (scheduleEntry) scheduleEntry.list.push({
+          time: latestEp,
+          name: g.name,
+          href: href,
+        });
+      }
+      makeSchedule(storage.settings.notifScheduleStart);
+      setModalShift(false);
+
+      $('.anitracker-modal-list-entry .anitracker-get-all-button').on('click', (e) => {
+        const elem = $(e.currentTarget);
+        const id = +elem.parents().eq(1).attr('animeid');
+        const storage = getStorage();
+
+        const found = storage.notifications.anime.find(a => a.id === id);
+        if (!found) {
+          console.error("[AnimePahe Improvements] Couldn't find feed for anime with ID " + id);
+          return;
+        }
+
+        found.hasFirstEpisode = true;
+        found.updateFrom = 0;
+        saveData(storage);
+
+        elem.replaceClass("btn-secondary", "btn-primary");
+        setTimeout(() => {
+          elem.replaceClass("btn-primary", "btn-secondary");
+          elem.prop('disabled', true);
+        }, 200);
+
+        showMessage('Added all episodes to feed');
+      });
+
+      $('.anitracker-modal-list-entry .anitracker-delete-button').on('click', (e) => {
+        const parent = $(e.currentTarget).parents().eq(1);
+        const name = parent.attr('animename');
+        toggleNotifications(name, +parent.attr('animeid'));
+        showMessage(`Removed "${name?.slice(0,20)}${name?.length > 20 ? '...' : ''}"`, 4000);
+
+        const name2 = getAnimeName();
+        if (name2.length > 0 && name2 === name) $('.anitracker-notifications-toggle .anitracker-title-icon-check').hide();
+
+        parent.remove();
+        openNotifAnimesModal(false);
+      });
+    });
+
+    function makeSchedule(startDay) {
+      const today = new Date().getDay();
+      $('.anitracker-feed-schedule>div').remove();
+      for (let i = 0; i < schedule.length; i++) {
+        if (schedule[0].num === startDay) break;
+        schedule.push(schedule.shift());
+      }
+      for (const entry of schedule) {
+        entry.list.sort((a,b) => a.time.toLocaleTimeString() > b.time.toLocaleTimeString() ? 1 : -1);
+        $(`
+        <div>
+          <div class="anitracker-feed-schedule-header">${getDayName(entry.num).slice(0,3)}</div>
+          <div class="anitracker-feed-schedule-body${entry.num === today ? ' anitracker-feed-schedule-today' : ''}">
+            ${entry.list.map(g => {
+              return `<a href="${g.href}" target="_blank" title="${toHtmlCodes(g.name)} (${g.time.toLocaleTimeString([], {timeStyle:'short'})})">${g.name}</a>`;
+            }).join('')}
+          </div>
+        </div>`).appendTo($('.anitracker-feed-schedule'));
+      }
+    }
+  }
 }
 
 $('.anitracker-header-notifications').on('click', openNotificationsModal);
