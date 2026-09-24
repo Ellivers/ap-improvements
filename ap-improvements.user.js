@@ -85,7 +85,7 @@
  * And more!
 */
 
-/*global $,GM_getValue,GM_setValue,sendMessage,Hls,hls,jQuery,Fuse,GM_xmlhttpRequest,GM_info,Base64,html2canvas,Cookies*/
+/*global $,GM_getValue,GM_setValue,sendMessage,Hls,hls,jQuery,Fuse,GM_xmlhttpRequest,GM_info,html2canvas,Cookies*/
 // MARKER:START
 
 const baseUrl = window.location.toString();
@@ -7608,11 +7608,24 @@ function isMobileOrTablet() {
   return check;
 }
 
-function bytesToBase64(bytes) {
-  const binString = Array.from(bytes, (byte) =>
-    String.fromCodePoint(byte),
-  ).join("");
-  return btoa(binString);
+function encodeBase64(str) {
+  return bytesToBase64(new TextEncoder().encode(str));
+
+  function bytesToBase64(bytes) {
+    const binString = Array.from(bytes, (byte) =>
+      String.fromCodePoint(byte),
+    ).join("");
+    return btoa(binString);
+  }
+}
+
+function decodeBase64(str) {
+  return new TextDecoder().decode(base64ToBytes(str));
+
+  function base64ToBytes(base64) {
+    const binString = atob(base64);
+    return Uint8Array.from(binString, (m) => m.codePointAt(0));
+  }
 }
 
 function download(filename, text, dataType = 'text/plain') {
@@ -10863,6 +10876,12 @@ function addGeneralButtons() {
           </label>
         </div>
         <div class="form-check">
+          <input class="form-check-input" type="checkbox" value="" id="anitracker-debug-disableSync" ${options.disableSync ? "checked" : ""}>
+          <label class="form-check-label" for="anitracker-debug-disableSync-input">
+            Disable syncing
+          </label>
+        </div>
+        <div class="form-check">
           <input class="form-check-input" type="checkbox" value="" id="anitracker-debug-notifs" ${options.notifs ? "checked" : ""}>
           <label class="form-check-label" for="anitracker-debug-notifs">
             Override allowing adding to episode feed
@@ -10921,6 +10940,7 @@ function addGeneralButtons() {
 
           storage.debug.dontLeave = $('#anitracker-debug-dontLeave-input').prop('checked');
           storage.debug.noSyncSim = $('#anitracker-debug-noSyncSim-input').prop('checked');
+          storage.debug.disableSync = $('#anitracker-debug-disableSync-input').prop('checked');
           storage.debug.anim = $('#anitracker-debug-anim-input').prop('checked');
           storage.debug.sync = $('#anitracker-debug-sync-input').prop('checked');
           storage.debug.msg = $('#anitracker-debug-msg').prop('checked');
@@ -10939,10 +10959,8 @@ function addGeneralButtons() {
           alert(JSON.stringify(decoded));
         });
         $('.anitracker-encode-base64-button').on('click', () => {
-          $.anitrackerCachedScript('https://cdn.jsdelivr.net/npm/js-base64@3.7.8/base64.min.js', function() {
-            console.log(Base64.encode($('#anitracker-encode-base64-input').val()));
-            showMessage('Encoded');
-          });
+          console.log(encodeBase64($('#anitracker-encode-base64-input').val()));
+          showMessage('Encoded');
         });
         $('.anitracker-functionresover-button').on('click', () => {
           eval(`${$('#anitracker-funcresover-fn').val()} = () => {
@@ -12308,7 +12326,13 @@ function syncGetData(code) {
         return;
       }
 
-      resolve(0, req.response, etag);
+      try {
+        resolve(0, JSON.parse(decodeBase64(req.response)), etag);
+      }
+      catch (err) {
+        console.error(`[AnimePahe Improvements] Got error ${err} when decoding sync data`);
+        resolve(3);
+      }
     };
     req.onerror = (() => {
       resolve(1);
@@ -12505,6 +12529,7 @@ async function syncData() {
     */
     return new Promise(resolve => {
       let storage = getStorage();
+      if (storage.debug?.disableSync) return resolve(3);
       const settings = storage.sync.settings;
       if (![settings.linkList,settings.videoTimes,settings.bookmarks,settings.notifications,settings.watched].includes(true)) {
         resolve(11);
@@ -12520,7 +12545,7 @@ async function syncData() {
         storage = getStorage();
         storage.sync.temp.requiredHash = '';
 
-        const dbResponse = JSON.parse(response.data);
+        const dbResponse = response.data;
 
         // If the database data hasn't been changed and there are no changes to save, do nothing
         if (storage.sync.lastSynced > dbResponse.lastUpdated && (storage.sync.temp.removedData.length + storage.sync.temp.addedData.length) === 0) {
@@ -12585,13 +12610,7 @@ async function syncData() {
         };
 
         try {
-          $.anitrackerCachedScript('https://cdn.jsdelivr.net/npm/js-base64@3.7.8/base64.min.js', function() {
-            req.send(Base64.encode(JSON.stringify(toPut)));
-          }).fail((jqXHR, textStatus) => {
-            console.error(`[AnimePahe Improvements] Error when putting sync data: ${textStatus} ${jqXHR.status}`);
-            resolve(4);
-            return;
-          });
+          req.send(encodeBase64(JSON.stringify(toPut)));
         }
         catch (err) {
           console.error(`[AnimePahe Improvements] Error when putting sync data: ${err}`);
