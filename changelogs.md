@@ -1,11 +1,12 @@
 ### 4.13.0 (in development)
+- Added a keybind for taking a video screenshot (P)
 - Added options for video playback speed changing controls in the Edit Keybinds menu
-  - Added Change Speed By Scrolling option to enable/disable changing speed by scrolling
-  - Added Change Speed By Arrow Keys option to enable/disable changing speed using the arrow keys
+  - Added Change Speed by Scrolling option to enable/disable changing speed by scrolling
+  - Added Change Speed by Arrow Keys option to enable/disable changing speed using the arrow keys
 - You can now click the modal header (title) to scroll to the top of a modal menu
 - Improved the way seek thumbnails feel
   - It should generally be a bit more responsive now
-- Fixed collections in search results being broken due to site changes
+- Fixed some things failing to load due to site changes
 - Fixed the Numpad Seeking option not showing up
 - Fixed toast messages for removing/marking a video progress entry as watched showing the incorrect name
 - Fixed the bookmark, episode feed, and link buttons being cut off on certain episode pages
