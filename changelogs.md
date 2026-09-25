@@ -6,6 +6,8 @@
 - You can now click the modal header (title) to scroll to the top of a modal menu
 - Improved the way seek thumbnails feel
   - It should generally be a bit more responsive now
+- This version is now required for the data sync feature, due to changes to sync data encoding
+- Auto-Play Next is now inactive while editing timestamps
 - Fixed some things failing to load due to site changes
 - Fixed the Numpad Seeking option not showing up
 - Fixed toast messages for removing/marking a video progress entry as watched showing the incorrect name
