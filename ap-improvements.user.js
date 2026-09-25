@@ -10882,7 +10882,7 @@ function addGeneralButtons() {
           </label>
         </div>
         <div class="form-check">
-          <input class="form-check-input" type="checkbox" value="" id="anitracker-debug-disableSync" ${options.disableSync ? "checked" : ""}>
+          <input class="form-check-input" type="checkbox" value="" id="anitracker-debug-disableSync-input" ${options.disableSync ? "checked" : ""}>
           <label class="form-check-label" for="anitracker-debug-disableSync-input">
             Disable syncing
           </label>
@@ -12535,7 +12535,10 @@ async function syncData() {
     */
     return new Promise(resolve => {
       let storage = getStorage();
-      if (storage.debug?.disableSync) return resolve(3);
+      if (storage.debug?.disableSync) {
+        console.log('Sync was disabled through debug!');
+        return resolve(3);
+      }
       const settings = storage.sync.settings;
       if (![settings.linkList,settings.videoTimes,settings.bookmarks,settings.notifications,settings.watched].includes(true)) {
         resolve(11);
