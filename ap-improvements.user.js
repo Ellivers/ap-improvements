@@ -1006,6 +1006,7 @@ const _css = `
   function timestampEditMode() {
     if (timestampEditModeEnabled) return;
     timestampEditModeEnabled = true;
+    sendMessage({action:'timestamp_edit_mode_toggle',value:true});
 
     const vidInfo = getVideoInfo();
     const storage = getStorage();
@@ -1061,6 +1062,7 @@ const _css = `
       $('.anitracker-message').off('anitracker:message_close').hide();
       $('.anitracker-seek-points>i').remove();
       timestampEditModeEnabled = false;
+      sendMessage({action:'timestamp_edit_mode_toggle',value:false});
       if (save === true) {
         newTimestamps = newTimestamps.filter(a => a.start !== undefined || a.end !== undefined);
         sendMessage({action:'timestamp_edit_mode_done', timestamps:newTimestamps});
@@ -3976,6 +3978,7 @@ function showMessage(text, time = 2000) {
 
 // MARKER:MESSAGES FROM IFRAME
 let currentEpisodeTime = 0;
+let timestampEditMode = false;
 // Messages received from iframe
 if (isEpisode()) {
   window.onmessage = function(e) {
@@ -4058,12 +4061,15 @@ if (isEpisode()) {
 
       openModal('Timestamp Results');
     }
+    else if (action === 'timestamp_edit_mode_toggle') {
+      timestampEditMode = Boolean(data.value);
+    }
     else if (action === 'key') {
       $(document).trigger('keydown', {event: data.event});
     }
     else if (data === 'ended') {
       const storage = getStorage();
-      if (storage.settings.autoPlayNext !== true || document.readyState !== 'complete') return;
+      if (storage.settings.autoPlayNext !== true || timestampEditMode || document.readyState !== 'complete') return;
       setTimeout(() => {
         $('.sequel a')[0]?.click();
       }, 100); // Wait for video data to be saved
