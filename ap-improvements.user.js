@@ -4602,7 +4602,7 @@ async function searchForCollections() {
 
   const baseName = $($('.search-results .result-title')[0]).text();
 
-  const response = await asyncGetResponseData('/api?m=search&q=' + makeSearchable(baseName));
+  const response = await getResponseData('/api?m=search&q=' + makeSearchable(baseName));
   if (!response || response.length < 2) return;
 
   const elem = $(`
@@ -7819,7 +7819,7 @@ async function getResponse(qurl) {
   });
 }
 
-function asyncGetResponseData(qurl) {
+function getResponseData(qurl) {
   return new Promise((resolve, reject) => {
     const req = new XMLHttpRequest();
     req.open('GET', qurl, true);
@@ -7882,7 +7882,7 @@ async function getAnimeDataFromSearch(iinfo = {}, config = {}) {
   if (cached) return {old:{},new:{...cached}};
   if (!iinfo.name) return undefined;
 
-  const response = await asyncGetResponseData(`/api?m=search&q=${makeSearchable(iinfo.name)}`);
+  const response = await getResponseData(`/api?m=search&q=${makeSearchable(iinfo.name)}`);
   if (!response) return response;
   const data = (() => {
     for (const anime of response) {
@@ -7972,7 +7972,7 @@ if (isHome()) {
   siteVars.episodePages.push({
     element: $('.episode-list-wrapper'),
     apiFunction: (options) => {
-      return asyncGetResponseData(`/api?m=airing&page=${options.pageNum}`);
+      return getResponseData(`/api?m=airing&page=${options.pageNum}`);
     },
     mode: 'multi',
     features: {
