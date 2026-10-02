@@ -3114,6 +3114,11 @@ const siteVars = {
   messageTimeout: undefined,
   ongoingRequests: [],
   stalledRequests: [], // List of URLs
+  siteSessionExpireMsg: {
+    tabStates: [],
+    promise: undefined,
+    shown: false,
+  },
   cached: {
     animeSearch: [],
     firstEpisode: initialStorage.cached.firstEpisode,
@@ -4500,6 +4505,16 @@ function receiveTabMessage(e) {
     const value = +message;
     if (value) setAutoSync(value);
     else unsetAutoSync();
+    return;
+  }
+
+  if (key === 'send_site_expired_message_state') {
+    broadcastTabMessage('site_expired_message_state_response', +siteVars.siteSessionExpireMsg.shown);
+    return;
+  }
+
+  if (key === 'site_expired_message_state_response') {
+    siteVars.siteSessionExpireMsg.tabStates.push(+message); // Will be 0 or 1
     return;
   }
 
@@ -7807,6 +7822,7 @@ async function getResponse(qurl) {
         });
         return;
       }
+      if (req.status === 403) siteSessionExpireMessage();
 
       console.error("Request failed with request URL " + qurl);
       resolve(undefined);
@@ -7837,6 +7853,7 @@ function getResponseData(qurl) {
         });
         return;
       }
+      if (req.status === 403) siteSessionExpireMessage();
 
       console.error("Request failed with request URL " + qurl);
       resolve(undefined);
@@ -7847,6 +7864,19 @@ function getResponseData(qurl) {
     req.ontimeout = req.onerror;
     req.send();
   });
+}
+
+async function siteSessionExpireMessage() {
+  if (siteVars.siteSessionExpireMsg.shown) return;
+  siteVars.siteSessionExpireMsg.tabStates = [];
+  broadcastTabMessage('send_site_expired_message_state');
+  await waitTime(100);
+  if (siteVars.siteSessionExpireMsg.tabStates.includes(1)) return;
+
+  siteVars.siteSessionExpireMsg.shown = true;
+  const answer = confirm("[AnimePahe Improvements]\n\nThe site's session seems to have expired. Reload the page?\n\nYou will not be prompted again during this session.");
+  if (!answer) return;
+  window.location.replace(window.location);
 }
 
 function getAnimeSessionFromUrl(url = window.location.toString()) {
