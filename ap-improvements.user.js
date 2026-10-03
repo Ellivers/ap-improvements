@@ -9576,6 +9576,10 @@ async function updateEpisodePage(entry, allowCache = true) {
   if (!episodes.length) return undefined;
 
   const episodeElements = entry.element.find('.episode-wrap');
+  if (!episodeElements.length) {
+    $(`<span>Episode list failed to load. Try reloading the page.</span>`).appendTo(entry.element.find('.episode-list'));
+    return;
+  }
 
   const storage = getStorage();
   let animeId;
