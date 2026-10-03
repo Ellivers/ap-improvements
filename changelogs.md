@@ -7,6 +7,8 @@
 - Improved the way seek thumbnails feel
   - It should generally be a bit more responsive now
 - This version is now required for the data sync feature, due to changes to sync data encoding
+- Added a prompt to reload the page when an outdated Cloudflare session is detected
+- Added an error message when the site has failed to load an anime's episode list
 - Auto-Play Next is now inactive while editing timestamps
 - Fixed some things failing to load due to site changes
 - Fixed the Numpad Seeking option not showing up
