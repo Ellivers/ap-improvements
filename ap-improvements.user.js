@@ -2980,6 +2980,10 @@ a.youtube-preview::before {
 .anitracker-relation-poster {
   filter: blur(5px) !important;
 }
+.anitracker-center-div {
+  margin: 0px auto;
+  width: fit-content;
+}
 a:hover .anitracker-relation-poster,a:focus-visible .anitracker-relation-poster {
   filter: none !important;
 }
@@ -11513,7 +11517,9 @@ function addGeneralButtons() {
           const storage = getStorage();
 
           $(`
-          <p class="anitracker-thin-text">Disconnect this device from sync?</p>
+          <div class="anitracker-center-div">
+            <p class="anitracker-thin-text">Disconnect this device from sync?</p>
+          </div>
           <div class="anitracker-center-content">
             <div style="display:flex;gap:16px;" id="anitracker-disconnect-prompt">
               <button class="btn btn-primary anitracker-disconnect-sync-confirm-button" title="Confirm disconnect">Yes</button>
@@ -11585,8 +11591,10 @@ function addGeneralButtons() {
 
           $(`
           <div id="anitracker-delete-sync-prompt">
-            <p class="anitracker-thin-text">Delete sync code?</p>
-            <p class="anitracker-thin-text anitracker-secondary-info">Existing data on all connected devices/browsers will remain as-is.</p>
+            <div class="anitracker-center-div">
+              <p class="anitracker-thin-text">Delete sync code?</p>
+              <p class="anitracker-thin-text anitracker-secondary-info">Existing data on all connected devices/browsers will remain as-is.</p>
+            </div>
             <div class="anitracker-center-content">
               <div style="display:flex;gap:16px;">
                 <button class="btn btn-danger anitracker-delete-sync-confirm-button" title="Confirm deletion">Yes</button>
