@@ -12,6 +12,7 @@
 - Auto-Play Next is now inactive while editing timestamps
 - Fixed some things failing to load due to site changes
 - Fixed the Numpad Seeking option not showing up
+- Fixed the Delete Code and Disconnect Sync modal menus having off-center elements when a sync message was displayed
 - Fixed toast messages for removing/marking a video progress entry as watched showing the incorrect name
 - Fixed the bookmark, episode feed, and link buttons being cut off on certain episode pages
 - Various other fixes
