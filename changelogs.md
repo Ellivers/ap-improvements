@@ -1,4 +1,4 @@
-### 4.13.0 (in development)
+### 4.13.0 (2026-10-07)
 - Added a keybind for taking a video screenshot (P)
 - Added options for video playback speed changing controls in the Edit Keybinds menu
   - Added Change Speed by Scrolling option to enable/disable changing speed by scrolling
