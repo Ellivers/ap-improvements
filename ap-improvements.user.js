@@ -3417,7 +3417,7 @@ function playAnimation(elem, anim, duration, type = '') {
   });
 }
 
-const posterRegex = /^(?:https:\/\/)?(?:i\.\w+\.\w+)?\/?([^.]*)(?:\.md|\.th\.sm)?(\..*)?$/;
+const posterRegex = /^(?:https:\/\/)?(?:i\.\w+\.\w+)?\/?([^.]*)(?:\.md|\.th|\.sm)?(\..*)?$/;
 function trimPosterUrl(posterUrl) {
   const parts = posterRegex.exec(posterUrl);
   if (!parts) return undefined;
