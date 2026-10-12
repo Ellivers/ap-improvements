@@ -5809,7 +5809,7 @@ function openBookmarksModal() {
           <a ${href} target="_blank" title="${toHtmlCodes(name)}" tabindex="0">
             ${g.newlyAdded ? '<i class="anitracker-bookmark-new"></i>' : ''}
             <div class="anitracker-big-poster-icon">
-              <img src="${g.posterUrl ? makePosterUrl(g.posterUrl,'md') : 'data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw=='}" loading="lazy">
+              <img src="${g.posterUrl ? makePosterUrl(g.posterUrl,'sm') : 'data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw=='}" loading="lazy">
             </div>
             <span>${toHtmlCodes(name)}</span>
           </a>
@@ -6169,7 +6169,7 @@ function getBookmarkImage(elem, bookmark, session = undefined) {
     removeImageSpinner(elem.find('.anitracker-big-poster-icon'));
 
     if (!data.poster) return;
-    elem.find('img').attr('src', makePosterUrl(data.poster,'md'));
+    elem.find('img').attr('src', makePosterUrl(data.poster,'sm'));
 
     const currentStorage = getStorage();
     const found = currentStorage.bookmarks.find(b => b.name === bookmark.name && b.id === bookmark.id);
@@ -6201,7 +6201,7 @@ function openBookmarkStatusEditModal(id, adding=false) {
       <div class="dropdown-menu anitracker-dropdown-content anitracker-status-dropdown" style="width:12em;"></div>
     </div>
     <div class="anitracker-image-wrapper anitracker-big-poster-icon" style="width:9em;height:9em;">
-      <img src="${entry.posterUrl ? makePosterUrl(entry.posterUrl, 'md') : 'data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw=='}" loading="lazy">
+      <img src="${entry.posterUrl ? makePosterUrl(entry.posterUrl, 'sm') : 'data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw=='}" loading="lazy">
     </div>
   </div>
   `).appendTo('#anitracker-modal-body');
@@ -8090,7 +8090,7 @@ function setupContinueWatchingSection() {
           episode: entry.episodeNum,
           videoPaths: entry.videoPaths,
         }, ["name","id","session","episode_session","poster","first_episode"], {requireInstant: true, ignored:['storage_video']});
-        if (data.poster) img = `<img src="${makePosterUrl(data.poster,'md')}">`;
+        if (data.poster) img = `<img src="${makePosterUrl(data.poster,'sm')}">`;
 
         const animeId = data.id || entry.animeId;
         const visibleAnimeName = data.name || entry.animeName;
