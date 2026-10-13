@@ -1,4 +1,4 @@
-### 4.13.1 (in development)
+### 4.13.1 (2026-10-13)
 - Made bookmark images a bit smaller in resolution
 - Fixed some poster images not being displayed
 
