@@ -1,3 +1,7 @@
+### 4.13.1 (in development)
+- Made bookmark images a bit smaller in resolution
+- Fixed some poster images not being displayed
+
 ### 4.13.0 (2026-10-07)
 - Added a keybind for taking a video screenshot (P)
 - Added options for video playback speed changing controls in the Edit Keybinds menu
