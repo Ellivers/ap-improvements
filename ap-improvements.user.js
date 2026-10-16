@@ -13,7 +13,7 @@
 // @grant       GM_setValue
 // @grant       GM_xmlhttpRequest
 // @grant       GM_info
-// @version     4.13.1
+// @version     4.13.2
 // @author      Ellivers
 // @license     MIT
 // @description Improvements and additions for the AnimePahe site
@@ -7872,6 +7872,7 @@ function getResponseData(qurl) {
 }
 
 async function siteSessionExpireMessage() {
+  await waitTime(randint(1,100));
   if (siteVars.siteSessionExpireMsg.shown) return;
   siteVars.siteSessionExpireMsg.tabStates = [];
   broadcastTabMessage('send_site_expired_message_state');
