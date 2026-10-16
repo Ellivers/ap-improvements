@@ -9074,10 +9074,14 @@ if (isEpisode()) {
 
     const relationType = $(this).attr('relationType');
     getRelationData(animeSession, relationType).then((relationData) => {
+      hideSpinner(this, 2);
       if (relationData === undefined) {
-        hideSpinner(this, 2);
         showMessage(`No ${relationType} found`);
         $(this).remove();
+        return;
+      }
+      if (!relationData.episodeList.length) {
+        windowOpen(`/anime/${relationData.session}`, '_self');
         return;
       }
 
@@ -9085,7 +9089,6 @@ if (isEpisode()) {
       const episodeSession = relationType === 'prequel' ? episodes[episodes.length-1].session : episodes[0].session;
 
       windowOpen(`/play/${relationData.session}/${episodeSession}`, '_self');
-      hideSpinner(this, 2);
     });
 
   });
@@ -9112,10 +9115,16 @@ function setRelationLink(relationData, type) {
   if (relationData === undefined) return linkElem.remove();
 
   const index = type === 'prequel' ? relationData.episodeList.length - 1 : 0;
-  const href = `/play/${relationData.session}/${relationData.episodeList[index].session}`;
+  const href = relationData.episodeList.length
+    ? `/play/${relationData.session}/${relationData.episodeList[index].session}`
+    : `/anime/${relationData.session}`;
+  const title = relationData.episodeList.length
+    ? `Play ${type === 'prequel' ? 'Last Episode' : 'First Episode'} of ${toHtmlCodes(relationData.title)}`
+    : `Go to ${toHtmlCodes(relationData.title)}`;
+
   $(`
   <div class="${type} hidden-sm-down anitracker-thumbnail">
-    <a href="${href}" title="Play ${type === 'prequel' ? 'Last Episode' : 'First Episode'} of ${toHtmlCodes(relationData.title)}">
+    <a href="${href}" title="${title}">
       <img class="anitracker-relation-poster" src="${makePosterUrl(relationData.poster)}" alt="">
     </a>
     <i class="fa fa-chevron-${type === 'prequel' ? 'left' : 'right'}" aria-hidden="true"></i>
