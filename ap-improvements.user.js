@@ -8423,7 +8423,8 @@ async function addContinueWatchingEpisodes(storage, episodeCount, clearAll = fal
     }, {
       ep: +ep.episode,
       title: ep.title,
-      'anime-id': ep.animeId
+      'anime-id': ep.animeId,
+      'anime-session': ep.animeSession,
     });
     applyEpisodeOptionsEvents(elem);
 
@@ -9387,6 +9388,18 @@ function applyEpisodeOptionsEvents(elems) {
     });
   }
 
+  async function getEpPage(dropdown) {
+    const data = await getAnimeData({
+      name: dropdown.data('title'),
+      id: dropdown.data('anime-id'),
+      session: dropdown.data('anime-session'),
+    }, ['session'], {requireNew: true});
+    if (!data.session) return;
+
+    const epData = await getEpisodeData(data.session, +dropdown.data('ep'));
+    return `/play/${data.session}/${epData?.session}`;
+  }
+
   elems.find('.anitracker-episode-menu-button').off('click').on('click', (e) => {
     const elem = $(e.currentTarget);
     elem.focus();
@@ -9457,13 +9470,20 @@ function applyEpisodeOptionsEvents(elems) {
           <span class="sr-only">Loading...</span>
         </div>
       </div>`).prependTo(dropdown.parent());
-      const pageLink = dropdown.parent().find('a').attr('href');
-      const req = new XMLHttpRequest();
-      req.open('GET', pageLink, true);
-      req.onload = () => {
-        const htmlPage = $(req.response);
+      
+      (async () => {
+        const href = dropdown.parent().find('a').attr('href');
+        const pageLink = isEpisode(href) ? href : await getEpPage(dropdown);
+
+        const page = await asyncGetPage(pageLink);
+        if (!page) {
+          showMessage('Downloading failed!');
+          spinner.remove();
+          return;
+        }
+
         const versions = [];
-        for (const item of htmlPage.find('#pickDownload>')) {
+        for (const item of page.find('#pickDownload>')) {
           const dlElem = $(item);
           const parts = /^.* · (\d+)p \(\d+[GM]B\)( (\w+))*/.exec(dlElem.text());
           if (!parts) continue;
@@ -9493,7 +9513,10 @@ function applyEpisodeOptionsEvents(elems) {
           bestCandidates.push(ver);
         }
         const candidates = bestCandidates.length ? bestCandidates : versions;
-        if (!candidates.length) showMessage("Couldn't download");
+        if (!candidates.length) {
+          showMessage("Couldn't download!");
+          spinner.remove();
+        }
         else if (candidates.length === 1) downloadEpisode(candidates[0].url, elem, resPref, langPref);
         else {
           $('#anitracker-modal-body').empty();
@@ -9509,13 +9532,7 @@ function applyEpisodeOptionsEvents(elems) {
           openModal('', undefined, {shiftContent:true});
           addModalEvent($('#anitracker-modal'), 'anitracker:close', () => {spinner.remove()});
         }
-      };
-      req.onerror = () => {
-        showMessage('Downloading failed');
-        spinner.remove();
-      };
-      req.ontimeout = req.onerror;
-      req.send();
+      })();
     }
     else if (action === 'add-watched') {
       if (!animeId) {
