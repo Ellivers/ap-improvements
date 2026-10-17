@@ -9472,8 +9472,7 @@ function applyEpisodeOptionsEvents(elems) {
       </div>`).prependTo(dropdown.parent());
       
       (async () => {
-        const href = dropdown.parent().find('a').attr('href');
-        const pageLink = isEpisode(href) ? href : await getEpPage(dropdown);
+        const pageLink = await getEpPage(dropdown);
 
         const page = await asyncGetPage(pageLink);
         if (!page) {
