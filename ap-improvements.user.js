@@ -2814,7 +2814,6 @@ a.youtube-preview::before {
   margin-bottom: 5px;
   text-align: center;
   display: flex;
-  align-items: start;
   justify-content: center;
   flex-wrap: wrap;
 }
@@ -2822,6 +2821,9 @@ a.youtube-preview::before {
   min-width: 5rem;
   max-width: 10rem;
   position: relative;
+  flex: 1 1 0%;
+  flex-direction: column;
+  display: flex;
 }
 .anitracker-feed-schedule .anitracker-feed-schedule-header {
   padding: 5px;
@@ -2841,6 +2843,7 @@ a.youtube-preview::before {
   border-left: 1px solid black;
   border-right: 1px solid black;
   padding: 5px;
+  flex-grow: 1;
 }
 .anitracker-feed-schedule .anitracker-feed-schedule-body.anitracker-feed-schedule-today {
   outline: 2px solid var(--secondary);
