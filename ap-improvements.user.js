@@ -8431,6 +8431,7 @@ async function addContinueWatchingEpisodes(storage, episodeCount, clearAll = fal
       title: ep.title,
       'anime-id': ep.animeId,
       'anime-session': ep.animeSession,
+      'accurate-session': false,
     });
     applyEpisodeOptionsEvents(elem);
 
@@ -9478,7 +9479,8 @@ function applyEpisodeOptionsEvents(elems) {
       </div>`).prependTo(dropdown.parent());
       
       (async () => {
-        const pageLink = await getEpPage(dropdown);
+        const accurateSession = dropdown.data('accurate-session');
+        const pageLink = accurateSession ? dropdown.parent().find('a').attr('href') : await getEpPage(dropdown);
 
         const page = await asyncGetPage(pageLink);
         if (!page) {
@@ -9670,6 +9672,7 @@ async function updateEpisodePage(entry, allowCache = true) {
         title: animeName,
         'anime-id': animeId,
         watched: epWatched,
+        'accurate-session': true,
       });
     }
     else {
