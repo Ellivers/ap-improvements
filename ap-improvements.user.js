@@ -7822,7 +7822,7 @@ async function getResponse(qurl) {
       if (req.status === 429) {
         siteVars.stalledRequests.push(qurl);
         const retryAfter = parseInt(req.getResponseHeader('Retry-After'));
-        waitTime(retryAfter ? (retryAfter + 0.5) * 1000 : 1000).then(() => {
+        waitTime(!isNaN(retryAfter) ? (retryAfter + 0.5) * 1000 : 1000).then(() => {
           req.open('GET', qurl, true);
           req.send();
         });
@@ -7854,7 +7854,7 @@ function getResponseData(qurl) {
       if (req.status === 429) {
         siteVars.stalledRequests.push(qurl);
         const retryAfter = parseInt(req.getResponseHeader('Retry-After'));
-        waitTime(retryAfter ? (retryAfter + 0.5) * 1000 : 1000).then(() => {
+        waitTime(!isNaN(retryAfter) ? (retryAfter + 0.5) * 1000 : 1000).then(() => {
           req.open('GET', qurl, true);
           req.send();
         });
