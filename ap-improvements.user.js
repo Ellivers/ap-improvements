@@ -2821,7 +2821,6 @@ a.youtube-preview::before {
   min-width: 5rem;
   max-width: 10rem;
   position: relative;
-  flex: 1 1 0%;
   flex-direction: column;
   display: flex;
 }
@@ -3074,6 +3073,9 @@ header.main-header nav .nav-search .search-results-wrap a {
   }
   .anitracker-modal-list {
     padding: 8px 6px;
+  }
+  .anitracker-feed-schedule>div {
+    flex: 1 1 0%;
   }
 }
 @keyframes anitracker-modalOpen {
