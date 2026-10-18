@@ -2852,6 +2852,7 @@ a.youtube-preview::before {
   overflow: hidden;
   text-overflow: ellipsis;
   text-wrap: nowrap;
+  max-width: fit-content;
 }
 .anitracker-feed-schedule .anitracker-feed-schedule-body a:hover {
   text-decoration: underline;
