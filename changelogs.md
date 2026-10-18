@@ -1,8 +1,10 @@
 ### 4.13.2 (in development)
+- Improved the layout of the Manage Feed schedule
 - Requests are now sent less often while stalled (flamewave000)
 - Fixed most cases of not being able to download an episode from the Continue Watching section
 - Fixed links to the previous/next anime on episode pages not appearing if the previous/next anime has no episodes
 - Somewhat fixed multiple session expiration messages appearing at the same time
+- Fixed misaligned anime names on the Manage Feed schedule
 
 ### 4.13.1 (2026-10-13)
 - Made bookmark images a bit smaller in resolution
