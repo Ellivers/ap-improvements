@@ -88,6 +88,7 @@
 
 /*global $,GM_getValue,GM_setValue,sendMessage,Hls,hls,jQuery,Fuse,GM_xmlhttpRequest,GM_info,html2canvas,Cookies*/
 // MARKER:START
+console.log('script load debug 1');
 
 const baseUrl = window.location.toString();
 const initialStorage = getStorage();
@@ -174,6 +175,7 @@ function getDefaultData() {
     }
   };
 }
+console.log('script load debug 2');
 
 function upgradeData(data, fromver) {
   if (fromver === undefined) {
@@ -289,6 +291,7 @@ function getStorage() {
   return res;
 }
 
+console.log('script load debug 3');
 function saveData(data) {
   GM_setValue('anime-link-tracker', data);
 }
@@ -310,6 +313,7 @@ function getStorageLimits() {
   }
 }
 
+console.log('script load debug 4');
 // Turns seconds into "hrs:minutes:seconds" or "minutes:seconds"
 function secondsToHMS(secs) {
   const mins = Math.floor(secs/60);
@@ -329,6 +333,7 @@ function HMStoSeconds(hms) {
  * anime_id:episode_num1-episode_num2,episode_num3;<other entries>
  */
 
+console.log('script load debug 5');
 function decodeWatched(watched) {
   const decoded = [];
   if (watched?.split === undefined) {
@@ -406,6 +411,7 @@ function isWatched(animeId, episode, watched = decodeWatched(getStorage().watche
   return found.episodes.includes(episode);
 }
 
+console.log('script load debug 6');
 function addWatched(animeId, episode, storage = getStorage()) {
   const watched = decodeWatched(storage.watched);
   const found = watched.find(a => a.animeId === animeId);
@@ -469,6 +475,7 @@ function getEpisodeValue(ep, ep2 = undefined, firstEp = undefined) {
   return firstEp !== undefined ? `${getRelativeEpisodeNum(ep, firstEp)}${ep2 ? '-' + getRelativeEpisodeNum(ep2, firstEp) : ''}` : `${ep}${ep2 ? '-' + ep2 : ''}`;
 }
 
+console.log('script load debug 7');
 function getStoredTime(name, ep, storage = getStorage(), id = undefined) {
   if (id) {
     return storage.videoTimes.find(a => a.episodeNum === ep && a.animeId === id);
@@ -490,6 +497,7 @@ function getPathname(url) {
   return new URL(url).pathname;
 }
 
+console.log('script load debug 8');
 function getVideoPath(url) {
   const parts = /(\w+)$/.exec(url);
   if (!parts) return undefined;
@@ -508,6 +516,7 @@ function bumpSyncDiff(storage, bumpReason) {
   if (isSyncEnabled(storage) && !storage.sync.temp.addedData.length) storage.sync.temp.addedData.push({bump:bumpReason}); // Mark that changes have been made
 }
 
+console.log('script load debug 9');
 function applyCssSheet(cssString) {
   $("head").append('<style id="anitracker-style" type="text/css"></style>');
   const sheet = $("#anitracker-style")[0].sheet;
@@ -519,11 +528,13 @@ function applyCssSheet(cssString) {
   }
 }
 
+console.log('script load debug 10');
 const kwikDLPageRegex = /^https:\/\/kwik\.\w+\/f\//;
 
 // MARKER:VIDEO IFRAME
 // Video player improvements
 function anitrackerKwikLoad() {
+  console.log('script load debug 12');
   if (typeof $ !== "undefined" && $() !== null) anitrackerPlayerLoad(window.location.origin + window.location.pathname);
   else {
     let scriptElem;
@@ -1758,13 +1769,16 @@ const _css = `
   }
 }
 
+console.log('script load debug 11');
 if (/^https:\/\/kwik\.\w+/.test(baseUrl)) {
   anitrackerKwikLoad();
   return;
 }
 
+console.log('script load debug 13');
 if ($() !== null) anitrackerLoad();
 else {
+  console.log('script load debug 14');
   for (const elem of document.querySelectorAll('head > link')) {
     if (!elem.href.includes('jquery')) continue;
     elem.addEventListener('load', anitrackerLoad);
@@ -1773,6 +1787,7 @@ else {
 }
 
 function anitrackerLoad() {
+console.log('script load debug 15');
 
 if ($('#anitracker-modal').length) {
   console.log("[AnimePahe Improvements] Script was reloaded.");
