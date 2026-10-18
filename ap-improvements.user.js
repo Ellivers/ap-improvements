@@ -1776,7 +1776,7 @@ if (/^https:\/\/kwik\.\w+/.test(baseUrl)) {
 }
 
 console.log('script load debug 13');
-if ($() !== null) anitrackerLoad();
+if (typeof $ !== 'undefined' && $() !== null) anitrackerLoad();
 else {
   console.log('script load debug 14');
   for (const elem of document.querySelectorAll('head > link')) {
