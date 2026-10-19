@@ -1778,16 +1778,17 @@ if (/^https:\/\/kwik\.\w+/.test(baseUrl)) {
 console.log('script load debug 13');
 if (typeof $ !== 'undefined' && $() !== null) anitrackerLoad();
 else {
-  console.log('script load debug 14');
+  console.log('script load debug 14', typeof $, $());
   for (const elem of document.querySelectorAll('head > link')) {
     if (!elem.href.includes('jquery')) continue;
     elem.addEventListener('load', anitrackerLoad);
+    console.log(elem)
     break;
   }
 }
 
 function anitrackerLoad() {
-console.log('script load debug 15');
+console.log('script load debug 15', typeof $, $());
 
 if ($('#anitracker-modal').length) {
   console.log("[AnimePahe Improvements] Script was reloaded.");
