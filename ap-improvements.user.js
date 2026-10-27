@@ -7802,14 +7802,14 @@ async function getEpisodePageResponse(session, pageNum = 1, sort = 'episode_asc'
       siteVars.ongoingRequests = siteVars.ongoingRequests.filter(r => !(r.type === 'firstEpPage' && r.session === session && r.page === pageNum && r.sort === sort));
       if (!data) return resolve(data);
 
-      if (data.data[0]) {
-        if (pageNum === 1) {
+      if (data.data.length) {
+        if (sort === 'episode_asc' && pageNum === 1) {
           cacheFirstEpisode(data.data[0].episode, {
             session: session,
             id: data.data[0].anime_id,
           }, getStorage());
         }
-        else if (data.current_page === data.last_page) {
+        else if (sort === 'episode_desc' && data.current_page === data.last_page) {
           cacheFirstEpisode(data.data[data.data.length - 1].episode, {
             session: session,
             id: data.data[data.data.length - 1].anime_id,
