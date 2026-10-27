@@ -5,6 +5,7 @@
 - Fixed links to the previous/next anime on episode pages not appearing if the previous/next anime has no episodes
 - Somewhat fixed multiple session expiration messages appearing at the same time
 - Fixed misaligned anime names on the Manage Feed schedule
+- Fixed Relative Episode Numbers showing negative episode numbers in rare occasions
 
 ### 4.13.1 (2026-10-13)
 - Made bookmark images a bit smaller in resolution
