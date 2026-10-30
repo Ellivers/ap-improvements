@@ -7896,7 +7896,7 @@ function getResponseData(qurl) {
 }
 
 async function siteSessionExpireMessage() {
-  await waitTime(randint(1,100));
+  await waitTime(randint(1,1000));
   if (siteVars.siteSessionExpireMsg.shown) return;
   siteVars.siteSessionExpireMsg.tabStates = [];
   broadcastTabMessage('send_site_expired_message_state');
