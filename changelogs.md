@@ -1,4 +1,4 @@
-### 4.13.2 (in development)
+### 4.13.2 (2026-11-02)
 - Improved the layout of the Manage Feed schedule
 - Requests are now sent less often while stalled (flamewave000)
 - Fixed most cases of not being able to download an episode from the Continue Watching section
