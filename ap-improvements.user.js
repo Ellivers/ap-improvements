@@ -13,7 +13,7 @@
 // @grant       GM_setValue
 // @grant       GM_xmlhttpRequest
 // @grant       GM_info
-// @version     4.13.2
+// @version     4.13.3
 // @author      Ellivers
 // @license     MIT
 // @description Improvements and additions for the AnimePahe site
@@ -9339,7 +9339,7 @@ function improvePoster() {
   }
   $('.anime-poster .youtube-preview').removeAttr('href');
   $(`
-  <a class="anitracker-full-poster-link" target="_blank" href="${$('.anime-poster .youtube-preview img').attr('src').replace('.md','')}">
+  <a class="anitracker-full-poster-link" target="_blank" href="${makePosterUrl($('.anime-poster .youtube-preview img').attr('src'))}">
     View full poster
   </a>`).appendTo('.anime-poster');
 }
