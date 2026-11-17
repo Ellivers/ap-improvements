@@ -1,3 +1,7 @@
+### 4.13.3 (in development)
+- Fixed the episode feed incorrectly asking to remove anime when opening the menu
+- Fixed the "View full poster" link not showing the highest resolution poster
+
 ### 4.13.2 (2026-11-02)
 - Improved the layout of the Manage Feed schedule
 - Requests are now sent less often while stalled (flamewave000)
