@@ -5385,27 +5385,7 @@ function openNotificationsModal() {
 
   function done(fromRefresh = true) {
     const storage = getStorage();
-    let removedAnime = 0;
-    for (const anime of storage.notifications.anime) {
-      if (!anime.latest_episode || anime.dont_ask === true) continue;
-      const time = Date.now() - anime.latest_episode;
-      if ((time / 1000 / 60 / 60 / 24 / 7) > 2) {
-        const remove = confirm(`[AnimePahe Improvements]\n\nThe latest episode for ${anime.name} was more than 2 weeks ago. Remove it from the feed?\n\nThis prompt will not be shown again.`);
-        if (remove === true) {
-          toggleNotifications(anime.name, anime.id);
-          removedAnime++;
-          showMessage('Removed from feed');
-        }
-        else {
-          anime.dont_ask = true;
-          saveData(storage);
-        }
-      }
-    }
-    if (removedAnime > 0) {
-      openNotificationsModal();
-      return;
-    }
+
     $('#anitracker-modal-body .anitracker-modal-list').empty();
 
     if (errorAnime.length) {
@@ -5427,6 +5407,25 @@ function openNotificationsModal() {
       saveData(storage);
       $('.anitracker-last-refreshed').text(getLastRefreshedText(storage.notifications.lastUpdated))
       .parent().css('height','').attr('title',getLastRefreshedTitle(storage.notifications.lastUpdated));
+
+      const finishedAiring = getFinishedAiringAnimeList(storage);
+      let removedAnime = 0;
+      for (const anime of finishedAiring) {
+        const remove = confirm(`[AnimePahe Improvements]\n\nThe latest episode for ${anime.name} was more than 2 weeks ago. Remove it from the feed?\n\nThis prompt will not be shown again.`);
+        if (remove === true) {
+          toggleNotifications(anime.name, anime.id);
+          removedAnime++;
+          showMessage('Removed from feed');
+        }
+        else {
+          anime.dont_ask = true;
+          saveData(storage);
+        }
+      }
+      if (removedAnime > 0) {
+        openNotificationsModal();
+        return;
+      }
     }
     currentNotificationIndex = 0;
     if (!storage.notifications.episodes.length) {
@@ -5437,6 +5436,16 @@ function openNotificationsModal() {
       addToList(20);
       setModalShift(shouldShiftModal());
     }
+  }
+
+  function getFinishedAiringAnimeList(storage) {
+    const list = [];
+    for (const anime of storage.notifications.anime) {
+      if (!anime.latest_episode || anime.dont_ask === true) continue;
+      const time = Date.now() - anime.latest_episode;
+      if ((time / 1000 / 60 / 60 / 24 / 7) > 2) list.push(anime);
+    }
+    return list;
   }
 
   function getLastRefreshedTitle(value) {
